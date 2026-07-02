@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "continuity-core": {
+      "command": "continuity-mcp",
+      "args": []
+    }
+  }
+}

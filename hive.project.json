@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "name": "continuity-core",
+  "sandbox": "continuity-core",
+  "kind": "workspace-infrastructure",
+  "description": "Workspace-level project continuity, session handoff, documentation reconciliation, and cross-project knowledge management system.",
+  "phase": "phase-1-local-core",
+  "project_root": ".",
+  "hive": {
+    "target_path": "../continuity-core",
+    "preferred_worker": "",
+    "required_capabilities": [
+      "reasoning",
+      "architecture",
+      "documentation",
+      "code",
+      "testing"
+    ]
+  },
+  "commands": {
+    "read_context": "sed -n \"1,220p\" docs/CONTEXT.md",
+    "read_design": "sed -n \"1,260p\" docs/SYSTEM_DESIGN.md"
+  }
+}

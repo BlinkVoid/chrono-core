@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "name": "continuity-core",
+  "version": "0.1.0",
+  "description": "Workspace continuity, session handoff, resume context, and documentation management.",
+  "skills": ["skills/continuity-core"],
+  "mcp_servers": {
+    "continuity-core": {
+      "command": "continuity-mcp",
+      "args": []
+    }
+  }
+}

@@ -1,0 +1,79 @@
+# Roadmap
+
+## Phase 0 — Design Incubator
+
+- [x] Create Incubator incubator project.
+- [x] Document mission and principles.
+- [x] Document initial system design.
+- [x] Document graph-shaped data model.
+- [x] Document management workflows.
+- [x] Document plugin/GearCore distribution strategy.
+- [x] Document existing-tool integration and supersession plan.
+- [x] Review existing `workspace-intelligence` implementation in detail.
+- [ ] Review `_MetaFactory` collection/consolidation outputs in detail.
+- [x] Decide exact integration/supersession boundary.
+
+## Phase 1 — Local Core
+
+Goal: useful local prototype without MCP dependency.
+
+- [x] Python package scaffold.
+- [x] SQLite schema and migrations.
+- [x] Workspace traversal and project resolver.
+- [x] Project registry import from workspace-intelligence SQLite registry (`continuity ingest-existing-tools`).
+- [ ] Project registry import from a live workspace scan (`continuity discover`).
+- [x] Session handoff capture command.
+- [x] Resume context generator.
+- [ ] Basic markdown export.
+- [x] Tests for resolver, schema, handoff, and resume context.
+
+- [x] Consolidate CLI on canonical Store/capture/resume path.
+
+Phase 1 persistence slice (completed): deterministic project IDs, `Store` CRUD,
+`continuity handoff` with `--summary` and optional JSON/CLI args, `continuity resume`
+reading from SQLite, and focused unit tests. Management/distillation and MCP server
+remain Phase 2/3.
+
+## Phase 2 — Agent Interface
+
+Goal: AI agents can use Continuity Core directly.
+
+- [x] MCP server (`continuity-mcp`) exposing `resolve_project`, `session_handoff`, and `get_resume_context`.
+- [x] `session_handoff` tool.
+- [x] `get_resume_context` tool.
+- [ ] `record_decision` / `record_blocker` standalone tools.
+- [ ] GearCore skill or plugin adapter.
+- [ ] Codex/Claude/Kimi usage instructions.
+
+## Phase 3 — Management Session
+
+Goal: project state becomes coherent and maintainable.
+
+- [ ] `distill_project` workflow.
+- [ ] `reconcile_docs` workflow.
+- [ ] stale/contradictory doc detection.
+- [ ] improvement advice generator.
+- [ ] project health review output.
+- [ ] wiki export with review queue.
+
+## Phase 4 — Cross-Project Intelligence
+
+Goal: reuse hard-won patterns across projects.
+
+- [ ] MetaFactory ingestion adapter.
+- [ ] reusable pattern index.
+- [ ] project similarity search.
+- [ ] pattern recommendation in resume context.
+- [ ] promote validated patterns into GearCore skills.
+
+## Phase 5 — Supersession / Consolidation
+
+Goal: reduce duplicated infrastructure.
+
+Candidates:
+
+- `project-tracking` placeholder should become obsolete immediately.
+- `tool-project-tracker` / `workspace-intelligence` may be absorbed if Continuity Core implements registry/discovery better.
+- `_MetaFactory` may remain a specialized collector or become a Continuity Core management workflow.
+
+Do not delete or replace existing tools until Continuity Core has feature parity and migration tests.

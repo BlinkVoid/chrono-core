@@ -1,0 +1,32 @@
+[project]
+name = "continuity-core"
+version = "0.1.0"
+description = "Workspace-level project continuity, session handoff, and documentation management infrastructure"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["mcp>=1.0"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+continuity = "continuity_core.cli:main"
+continuity-mcp = "continuity_core.mcp_server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -1,0 +1,62 @@
+---
+name: continuity-core
+description: Project continuity, session handoff, resume context, and documentation management for workspace projects.
+---
+
+# Continuity Core
+
+Use this skill when working on a software/project repository where continuity across sessions matters.
+
+## When To Use
+
+Use Continuity Core when the user asks to:
+
+- handoff
+- wrap up
+- park the work
+- save state
+- resume a project
+- explain current project status
+- find next actions
+- reconcile project docs
+- run a management/distillation pass
+
+For non-trivial project work, prefer loading a resume context before making changes.
+
+## Session Start
+
+If starting or resuming project work, run:
+
+```bash
+continuity resume --cwd "$PWD"
+```
+
+Or, when using the MCP server, call `continuity_core.get_resume_context` with `cwd`.
+
+Use the returned context to understand project status, blockers, decisions, and next actions.
+
+## Handoff
+
+When the user says `handoff` or equivalent, prepare a concise structured handoff and run:
+
+```bash
+continuity handoff --cwd "$PWD" --summary "<one sentence summary>"
+```
+
+Or call `continuity_core.session_handoff` with `cwd`, `summary`, and optional structured fields (`files_changed`, `tests`, `decisions`, `blockers`, `next_actions`, `risks`).
+
+Include summary, files changed, verification, decisions, blockers, next actions, and risks.
+
+## MCP Tools
+
+When Continuity Core is installed as an MCP server (`continuity-mcp`), the following tools are available:
+
+- `continuity_core.resolve_project` — identify the project for a given `cwd`.
+- `continuity_core.session_handoff` — persist a structured handoff.
+- `continuity_core.get_resume_context` — fetch compact resume context.
+
+All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
+
+## Management Pass
+
+Only run a deeper management pass when explicitly asked. Management includes distillation, stale-doc detection, improvement advice, and wiki updates.
