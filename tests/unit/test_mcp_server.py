@@ -7,8 +7,12 @@ from continuity_core.mcp_server import (
     DEFAULT_WORKSPACE_ROOT,
     get_resume_context_tool,
     handle_get_resume_context,
+    handle_record_blocker,
+    handle_record_decision,
     handle_resolve_project,
     handle_session_handoff,
+    record_blocker_tool,
+    record_decision_tool,
     resolve_project_tool,
     session_handoff_tool,
 )
@@ -163,6 +167,83 @@ def test_get_resume_context_tool_passes_max_tokens(tmp_path: Path):
 
     assert result["project_name"] == "unknown"
     assert result["max_tokens"] == 4096
+
+
+def test_handle_record_decision_persists_sessionless_decision(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    db_path = tmp_path / "continuity.db"
+
+    result = handle_record_decision(
+        str(project),
+        "Adopt sessionless management notes",
+        rationale="Management sessions need to record state without a handoff.",
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+    )
+
+    assert result["ok"] is True
+    assert result["recorded_count"] == 1
+    assert result["decision"]["title"] == "Adopt sessionless management notes"
+
+    store = Store(str(db_path))
+    context = store.get_resume_context(result["project_id"])
+    assert context.project_name == "example"
+    assert context.recent_decisions[0]["title"] == "Adopt sessionless management notes"
+
+
+def test_handle_record_blocker_persists_sessionless_blocker(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    db_path = tmp_path / "continuity.db"
+
+    result = handle_record_blocker(
+        str(project),
+        "Need live credentials",
+        detail="Smoke test cannot run until credentials exist.",
+        status="open",
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+    )
+
+    assert result["ok"] is True
+    assert result["recorded_count"] == 1
+    assert result["blocker"]["title"] == "Need live credentials"
+
+    store = Store(str(db_path))
+    context = store.get_resume_context(result["project_id"])
+    assert context.project_name == "example"
+    assert context.active_blockers[0]["title"] == "Need live credentials"
+
+
+def test_record_decision_and_blocker_tools_wrap_handlers(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    db_path = tmp_path / "continuity.db"
+
+    decision = record_decision_tool(
+        str(project),
+        "Use narrow MCP tools",
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+    )
+    blocker = record_blocker_tool(
+        str(project),
+        "Await operator review",
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+    )
+
+    assert decision["ok"] is True
+    assert decision["decision"]["title"] == "Use narrow MCP tools"
+    assert blocker["ok"] is True
+    assert blocker["blocker"]["status"] == "open"
 
 
 def test_mcp_server_constants():

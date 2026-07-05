@@ -190,6 +190,29 @@ def import_workspace_intelligence(
     return result
 
 
+def _find_project_tracking_source(workspace: Path) -> tuple[Path, str]:
+    live_source = workspace / "project-tracking"
+    if live_source.exists():
+        return live_source, "project-tracking"
+
+    archive_root = workspace / "_archive_projects"
+    if archive_root.exists():
+        archived_sources = sorted(
+            (
+                child
+                for child in archive_root.iterdir()
+                if child.is_dir() and child.name.startswith("project-tracking")
+            ),
+            key=lambda child: child.name,
+            reverse=True,
+        )
+        if archived_sources:
+            archived_source = archived_sources[0]
+            return archived_source, str(archived_source.relative_to(workspace))
+
+    return live_source, "project-tracking"
+
+
 def import_project_tracking(
     store: Store,
     *,
@@ -197,9 +220,8 @@ def import_project_tracking(
 ) -> ImportResult:
     """Import the legacy project-tracking directory as archived source evidence."""
     workspace = Path(workspace_root)
-    tracking_dir = workspace / "project-tracking"
-    relative_path = "project-tracking"
-    project_id = make_project_id(relative_path)
+    tracking_dir, relative_path = _find_project_tracking_source(workspace)
+    project_id = make_project_id("project-tracking")
     result = ImportResult(
         ok=True,
         source="project-tracking",
@@ -232,7 +254,9 @@ def import_project_tracking(
         evidence_items.append(f"README:\n{readme_text}")
     else:
         evidence_items.append("README missing.")
-    evidence_items.append("Status: archived / superseded by tool-project-tracker (workspace-intelligence).")
+    evidence_items.append(
+        "Status: archived / superseded by tool-project-tracker (workspace-intelligence)."
+    )
 
     for child in sorted(tracking_dir.iterdir()):
         if child.is_file() and child.name != "README.md":

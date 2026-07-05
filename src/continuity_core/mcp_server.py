@@ -8,6 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from continuity_core.capture.git import read_git_state
 from continuity_core.capture.handoff import persist_handoff
 from continuity_core.domain.models import HandoffPayload
+from continuity_core.management.distill import distill_project
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import resolve_project
 
@@ -72,6 +73,69 @@ def handle_get_resume_context(
     return result
 
 
+def handle_record_decision(
+    cwd: str,
+    title: str,
+    *,
+    rationale: str | None = None,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Record a project decision outside a session handoff."""
+    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    project = resolve_project(Path(cwd), workspace_root=ws)
+    store = Store(db_path or DEFAULT_DB_PATH)
+    store.init_schema()
+    project_id = store.get_or_create_project(project)
+    decision = {"title": title, "rationale": rationale or ""}
+    store.record_decisions(project_id, None, [decision])
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "recorded_count": 1,
+        "decision": decision,
+    }
+
+
+def handle_record_blocker(
+    cwd: str,
+    title: str,
+    *,
+    detail: str | None = None,
+    status: str = "open",
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Record a project blocker outside a session handoff."""
+    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    project = resolve_project(Path(cwd), workspace_root=ws)
+    store = Store(db_path or DEFAULT_DB_PATH)
+    store.init_schema()
+    project_id = store.get_or_create_project(project)
+    blocker = {"title": title, "status": status, "detail": detail or ""}
+    store.record_blockers(project_id, None, [blocker])
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "recorded_count": 1,
+        "blocker": blocker,
+    }
+
+
+def handle_distill_project(
+    cwd: str,
+    *,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Distill captured continuity records into compact project state."""
+    return distill_project(
+        cwd=cwd,
+        workspace_root=workspace_root or DEFAULT_WORKSPACE_ROOT,
+        store=Store(db_path or DEFAULT_DB_PATH),
+    )
+
+
 mcp = FastMCP("continuity-core")
 
 
@@ -125,6 +189,54 @@ def get_resume_context_tool(
         db_path=db_path,
         max_tokens=max_tokens,
     )
+
+
+@mcp.tool(name="continuity_core.record_decision")
+def record_decision_tool(
+    cwd: str,
+    title: str,
+    rationale: str | None = None,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Persist a project decision outside a session handoff."""
+    return handle_record_decision(
+        cwd,
+        title,
+        rationale=rationale,
+        workspace_root=workspace_root,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="continuity_core.record_blocker")
+def record_blocker_tool(
+    cwd: str,
+    title: str,
+    detail: str | None = None,
+    status: str = "open",
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Persist a project blocker outside a session handoff."""
+    return handle_record_blocker(
+        cwd,
+        title,
+        detail=detail,
+        status=status,
+        workspace_root=workspace_root,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="continuity_core.distill_project")
+def distill_project_tool(
+    cwd: str,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Distill captured continuity records into compact project state."""
+    return handle_distill_project(cwd, workspace_root=workspace_root, db_path=db_path)
 
 
 def main() -> int:

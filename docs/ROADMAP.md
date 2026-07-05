@@ -21,10 +21,10 @@ Goal: useful local prototype without MCP dependency.
 - [x] SQLite schema and migrations.
 - [x] Workspace traversal and project resolver.
 - [x] Project registry import from workspace-intelligence SQLite registry (`continuity ingest-existing-tools`).
-- [ ] Project registry import from a live workspace scan (`continuity discover`).
+- [x] Project registry import from a live workspace scan (`continuity discover`).
 - [x] Session handoff capture command.
 - [x] Resume context generator.
-- [ ] Basic markdown export.
+- [x] Basic markdown export.
 - [x] Tests for resolver, schema, handoff, and resume context.
 
 - [x] Consolidate CLI on canonical Store/capture/resume path.
@@ -41,15 +41,15 @@ Goal: AI agents can use Continuity Core directly.
 - [x] MCP server (`continuity-mcp`) exposing `resolve_project`, `session_handoff`, and `get_resume_context`.
 - [x] `session_handoff` tool.
 - [x] `get_resume_context` tool.
-- [ ] `record_decision` / `record_blocker` standalone tools.
-- [ ] GearCore skill or plugin adapter.
-- [ ] Codex/Claude/Kimi usage instructions.
+- [x] `record_decision` / `record_blocker` standalone tools.
+- [x] GearCore skill or plugin adapter.
+- [x] Codex/Claude/Kimi usage instructions.
 
 ## Phase 3 — Management Session
 
 Goal: project state becomes coherent and maintainable.
 
-- [ ] `distill_project` workflow.
+- [x] `distill_project` workflow.
 - [ ] `reconcile_docs` workflow.
 - [ ] stale/contradictory doc detection.
 - [ ] improvement advice generator.

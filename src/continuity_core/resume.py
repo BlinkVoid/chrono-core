@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 from pathlib import Path
-from typing import Any
 
 from continuity_core.domain.models import ResumeContext
 from continuity_core.store.store import Store

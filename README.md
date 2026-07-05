@@ -6,7 +6,7 @@ It began in Hub incubator as an incubator and now lives as its own workspace pro
 
 ## Current Status
 
-Phase 1 local core implemented with SQLite persistence, project resolution, workspace discovery, session handoff capture, resume context, and workspace-intelligence ingestion. Phase 2 MCP server is implemented. Management/distillation workflows are Phase 3.
+Phase 1 local core implemented with SQLite persistence, project resolution, workspace discovery, session handoff capture, resume context, markdown export, and workspace-intelligence ingestion. Phase 2 MCP server and GearCore install-plan adapter are implemented. Phase 3 has a deterministic project distillation workflow. Additional management workflows remain Phase 3.
 
 Available CLI commands:
 
@@ -14,7 +14,10 @@ Available CLI commands:
 - `continuity discover` — scan a workspace for project markers and upsert discovered projects.
 - `continuity handoff` — capture a session handoff into the continuity database.
 - `continuity resume` — show resume context for a project.
+- `continuity distill` — derive and persist compact project state from captured records.
 - `continuity ingest-existing-tools` — import project metadata from the `workspace-intelligence` SQLite registry and archive the legacy `project-tracking` directory as source evidence.
+- `continuity export markdown` — write a derived project index and project pages from the continuity database.
+- `continuity gearcore install-plan` — print GearCore registration commands for the skill and MCP server.
 
 ## Core Problem
 
@@ -38,6 +41,7 @@ Continuity Core treats project state as something that must be explicitly captur
 - [Management Workflows](docs/MANAGEMENT_WORKFLOWS.md)
 - [Plugin Strategy](docs/PLUGIN_STRATEGY.md)
 - [GearCore Skill Spec](docs/GEARCORE_SKILL_SPEC.md)
+- [Usage](docs/USAGE.md)
 - [Integration and Supersession Plan](docs/INTEGRATION_SUPERSESSION.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Project Context](docs/CONTEXT.md)

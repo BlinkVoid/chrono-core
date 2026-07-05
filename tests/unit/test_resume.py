@@ -23,7 +23,9 @@ def test_get_resume_context_for_unknown_project(tmp_path: Path):
 def test_get_resume_context_after_handoff(tmp_path: Path):
     store = Store(tmp_path / "test.db")
     store.init_schema()
-    project = resolve_project(tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace")
+    project = resolve_project(
+        tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
+    )
     store.get_or_create_project(project)
 
     payload = HandoffPayload(summary="Latest.", next_actions=["Act"])

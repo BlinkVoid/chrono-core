@@ -65,13 +65,37 @@ Output tiers:
 7. Docs to read first.
 8. Stale-doc warnings.
 
+### `continuity distill`
+
+Derive compact project state from captured sessions, blockers, next actions, and decisions.
+
+```bash
+continuity distill --cwd . --db-path data/continuity.db
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "project_id": "example-abc123",
+  "project_name": "example",
+  "phase": "blocked",
+  "summary": "Implemented management state capture.",
+  "current_status": "Latest session on main.",
+  "active_blocker_count": 1,
+  "next_action_count": 1,
+  "recent_decision_count": 1
+}
+```
+
 ### `continuity ingest-existing-tools`
 
 Import project metadata from the Workspace Intelligence SQLite registry and archive the legacy `project-tracking` directory as source evidence.
 
 ```bash
 continuity ingest-existing-tools \
-  --registry-path ~/workspace/tool-project-tracker/data/registry.db \
+  --registry-path ~/.local/state/workspace-intelligence/registry.db \
   --workspace-root ~/workspace \
   --db-path data/continuity.db
 ```
@@ -82,12 +106,12 @@ Output shape:
 {
   "ok": true,
   "workspace_root": "~/workspace",
-  "registry_path": "~/workspace/tool-project-tracker/data/registry.db",
+  "registry_path": "~/.local/state/workspace-intelligence/registry.db",
   "sources": {
     "workspace-intelligence": {
       "ok": true,
       "source": "workspace-intelligence",
-      "registry_path": "~/workspace/tool-project-tracker/data/registry.db",
+      "registry_path": "~/.local/state/workspace-intelligence/registry.db",
       "workspace_root": "~/workspace",
       "imported_count": 1,
       "skipped_count": 0,
@@ -124,13 +148,71 @@ Output shape:
 }
 ```
 
+### `continuity export markdown`
+
+Write a derived Markdown project index and one resume-style project page per project.
+
+```bash
+continuity export markdown \
+  --db-path data/continuity.db \
+  --output-dir exports/markdown
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "output_dir": "exports/markdown",
+  "index_path": "exports/markdown/Projects.md",
+  "exported_count": 1,
+  "projects": [
+    {
+      "project_id": "example-abc123",
+      "name": "example",
+      "path": "exports/markdown/projects/example-abc123.md",
+      "relative_path": "projects/example-abc123.md"
+    }
+  ]
+}
+```
+
+### `continuity gearcore install-plan`
+
+Print explicit GearCore registration commands for the Continuity Core skill and MCP server without mutating GearCore config.
+
+```bash
+continuity gearcore install-plan
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "scope": "global",
+  "project_root": null,
+  "skill_path": "~/workspace/continuity-core/skills/continuity-core",
+  "symlink": true,
+  "mcp_server": {
+    "id": "continuity-core",
+    "type": "stdio",
+    "command": "continuity-mcp"
+  },
+  "commands": [
+    {
+      "description": "Register Continuity Core skill",
+      "argv": ["gearcore", "add-skill", "--scope", "global", "--symlink", "..."],
+      "shell": "gearcore add-skill --scope global --symlink ..."
+    }
+  ]
+}
+```
+
 ### Future CLI Commands
 
-- `continuity discover`
-- `continuity distill`
 - `continuity reconcile`
 - `continuity health`
-- `continuity export markdown`
 
 ## MCP Tools
 
@@ -211,11 +293,77 @@ Output:
 }
 ```
 
+### `continuity_core.record_decision`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "title": "Use provider-neutral LLM boundary",
+  "rationale": "Keeps provider swaps local to the LLM layer."
+}
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "project_id": "example-abc12345",
+  "recorded_count": 1,
+  "decision": {
+    "title": "Use provider-neutral LLM boundary",
+    "rationale": "Keeps provider swaps local to the LLM layer."
+  }
+}
+```
+
+### `continuity_core.record_blocker`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "title": "Live smoke requires credentials",
+  "detail": "Credential path is not configured.",
+  "status": "open"
+}
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "project_id": "example-abc12345",
+  "recorded_count": 1,
+  "blocker": {
+    "title": "Live smoke requires credentials",
+    "status": "open",
+    "detail": "Credential path is not configured."
+  }
+}
+```
+
+### `continuity_core.distill_project`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "db_path": "data/continuity.db"
+}
+```
+
+Output: same shape as `continuity distill`.
+
 ### Management Tools
 
 Not MVP persistence-critical, but contract names are reserved:
 
-- `continuity_core.distill_project`
 - `continuity_core.reconcile_docs`
 - `continuity_core.review_project_health`
 - `continuity_core.find_reusable_patterns`

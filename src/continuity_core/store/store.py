@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ from continuity_core.workspace.resolver import ResolvedProject
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def make_session_id() -> str:
@@ -82,7 +82,9 @@ class Store:
         now = utc_now()
         conn.execute(
             """
-            INSERT INTO projects (id, name, path, relative_path, status, phase, summary, created_at, updated_at)
+            INSERT INTO projects (
+                id, name, path, relative_path, status, phase, summary, created_at, updated_at
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 name=excluded.name,
@@ -120,7 +122,10 @@ class Store:
         conn.execute(
             """
             INSERT INTO sessions
-                (id, project_id, ended_at, agent_name, summary, git_branch, git_head, git_dirty, raw_payload_json)
+                (
+                    id, project_id, ended_at, agent_name, summary, git_branch, git_head,
+                    git_dirty, raw_payload_json
+                )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -219,7 +224,9 @@ class Store:
         for item in items:
             conn.execute(
                 """
-                INSERT INTO observations (id, project_id, session_id, kind, content, source, observed_at)
+                INSERT INTO observations (
+                    id, project_id, session_id, kind, content, source, observed_at
+                )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -232,6 +239,34 @@ class Store:
                     now,
                 ),
             )
+        conn.commit()
+
+    def list_projects(self) -> list[dict[str, Any]]:
+        conn = self._connect()
+        rows = conn.execute(
+            """
+            SELECT id, name, path, relative_path, status, phase, summary, updated_at
+            FROM projects
+            ORDER BY relative_path
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_project_state(
+        self, project_id: str, *, phase: str | None = None, summary: str | None = None
+    ) -> None:
+        conn = self._connect()
+        conn.execute(
+            """
+            UPDATE projects
+            SET
+                phase = COALESCE(?, phase),
+                summary = COALESCE(?, summary),
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (phase, summary, utc_now(), project_id),
+        )
         conn.commit()
 
     def get_resume_context(self, project_id: str) -> ResumeContext:

@@ -126,6 +126,22 @@ disclosure:
 
 The skill should not force a full management pass on every session. It should make low-friction capture easy and reserve distillation/reconciliation for dedicated management sessions.
 
+## GearCore Adapter Command
+
+The MVP adapter does not mutate GearCore config directly. It emits an explicit installation plan:
+
+```bash
+continuity gearcore install-plan
+```
+
+For project-scoped registration:
+
+```bash
+continuity gearcore install-plan --scope project --project-root /path/to/project
+```
+
+The plan includes one `gearcore add-skill` command for `skills/continuity-core` and one `gearcore add-mcp` command for `continuity-mcp`.
+
 ## Future Hook Support
 
 If GearCore later adds hooks, Continuity Core could support:

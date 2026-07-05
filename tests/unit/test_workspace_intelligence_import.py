@@ -4,9 +4,24 @@ import json
 import sqlite3
 from pathlib import Path
 
-from continuity_core.integrations.workspace_intelligence import import_workspace_intelligence
+from continuity_core.cli import DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY, build_parser
+from continuity_core.integrations.workspace_intelligence import (
+    import_project_tracking,
+    import_workspace_intelligence,
+)
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import make_project_id
+
+
+def test_ingest_existing_tools_defaults_to_state_registry():
+    expected = str(
+        Path.home() / ".local" / "state" / "workspace-intelligence" / "registry.db"
+    )
+
+    args = build_parser().parse_args(["ingest-existing-tools"])
+
+    assert DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY == expected
+    assert args.registry_path == expected
 
 
 def _create_workspace_intelligence_db(path: Path, workspace: Path) -> None:
@@ -91,6 +106,21 @@ def _create_workspace_intelligence_db(path: Path, workspace: Path) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def test_import_project_tracking_uses_archived_source_when_original_moved(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    archived_tracking = workspace / "_archive_projects" / "project-tracking-2026-07-02"
+    archived_tracking.mkdir(parents=True)
+    (archived_tracking / "README.md").write_text("# Project Tracking\n\nArchived source.")
+    store = Store(tmp_path / "continuity.db")
+
+    result = import_project_tracking(store, workspace_root=workspace)
+
+    assert result.ok is True
+    assert result.registry_path == str(archived_tracking)
+    assert result.projects[0].project_id == make_project_id("project-tracking")
+    assert result.projects[0].relative_path == "_archive_projects/project-tracking-2026-07-02"
 
 
 def test_import_workspace_intelligence_registry_into_continuity_store(tmp_path: Path):

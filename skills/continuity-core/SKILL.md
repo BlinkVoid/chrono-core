@@ -54,9 +54,28 @@ When Continuity Core is installed as an MCP server (`continuity-mcp`), the follo
 - `continuity_core.resolve_project` — identify the project for a given `cwd`.
 - `continuity_core.session_handoff` — persist a structured handoff.
 - `continuity_core.get_resume_context` — fetch compact resume context.
+- `continuity_core.record_decision` — persist a project decision outside a handoff.
+- `continuity_core.record_blocker` — persist a blocker outside a handoff.
+- `continuity_core.distill_project` — derive and persist compact project state from captured records.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
 
 ## Management Pass
 
 Only run a deeper management pass when explicitly asked. Management includes distillation, stale-doc detection, improvement advice, and wiki updates.
+
+For the current deterministic distillation workflow, run:
+
+```bash
+continuity distill --cwd "$PWD"
+```
+
+## GearCore Registration
+
+To expose Continuity Core through GearCore, run:
+
+```bash
+continuity gearcore install-plan
+```
+
+Review the emitted commands, then run them to register the skill and MCP server. Use `--scope project --project-root <path>` for project-scoped registration.

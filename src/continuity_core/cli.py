@@ -6,7 +6,10 @@ from pathlib import Path
 
 from continuity_core import __version__
 from continuity_core.capture.handoff import capture_handoff
+from continuity_core.export.markdown import export_markdown
+from continuity_core.integrations.gearcore import build_gearcore_install_plan
 from continuity_core.integrations.workspace_intelligence import ingest_existing_tools
+from continuity_core.management.distill import distill_project
 from continuity_core.resume import resume_command
 from continuity_core.store.store import Store
 from continuity_core.workspace.discovery import DiscoveryOptions, discover_workspace
@@ -14,8 +17,8 @@ from continuity_core.workspace.resolver import resolve_project
 
 DEFAULT_WORKSPACE_ROOT = "~/workspace"
 DEFAULT_DB_PATH = "data/continuity.db"
-DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = (
-    "~/workspace/tool-project-tracker/data/registry.db"
+DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = str(
+    Path.home() / ".local" / "state" / "workspace-intelligence" / "registry.db"
 )
 
 
@@ -36,6 +39,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
     p_resume.add_argument("--json", action="store_true", help="emit JSON")
+
+    p_distill = sub.add_parser("distill", help="distill captured records into project state")
+    p_distill.add_argument("--cwd", default=".")
+    p_distill.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_distill.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
 
     p_discover = sub.add_parser("discover", help="discover workspace projects")
     p_discover.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
@@ -107,6 +117,40 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
+    p_export = sub.add_parser("export", help="export derived continuity artifacts")
+    export_sub = p_export.add_subparsers(dest="export_command")
+    p_export_markdown = export_sub.add_parser("markdown", help="export project markdown")
+    p_export_markdown.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+    p_export_markdown.add_argument(
+        "--output-dir",
+        default="exports/markdown",
+        help="directory for markdown export output",
+    )
+
+    p_gearcore = sub.add_parser("gearcore", help="GearCore adapter utilities")
+    gearcore_sub = p_gearcore.add_subparsers(dest="gearcore_command")
+    p_gearcore_plan = gearcore_sub.add_parser(
+        "install-plan", help="print GearCore registration commands"
+    )
+    p_gearcore_plan.add_argument(
+        "--scope", choices=["global", "project"], default="global", help="GearCore scope"
+    )
+    p_gearcore_plan.add_argument(
+        "--project-root", default=None, help="project root for project-scoped registration"
+    )
+    p_gearcore_plan.add_argument(
+        "--skill-path", default=None, help="override Continuity Core skill path"
+    )
+    p_gearcore_plan.add_argument(
+        "--mcp-command", default="continuity-mcp", help="MCP server command"
+    )
+    p_gearcore_plan.add_argument(
+        "--copy", dest="symlink", action="store_false", help="copy skill instead of symlinking"
+    )
+    p_gearcore_plan.set_defaults(symlink=True)
+
     return parser
 
 
@@ -125,6 +169,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "resume":
         return resume_command(args)
+
+    if args.command == "distill":
+        store = Store(args.db_path)
+        result = distill_project(
+            cwd=args.cwd,
+            workspace_root=args.workspace_root,
+            store=store,
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result["ok"] else 1
 
     if args.command == "discover":
         store = None if args.no_persist else Store(args.db_path)
@@ -155,6 +209,27 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result, indent=2))
         return 0 if result["ok"] else 1
+
+    if args.command == "export":
+        if args.export_command == "markdown":
+            store = Store(args.db_path)
+            result = export_markdown(store, args.output_dir)
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
+        parser.error("export requires a subcommand")
+
+    if args.command == "gearcore":
+        if args.gearcore_command == "install-plan":
+            result = build_gearcore_install_plan(
+                scope=args.scope,
+                project_root=args.project_root,
+                skill_path=args.skill_path,
+                symlink=args.symlink,
+                mcp_command=args.mcp_command,
+            ).to_dict()
+            print(json.dumps(result, indent=2))
+            return 0
+        parser.error("gearcore requires a subcommand")
 
     parser.print_help()
     return 0

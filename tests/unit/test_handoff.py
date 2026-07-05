@@ -53,7 +53,9 @@ def test_build_handoff_payload_from_json(tmp_path: Path):
 
 def test_persist_handoff_creates_records(tmp_path: Path):
     store = Store(tmp_path / "test.db")
-    project = resolve_project(tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace")
+    project = resolve_project(
+        tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
+    )
     payload = HandoffPayload(
         summary="Test handoff.",
         files_changed=["src/x.py"],

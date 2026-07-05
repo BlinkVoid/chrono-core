@@ -18,11 +18,17 @@ def test_store_get_or_create_project(tmp_path: Path):
     store = Store(tmp_path / "test.db")
     store.init_schema()
 
-    project = resolve_project(tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace")
+    project = resolve_project(
+        tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
+    )
     project_id = store.get_or_create_project(project)
 
     assert project_id == project.project_id
-    row = store._connect().execute("SELECT name, path FROM projects WHERE id = ?", (project_id,)).fetchone()
+    row = (
+        store._connect()
+        .execute("SELECT name, path FROM projects WHERE id = ?", (project_id,))
+        .fetchone()
+    )
     assert row["name"] == "example"
 
 
@@ -30,7 +36,9 @@ def test_store_creates_session_and_records(tmp_path: Path):
     store = Store(tmp_path / "test.db")
     store.init_schema()
 
-    project = resolve_project(tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace")
+    project = resolve_project(
+        tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
+    )
     project_id = store.get_or_create_project(project)
 
     from continuity_core.domain.models import GitState, HandoffPayload
@@ -63,7 +71,9 @@ def test_store_get_resume_context(tmp_path: Path):
     store = Store(tmp_path / "test.db")
     store.init_schema()
 
-    project = resolve_project(tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace")
+    project = resolve_project(
+        tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
+    )
     project_id = store.get_or_create_project(project)
 
     from continuity_core.domain.models import GitState, HandoffPayload
