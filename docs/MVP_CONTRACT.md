@@ -95,6 +95,28 @@ Output shape:
 }
 ```
 
+### `continuity blocker resolve` / `continuity action complete`
+
+Close captured records so resume context and distilled phase stay accurate.
+Blocker and next-action ids appear in `continuity resume` output.
+
+```bash
+continuity blocker resolve blk_1a2b3c4d5e6f7a8b
+continuity action complete act_1a2b3c4d5e6f7a8b
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "blocker_id": "blk_1a2b3c4d5e6f7a8b",
+  "status": "resolved"
+}
+```
+
+Unknown ids return `"ok": false`, `"status": "not_found"`, and exit code 1.
+
 ### `continuity ingest-existing-tools`
 
 Import project metadata from the Workspace Intelligence SQLite registry and archive the legacy `project-tracking` directory as source evidence.
@@ -349,6 +371,29 @@ Output:
   }
 }
 ```
+
+### `continuity_core.resolve_blocker` / `continuity_core.complete_action`
+
+Input:
+
+```json
+{
+  "blocker_id": "blk_1a2b3c4d5e6f7a8b"
+}
+```
+
+Output:
+
+```json
+{
+  "ok": true,
+  "blocker_id": "blk_1a2b3c4d5e6f7a8b",
+  "status": "resolved"
+}
+```
+
+`continuity_core.complete_action` takes `action_id` and reports `"status": "done"`.
+Unknown ids return `"ok": false` with `"status": "not_found"`.
 
 ### `continuity_core.distill_project`
 

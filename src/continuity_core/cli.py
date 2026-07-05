@@ -104,6 +104,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_handoff.add_argument("--agent", dest="agent_name", default=None, help="agent name")
 
+    p_blocker = sub.add_parser("blocker", help="manage blocker lifecycle")
+    blocker_sub = p_blocker.add_subparsers(dest="blocker_command")
+    p_blocker_resolve = blocker_sub.add_parser("resolve", help="mark a blocker resolved")
+    p_blocker_resolve.add_argument("blocker_id", help="blocker id (see resume output)")
+    p_blocker_resolve.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_action = sub.add_parser("action", help="manage next-action lifecycle")
+    action_sub = p_action.add_subparsers(dest="action_command")
+    p_action_complete = action_sub.add_parser("complete", help="mark a next action done")
+    p_action_complete.add_argument("action_id", help="next action id (see resume output)")
+    p_action_complete.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
     p_ingest = sub.add_parser(
         "ingest-existing-tools", help="import workspace-intelligence registry into Continuity"
     )
@@ -199,6 +215,34 @@ def main(argv: list[str] | None = None) -> int:
         result = capture_handoff(args)
         print(json.dumps(result, indent=2))
         return 0
+
+    if args.command == "blocker":
+        if args.blocker_command == "resolve":
+            store = Store(args.db_path)
+            store.init_schema()
+            resolved = store.resolve_blocker(args.blocker_id)
+            result = {
+                "ok": resolved,
+                "blocker_id": args.blocker_id,
+                "status": "resolved" if resolved else "not_found",
+            }
+            print(json.dumps(result, indent=2))
+            return 0 if resolved else 1
+        parser.error("blocker requires a subcommand")
+
+    if args.command == "action":
+        if args.action_command == "complete":
+            store = Store(args.db_path)
+            store.init_schema()
+            completed = store.complete_next_action(args.action_id)
+            result = {
+                "ok": completed,
+                "action_id": args.action_id,
+                "status": "done" if completed else "not_found",
+            }
+            print(json.dumps(result, indent=2))
+            return 0 if completed else 1
+        parser.error("action requires a subcommand")
 
     if args.command == "ingest-existing-tools":
         store = Store(args.db_path)

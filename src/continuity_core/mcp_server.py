@@ -122,6 +122,30 @@ def handle_record_blocker(
     }
 
 
+def handle_resolve_blocker(blocker_id: str, *, db_path: str | None = None) -> dict[str, Any]:
+    """Mark a previously recorded blocker as resolved."""
+    store = Store(db_path or DEFAULT_DB_PATH)
+    store.init_schema()
+    resolved = store.resolve_blocker(blocker_id)
+    return {
+        "ok": resolved,
+        "blocker_id": blocker_id,
+        "status": "resolved" if resolved else "not_found",
+    }
+
+
+def handle_complete_action(action_id: str, *, db_path: str | None = None) -> dict[str, Any]:
+    """Mark a previously recorded next action as done."""
+    store = Store(db_path or DEFAULT_DB_PATH)
+    store.init_schema()
+    completed = store.complete_next_action(action_id)
+    return {
+        "ok": completed,
+        "action_id": action_id,
+        "status": "done" if completed else "not_found",
+    }
+
+
 def handle_distill_project(
     cwd: str,
     *,
@@ -227,6 +251,18 @@ def record_blocker_tool(
         workspace_root=workspace_root,
         db_path=db_path,
     )
+
+
+@mcp.tool(name="continuity_core.resolve_blocker")
+def resolve_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[str, Any]:
+    """Mark an open blocker as resolved so resume context stops reporting it."""
+    return handle_resolve_blocker(blocker_id, db_path=db_path)
+
+
+@mcp.tool(name="continuity_core.complete_action")
+def complete_action_tool(action_id: str, db_path: str | None = None) -> dict[str, Any]:
+    """Mark an open next action as done so resume context stops reporting it."""
+    return handle_complete_action(action_id, db_path=db_path)
 
 
 @mcp.tool(name="continuity_core.distill_project")

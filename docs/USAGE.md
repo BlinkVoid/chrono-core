@@ -66,4 +66,5 @@ gearcore request-skill continuity-core
 - Resolve the project before capturing state.
 - Include summary, files changed, tests, decisions, blockers, next actions, and risks in the handoff.
 - Prefer structured records over free-form notes when the tool is available.
+- Close finished work: `continuity blocker resolve <id>` and `continuity action complete <id>` keep resume context and the distilled phase truthful.
 - Reserve deeper management workflows for dedicated review sessions.

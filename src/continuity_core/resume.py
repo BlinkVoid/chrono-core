@@ -42,12 +42,12 @@ def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:
     if context.active_blockers:
         lines.append("\nOpen blockers:")
         for blocker in context.active_blockers:
-            lines.append(f"  - {blocker.get('title', '')}")
+            lines.append(f"  - [{blocker.get('id', '')}] {blocker.get('title', '')}")
 
     if context.next_actions:
         lines.append("\nNext actions:")
         for action in context.next_actions:
-            lines.append(f"  - {action.get('text', '')}")
+            lines.append(f"  - [{action.get('id', '')}] {action.get('text', '')}")
 
     if context.recent_decisions:
         lines.append("\nRecent decisions:")

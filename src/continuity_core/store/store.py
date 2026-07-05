@@ -241,6 +241,24 @@ class Store:
             )
         conn.commit()
 
+    def resolve_blocker(self, blocker_id: str) -> bool:
+        conn = self._connect()
+        cursor = conn.execute(
+            "UPDATE blockers SET status = 'resolved', resolved_at = ? WHERE id = ?",
+            (utc_now(), blocker_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def complete_next_action(self, action_id: str) -> bool:
+        conn = self._connect()
+        cursor = conn.execute(
+            "UPDATE next_actions SET status = 'done', completed_at = ? WHERE id = ?",
+            (utc_now(), action_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
     def list_projects(self) -> list[dict[str, Any]]:
         conn = self._connect()
         rows = conn.execute(

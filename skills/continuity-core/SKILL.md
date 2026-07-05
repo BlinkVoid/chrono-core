@@ -35,6 +35,8 @@ Or, when using the MCP server, call `continuity_core.get_resume_context` with `c
 
 Use the returned context to understand project status, blockers, decisions, and next actions.
 
+When a blocker is no longer real or a next action is finished, close it so resume context stays accurate — `continuity blocker resolve <id>` / `continuity action complete <id>` (or the matching MCP tools). Ids appear in resume output.
+
 ## Handoff
 
 When the user says `handoff` or equivalent, prepare a concise structured handoff and run:
@@ -56,6 +58,8 @@ When Continuity Core is installed as an MCP server (`continuity-mcp`), the follo
 - `continuity_core.get_resume_context` — fetch compact resume context.
 - `continuity_core.record_decision` — persist a project decision outside a handoff.
 - `continuity_core.record_blocker` — persist a blocker outside a handoff.
+- `continuity_core.resolve_blocker` — mark an open blocker resolved by id.
+- `continuity_core.complete_action` — mark an open next action done by id.
 - `continuity_core.distill_project` — derive and persist compact project state from captured records.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
