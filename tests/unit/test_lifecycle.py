@@ -171,8 +171,8 @@ def test_mcp_lifecycle_tools_registered():
 
     tools = anyio.run(mcp_server.mcp.list_tools)
     names = {tool.name for tool in tools}
-    assert "continuity_core.resolve_blocker" in names
-    assert "continuity_core.complete_action" in names
+    assert "continuity_core_resolve_blocker" in names
+    assert "continuity_core_complete_action" in names
 
 
 def test_format_resume_shows_ids_for_blockers_and_actions(tmp_path: Path):

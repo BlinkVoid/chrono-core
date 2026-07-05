@@ -31,7 +31,7 @@ If starting or resuming project work, run:
 continuity resume --cwd "$PWD"
 ```
 
-Or, when using the MCP server, call `continuity_core.get_resume_context` with `cwd`.
+Or, when using the MCP server, call `continuity_core_get_resume_context` with `cwd`.
 
 Use the returned context to understand project status, blockers, decisions, and next actions.
 
@@ -45,7 +45,7 @@ When the user says `handoff` or equivalent, prepare a concise structured handoff
 continuity handoff --cwd "$PWD" --summary "<one sentence summary>"
 ```
 
-Or call `continuity_core.session_handoff` with `cwd`, `summary`, and optional structured fields (`files_changed`, `tests`, `decisions`, `blockers`, `next_actions`, `risks`).
+Or call `continuity_core_session_handoff` with `cwd`, `summary`, and optional structured fields (`files_changed`, `tests`, `decisions`, `blockers`, `next_actions`, `risks`).
 
 Include summary, files changed, verification, decisions, blockers, next actions, and risks.
 
@@ -53,14 +53,14 @@ Include summary, files changed, verification, decisions, blockers, next actions,
 
 When Continuity Core is installed as an MCP server (`continuity-mcp`), the following tools are available:
 
-- `continuity_core.resolve_project` — identify the project for a given `cwd`.
-- `continuity_core.session_handoff` — persist a structured handoff.
-- `continuity_core.get_resume_context` — fetch compact resume context.
-- `continuity_core.record_decision` — persist a project decision outside a handoff.
-- `continuity_core.record_blocker` — persist a blocker outside a handoff.
-- `continuity_core.resolve_blocker` — mark an open blocker resolved by id.
-- `continuity_core.complete_action` — mark an open next action done by id.
-- `continuity_core.distill_project` — derive and persist compact project state from captured records.
+- `continuity_core_resolve_project` — identify the project for a given `cwd`.
+- `continuity_core_session_handoff` — persist a structured handoff.
+- `continuity_core_get_resume_context` — fetch compact resume context.
+- `continuity_core_record_decision` — persist a project decision outside a handoff.
+- `continuity_core_record_blocker` — persist a blocker outside a handoff.
+- `continuity_core_resolve_blocker` — mark an open blocker resolved by id.
+- `continuity_core_complete_action` — mark an open next action done by id.
+- `continuity_core_distill_project` — derive and persist compact project state from captured records.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
 

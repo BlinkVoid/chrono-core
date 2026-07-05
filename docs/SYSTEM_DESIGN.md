@@ -80,15 +80,15 @@ GearCore is the personal workspace distribution layer. Public users should be ab
 
 AI agents are the primary users. The MCP server should expose:
 
-- `continuity_core.resolve_project`
-- `continuity_core.session_handoff`
-- `continuity_core.get_resume_context`
-- `continuity_core.record_decision`
-- `continuity_core.record_blocker`
-- `continuity_core.distill_project`
-- `continuity_core.reconcile_docs`
-- `continuity_core.review_project_health`
-- `continuity_core.find_reusable_patterns`
+- `continuity_core_resolve_project`
+- `continuity_core_session_handoff`
+- `continuity_core_get_resume_context`
+- `continuity_core_record_decision`
+- `continuity_core_record_blocker`
+- `continuity_core_distill_project`
+- `continuity_core_reconcile_docs`
+- `continuity_core_review_project_health`
+- `continuity_core_find_reusable_patterns`
 
 ### CLI Second
 

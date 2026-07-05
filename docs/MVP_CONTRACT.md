@@ -241,7 +241,11 @@ Output shape:
 
 ## MCP Tools
 
-### `continuity_core.resolve_project`
+Tool names use underscores only (`continuity_core_<verb>`), never dots:
+Anthropic's API constrains tool names to `^[a-zA-Z0-9_-]+$`, and clients that
+pass MCP tool names through verbatim reject dotted names.
+
+### `continuity_core_resolve_project`
 
 Input:
 
@@ -254,7 +258,7 @@ Input:
 
 Output: same as `continuity resolve`.
 
-### `continuity_core.session_handoff`
+### `continuity_core_session_handoff`
 
 Input:
 
@@ -292,7 +296,7 @@ Output:
 }
 ```
 
-### `continuity_core.get_resume_context`
+### `continuity_core_get_resume_context`
 
 Input:
 
@@ -318,7 +322,7 @@ Output:
 }
 ```
 
-### `continuity_core.record_decision`
+### `continuity_core_record_decision`
 
 Input:
 
@@ -344,7 +348,7 @@ Output:
 }
 ```
 
-### `continuity_core.record_blocker`
+### `continuity_core_record_blocker`
 
 Input:
 
@@ -372,7 +376,7 @@ Output:
 }
 ```
 
-### `continuity_core.resolve_blocker` / `continuity_core.complete_action`
+### `continuity_core_resolve_blocker` / `continuity_core_complete_action`
 
 Input:
 
@@ -392,10 +396,10 @@ Output:
 }
 ```
 
-`continuity_core.complete_action` takes `action_id` and reports `"status": "done"`.
+`continuity_core_complete_action` takes `action_id` and reports `"status": "done"`.
 Unknown ids return `"ok": false` with `"status": "not_found"`.
 
-### `continuity_core.distill_project`
+### `continuity_core_distill_project`
 
 Input:
 
@@ -411,6 +415,6 @@ Output: same shape as `continuity distill`.
 
 Not MVP persistence-critical, but contract names are reserved:
 
-- `continuity_core.reconcile_docs`
-- `continuity_core.review_project_health`
-- `continuity_core.find_reusable_patterns`
+- `continuity_core_reconcile_docs`
+- `continuity_core_review_project_health`
+- `continuity_core_find_reusable_patterns`

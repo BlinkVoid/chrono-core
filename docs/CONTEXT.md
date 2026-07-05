@@ -65,7 +65,7 @@ GearCore does not currently appear to provide hard workflow hooks, so the MVP sh
 
 Implemented the MCP tool layer over the Phase 1 local core:
 
-- `continuity_core.mcp_server` registers `resolve_project`, `session_handoff`, and `get_resume_context` tools via FastMCP.
+- `continuity_core_mcp_server` registers `resolve_project`, `session_handoff`, and `get_resume_context` tools via FastMCP.
 - Tool handlers reuse the canonical `Store`, `capture/handoff`, `resume`, and `workspace.resolver` code paths.
 - `continuity-mcp` entry point is wired in `pyproject.toml` and referenced by `.mcp.json` and `.codex-plugin/plugin.json`.
 - Added focused unit tests for pure MCP tool handlers that exercise the handlers directly without a live MCP client process.

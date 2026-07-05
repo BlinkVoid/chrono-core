@@ -38,7 +38,7 @@ Recommended path:
 2. Import registry data or wrap its discovery service.
 3. **Status:** `continuity_core.integrations.workspace_intelligence` now imports the SQLite registry via `continuity ingest-existing-tools`, including project metadata, git state, and lifecycle phase.
 4. Avoid deleting or replacing it until Continuity Core has feature parity for project discovery and metadata export.
-5. Decide later whether to absorb it as `continuity_core.workspace`.
+5. Decide later whether to absorb it as `continuity_core_workspace`.
 
 ### `_MetaFactory`
 
@@ -61,7 +61,7 @@ Recommended path:
 
 1. Treat `_MetaFactory` as an upstream pattern/insight source.
 2. Add a Continuity Core adapter to read latest snapshots/consolidations.
-3. Later fold collector behavior into `continuity_core.management` if the boundary becomes artificial.
+3. Later fold collector behavior into `continuity_core_management` if the boundary becomes artificial.
 
 ## Supersession Rule
 

@@ -38,8 +38,8 @@ continuity handoff --cwd "$PWD" --summary "One-sentence session summary."
 
 If the MCP server is connected, use:
 
-- `continuity_core.get_resume_context`
-- `continuity_core.session_handoff`
+- `continuity_core_get_resume_context`
+- `continuity_core_session_handoff`
 
 ## Kimi
 

@@ -163,13 +163,13 @@ def handle_distill_project(
 mcp = FastMCP("continuity-core")
 
 
-@mcp.tool(name="continuity_core.resolve_project")
+@mcp.tool(name="continuity_core_resolve_project")
 def resolve_project_tool(cwd: str, workspace_root: str | None = None) -> dict[str, Any]:
     """Resolve the project that contains *cwd* within the workspace."""
     return handle_resolve_project(cwd, workspace_root)
 
 
-@mcp.tool(name="continuity_core.session_handoff")
+@mcp.tool(name="continuity_core_session_handoff")
 def session_handoff_tool(
     cwd: str,
     summary: str,
@@ -199,7 +199,7 @@ def session_handoff_tool(
     )
 
 
-@mcp.tool(name="continuity_core.get_resume_context")
+@mcp.tool(name="continuity_core_get_resume_context")
 def get_resume_context_tool(
     cwd: str,
     workspace_root: str | None = None,
@@ -215,7 +215,7 @@ def get_resume_context_tool(
     )
 
 
-@mcp.tool(name="continuity_core.record_decision")
+@mcp.tool(name="continuity_core_record_decision")
 def record_decision_tool(
     cwd: str,
     title: str,
@@ -233,7 +233,7 @@ def record_decision_tool(
     )
 
 
-@mcp.tool(name="continuity_core.record_blocker")
+@mcp.tool(name="continuity_core_record_blocker")
 def record_blocker_tool(
     cwd: str,
     title: str,
@@ -253,19 +253,19 @@ def record_blocker_tool(
     )
 
 
-@mcp.tool(name="continuity_core.resolve_blocker")
+@mcp.tool(name="continuity_core_resolve_blocker")
 def resolve_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[str, Any]:
     """Mark an open blocker as resolved so resume context stops reporting it."""
     return handle_resolve_blocker(blocker_id, db_path=db_path)
 
 
-@mcp.tool(name="continuity_core.complete_action")
+@mcp.tool(name="continuity_core_complete_action")
 def complete_action_tool(action_id: str, db_path: str | None = None) -> dict[str, Any]:
     """Mark an open next action as done so resume context stops reporting it."""
     return handle_complete_action(action_id, db_path=db_path)
 
 
-@mcp.tool(name="continuity_core.distill_project")
+@mcp.tool(name="continuity_core_distill_project")
 def distill_project_tool(
     cwd: str,
     workspace_root: str | None = None,

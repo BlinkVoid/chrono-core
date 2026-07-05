@@ -2,7 +2,7 @@
 
 ## Workflow 1: Direct Session Handoff
 
-An agent working in any project calls `continuity_core.session_handoff`.
+An agent working in any project calls `continuity_core_session_handoff`.
 
 The tool resolves the project from `cwd`, records raw facts, links changed files and git state, and updates the latest project state.
 
