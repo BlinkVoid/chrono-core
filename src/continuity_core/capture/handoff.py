@@ -63,16 +63,17 @@ def persist_handoff(
 ) -> dict[str, Any]:
     """Persist a handoff payload and return a result summary."""
     store.init_schema()
-    project_id = store.get_or_create_project(project)
     git = git_state or GitState()
-    session_id = store.create_session(project_id, payload, git, agent_name=agent_name)
+    with store.transaction():
+        project_id = store.get_or_create_project(project)
+        session_id = store.create_session(project_id, payload, git, agent_name=agent_name)
 
-    store.record_decisions(project_id, session_id, payload.decisions)
-    store.record_blockers(project_id, session_id, payload.blockers)
-    store.record_next_actions(project_id, session_id, payload.next_actions)
-    store.record_observations(project_id, session_id, "file", payload.files_changed)
-    store.record_observations(project_id, session_id, "test", payload.tests)
-    store.record_observations(project_id, session_id, "risk", payload.risks)
+        store.record_decisions(project_id, session_id, payload.decisions)
+        store.record_blockers(project_id, session_id, payload.blockers)
+        store.record_next_actions(project_id, session_id, payload.next_actions)
+        store.record_observations(project_id, session_id, "file", payload.files_changed)
+        store.record_observations(project_id, session_id, "test", payload.tests)
+        store.record_observations(project_id, session_id, "risk", payload.risks)
 
     open_blockers = [b for b in payload.blockers if b.get("status") == "open"]
     resume_hint = payload.summary

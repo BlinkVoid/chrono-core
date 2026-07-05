@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -31,13 +33,38 @@ class Store:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn: sqlite3.Connection | None = None
+        self._tx_depth = 0
 
     def _connect(self) -> sqlite3.Connection:
         if self._conn is None:
             self._conn = sqlite3.connect(str(self.db_path))
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA foreign_keys = ON")
+            self._conn.execute("PRAGMA journal_mode = WAL")
+            self._conn.execute("PRAGMA synchronous = NORMAL")
         return self._conn
+
+    def _commit(self) -> None:
+        """Commit unless inside an explicit transaction() block."""
+        if self._tx_depth == 0 and self._conn is not None:
+            self._conn.commit()
+
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        """Group store calls into one atomic commit (nesting joins the outer block)."""
+        conn = self._connect()
+        self._tx_depth += 1
+        try:
+            yield
+        except BaseException:
+            self._tx_depth -= 1
+            if self._tx_depth == 0:
+                conn.rollback()
+            raise
+        else:
+            self._tx_depth -= 1
+            if self._tx_depth == 0:
+                conn.commit()
 
     def init_schema(self) -> None:
         conn = self._connect()
@@ -54,7 +81,7 @@ class Store:
             "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
             (SCHEMA_VERSION, utc_now()),
         )
-        conn.commit()
+        self._commit()
 
     def close(self) -> None:
         if self._conn is not None:
@@ -106,7 +133,7 @@ class Store:
                 now,
             ),
         )
-        conn.commit()
+        self._commit()
         return project_id
 
     def create_session(
@@ -140,7 +167,7 @@ class Store:
                 json.dumps(payload.to_dict()),
             ),
         )
-        conn.commit()
+        self._commit()
         return session_id
 
     def record_decisions(
@@ -165,7 +192,7 @@ class Store:
                     now,
                 ),
             )
-        conn.commit()
+        self._commit()
 
     def record_blockers(
         self, project_id: str, session_id: str | None, blockers: list[dict[str, Any]]
@@ -190,7 +217,7 @@ class Store:
                     now,
                 ),
             )
-        conn.commit()
+        self._commit()
 
     def record_next_actions(
         self, project_id: str, session_id: str | None, actions: list[str]
@@ -207,7 +234,7 @@ class Store:
                 """,
                 (make_entity_id("act"), project_id, session_id, action, now),
             )
-        conn.commit()
+        self._commit()
 
     def record_observations(
         self,
@@ -239,7 +266,7 @@ class Store:
                     now,
                 ),
             )
-        conn.commit()
+        self._commit()
 
     def resolve_blocker(self, blocker_id: str) -> bool:
         conn = self._connect()
@@ -247,7 +274,7 @@ class Store:
             "UPDATE blockers SET status = 'resolved', resolved_at = ? WHERE id = ?",
             (utc_now(), blocker_id),
         )
-        conn.commit()
+        self._commit()
         return cursor.rowcount > 0
 
     def complete_next_action(self, action_id: str) -> bool:
@@ -256,7 +283,7 @@ class Store:
             "UPDATE next_actions SET status = 'done', completed_at = ? WHERE id = ?",
             (utc_now(), action_id),
         )
-        conn.commit()
+        self._commit()
         return cursor.rowcount > 0
 
     def list_projects(self) -> list[dict[str, Any]]:
@@ -285,7 +312,7 @@ class Store:
             """,
             (phase, summary, utc_now(), project_id),
         )
-        conn.commit()
+        self._commit()
 
     def get_resume_context(self, project_id: str) -> ResumeContext:
         conn = self._connect()
