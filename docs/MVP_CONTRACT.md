@@ -353,6 +353,12 @@ Output:
 }
 ```
 
+When `max_tokens` is provided, the result is trimmed to that approximate
+budget (~4 characters per token on the serialized JSON) and gains a
+`"truncated"` boolean. Trimming drops the oldest `recent_decisions`, then
+`next_actions`, then `active_blockers`, then shortens `summary`; project
+identity and current status always survive.
+
 ### `continuity_core_record_decision`
 
 Input:

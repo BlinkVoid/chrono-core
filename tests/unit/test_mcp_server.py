@@ -166,7 +166,7 @@ def test_get_resume_context_tool_passes_max_tokens(tmp_path: Path):
     )
 
     assert result["project_name"] == "unknown"
-    assert result["max_tokens"] == 4096
+    assert result["truncated"] is False
 
 
 def test_handle_record_decision_persists_sessionless_decision(tmp_path: Path):

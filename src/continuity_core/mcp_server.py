@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -69,7 +70,29 @@ def handle_get_resume_context(
     context = store.get_resume_context(project.project_id)
     result = context.to_dict()
     if max_tokens:
-        result["max_tokens"] = max_tokens
+        result = _fit_to_token_budget(result, max_tokens)
+    return result
+
+
+def _estimate_tokens(result: dict[str, Any]) -> int:
+    # Rough serialized-size heuristic: ~4 characters per token.
+    return len(json.dumps(result)) // 4
+
+
+def _fit_to_token_budget(result: dict[str, Any], max_tokens: int) -> dict[str, Any]:
+    """Trim resume context to an approximate token budget, least useful items first.
+
+    Lists are ordered newest-first, so trimming drops the oldest entries.
+    Project identity and current status are never removed.
+    """
+    result["truncated"] = False
+    for key in ("recent_decisions", "next_actions", "active_blockers"):
+        while _estimate_tokens(result) > max_tokens and result[key]:
+            result[key].pop()
+            result["truncated"] = True
+    while _estimate_tokens(result) > max_tokens and result["summary"]:
+        result["summary"] = result["summary"][: len(result["summary"]) // 2]
+        result["truncated"] = True
     return result
 
 
