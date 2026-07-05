@@ -117,6 +117,37 @@ Output shape:
 
 Unknown ids return `"ok": false`, `"status": "not_found"`, and exit code 1.
 
+### `continuity search`
+
+Full-text search captured observations (changed files, tests, risks, imported
+metadata) using SQLite FTS5 match syntax.
+
+```bash
+continuity search "credential" --limit 10
+continuity search "deploy AND pipeline" --project-id example-abc123
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "query": "credential",
+  "count": 1,
+  "results": [
+    {
+      "id": "obs_1a2b3c4d5e6f7a8b",
+      "project_id": "example-abc123",
+      "session_id": null,
+      "kind": "risk",
+      "content": "Credential rotation is unverified",
+      "source": "handoff",
+      "observed_at": "2026-07-05T00:00:00+00:00"
+    }
+  ]
+}
+```
+
 ### `continuity ingest-existing-tools`
 
 Import project metadata from the Workspace Intelligence SQLite registry and archive the legacy `project-tracking` directory as source evidence.
@@ -398,6 +429,20 @@ Output:
 
 `continuity_core_complete_action` takes `action_id` and reports `"status": "done"`.
 Unknown ids return `"ok": false` with `"status": "not_found"`.
+
+### `continuity_core_search_observations`
+
+Input:
+
+```json
+{
+  "query": "credential",
+  "project_id": null,
+  "limit": 20
+}
+```
+
+Output: same shape as `continuity search`.
 
 ### `continuity_core_distill_project`
 

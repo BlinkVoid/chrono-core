@@ -104,6 +104,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_handoff.add_argument("--agent", dest="agent_name", default=None, help="agent name")
 
+    p_search = sub.add_parser("search", help="full-text search captured observations")
+    p_search.add_argument("query", help="FTS5 match expression")
+    p_search.add_argument("--project-id", default=None, help="limit results to one project")
+    p_search.add_argument("--limit", type=int, default=20, help="maximum results")
+    p_search.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
     p_blocker = sub.add_parser("blocker", help="manage blocker lifecycle")
     blocker_sub = p_blocker.add_subparsers(dest="blocker_command")
     p_blocker_resolve = blocker_sub.add_parser("resolve", help="mark a blocker resolved")
@@ -213,6 +221,16 @@ def main(argv: list[str] | None = None) -> int:
         if not args.summary.strip() and not args.json:
             parser.error("handoff requires --summary or --json")
         result = capture_handoff(args)
+        print(json.dumps(result, indent=2))
+        return 0
+
+    if args.command == "search":
+        store = Store(args.db_path)
+        store.init_schema()
+        results = store.search_observations(
+            args.query, project_id=args.project_id, limit=args.limit
+        )
+        result = {"ok": True, "query": args.query, "count": len(results), "results": results}
         print(json.dumps(result, indent=2))
         return 0
 

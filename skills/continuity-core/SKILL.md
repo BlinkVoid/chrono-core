@@ -61,6 +61,7 @@ When Continuity Core is installed as an MCP server (`continuity-mcp`), the follo
 - `continuity_core_resolve_blocker` — mark an open blocker resolved by id.
 - `continuity_core_complete_action` — mark an open next action done by id.
 - `continuity_core_distill_project` — derive and persist compact project state from captured records.
+- `continuity_core_search_observations` — full-text search captured observations across projects.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
 

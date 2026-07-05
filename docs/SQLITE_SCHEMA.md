@@ -6,7 +6,13 @@ Start with SQLite plus FTS and graph-shaped edges. Do not introduce a dedicated 
 
 ## Version
 
-Schema version: `1`
+Schema version: `2`
+
+- v1: initial tables and the `observation_fts` virtual table.
+- v2: FTS sync triggers on `observations` (insert/update/delete). The
+  `observation_fts` table is external-content, so without triggers it stayed
+  permanently empty. Migrating to v2 runs an FTS `rebuild` so rows captured
+  under v1 become searchable.
 
 ## Canonical Tables
 

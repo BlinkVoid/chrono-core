@@ -77,10 +77,16 @@ class Store:
             )
             """
         )
-        conn.execute(
-            "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
-            (SCHEMA_VERSION, utc_now()),
-        )
+        applied = {
+            row["version"] for row in conn.execute("SELECT version FROM schema_migrations")
+        }
+        if SCHEMA_VERSION not in applied:
+            # Version 2 added FTS sync triggers; reindex rows written before them.
+            conn.execute("INSERT INTO observation_fts (observation_fts) VALUES ('rebuild')")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+                (SCHEMA_VERSION, utc_now()),
+            )
         self._commit()
 
     def close(self) -> None:
@@ -285,6 +291,24 @@ class Store:
         )
         self._commit()
         return cursor.rowcount > 0
+
+    def search_observations(
+        self, query: str, *, project_id: str | None = None, limit: int = 20
+    ) -> list[dict[str, Any]]:
+        conn = self._connect()
+        sql = """
+            SELECT o.id, o.project_id, o.session_id, o.kind, o.content, o.source, o.observed_at
+            FROM observation_fts f
+            JOIN observations o ON o.rowid = f.rowid
+            WHERE observation_fts MATCH ?
+        """
+        params: list[Any] = [query]
+        if project_id is not None:
+            sql += " AND o.project_id = ?"
+            params.append(project_id)
+        sql += " ORDER BY rank LIMIT ?"
+        params.append(limit)
+        return [dict(row) for row in conn.execute(sql, params).fetchall()]
 
     def list_projects(self) -> list[dict[str, Any]]:
         conn = self._connect()

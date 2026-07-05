@@ -146,6 +146,20 @@ def handle_complete_action(action_id: str, *, db_path: str | None = None) -> dic
     }
 
 
+def handle_search_observations(
+    query: str,
+    *,
+    project_id: str | None = None,
+    db_path: str | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """Full-text search captured observations across projects."""
+    store = Store(db_path or DEFAULT_DB_PATH)
+    store.init_schema()
+    results = store.search_observations(query, project_id=project_id, limit=limit)
+    return {"ok": True, "query": query, "count": len(results), "results": results}
+
+
 def handle_distill_project(
     cwd: str,
     *,
@@ -263,6 +277,19 @@ def resolve_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[st
 def complete_action_tool(action_id: str, db_path: str | None = None) -> dict[str, Any]:
     """Mark an open next action as done so resume context stops reporting it."""
     return handle_complete_action(action_id, db_path=db_path)
+
+
+@mcp.tool(name="continuity_core_search_observations")
+def search_observations_tool(
+    query: str,
+    project_id: str | None = None,
+    db_path: str | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """Full-text search captured observations (files, tests, risks, imported metadata)."""
+    return handle_search_observations(
+        query, project_id=project_id, db_path=db_path, limit=limit
+    )
 
 
 @mcp.tool(name="continuity_core_distill_project")

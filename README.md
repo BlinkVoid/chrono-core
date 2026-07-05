@@ -17,6 +17,7 @@ Available CLI commands:
 - `continuity distill` — derive and persist compact project state from captured records.
 - `continuity blocker resolve <id>` — mark an open blocker resolved (ids are shown in resume output).
 - `continuity action complete <id>` — mark an open next action done.
+- `continuity search <query>` — full-text search captured observations (FTS5).
 - `continuity ingest-existing-tools` — import project metadata from the `workspace-intelligence` SQLite registry and archive the legacy `project-tracking` directory as source evidence.
 - `continuity export markdown` — write a derived project index and project pages from the continuity database.
 - `continuity gearcore install-plan` — print GearCore registration commands for the skill and MCP server.

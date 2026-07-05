@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 DDL = """
 PRAGMA foreign_keys = ON;
@@ -99,4 +99,24 @@ CREATE VIRTUAL TABLE IF NOT EXISTS observation_fts USING fts5(
     content='observations',
     content_rowid='rowid'
 );
+
+CREATE TRIGGER IF NOT EXISTS observations_fts_insert
+AFTER INSERT ON observations BEGIN
+    INSERT INTO observation_fts (rowid, content, source)
+    VALUES (new.rowid, new.content, new.source);
+END;
+
+CREATE TRIGGER IF NOT EXISTS observations_fts_delete
+AFTER DELETE ON observations BEGIN
+    INSERT INTO observation_fts (observation_fts, rowid, content, source)
+    VALUES ('delete', old.rowid, old.content, old.source);
+END;
+
+CREATE TRIGGER IF NOT EXISTS observations_fts_update
+AFTER UPDATE ON observations BEGIN
+    INSERT INTO observation_fts (observation_fts, rowid, content, source)
+    VALUES ('delete', old.rowid, old.content, old.source);
+    INSERT INTO observation_fts (rowid, content, source)
+    VALUES (new.rowid, new.content, new.source);
+END;
 """
