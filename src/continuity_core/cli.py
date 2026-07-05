@@ -6,6 +6,7 @@ from pathlib import Path
 
 from continuity_core import __version__
 from continuity_core.capture.handoff import capture_handoff
+from continuity_core.config import DEFAULT_WORKSPACE_ROOT, default_db_path
 from continuity_core.export.markdown import export_markdown
 from continuity_core.integrations.gearcore import build_gearcore_install_plan
 from continuity_core.integrations.workspace_intelligence import ingest_existing_tools
@@ -15,8 +16,7 @@ from continuity_core.store.store import Store
 from continuity_core.workspace.discovery import DiscoveryOptions, discover_workspace
 from continuity_core.workspace.resolver import resolve_project
 
-DEFAULT_WORKSPACE_ROOT = "~/workspace"
-DEFAULT_DB_PATH = "data/continuity.db"
+DEFAULT_DB_PATH = default_db_path()
 DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = str(
     Path.home() / ".local" / "state" / "workspace-intelligence" / "registry.db"
 )

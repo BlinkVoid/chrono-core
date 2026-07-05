@@ -6,6 +6,12 @@ This is the first executable contract. It favors low-friction session handoff an
 
 ## CLI Commands
 
+All commands read and write the continuity database at
+`~/.local/share/continuity-core/continuity.db` by default. This is the single
+canonical location shared by the CLI and the MCP server, so handoffs captured
+through one surface are visible from the other. Pass `--db-path` (CLI) or
+`db_path` (MCP) to override it.
+
 ### `continuity resolve`
 
 Resolve the current project from a path.
@@ -70,7 +76,7 @@ Output tiers:
 Derive compact project state from captured sessions, blockers, next actions, and decisions.
 
 ```bash
-continuity distill --cwd . --db-path data/continuity.db
+continuity distill --cwd .
 ```
 
 Output shape:
@@ -96,8 +102,7 @@ Import project metadata from the Workspace Intelligence SQLite registry and arch
 ```bash
 continuity ingest-existing-tools \
   --registry-path ~/.local/state/workspace-intelligence/registry.db \
-  --workspace-root ~/workspace \
-  --db-path data/continuity.db
+  --workspace-root ~/workspace
 ```
 
 Output shape:
@@ -153,9 +158,7 @@ Output shape:
 Write a derived Markdown project index and one resume-style project page per project.
 
 ```bash
-continuity export markdown \
-  --db-path data/continuity.db \
-  --output-dir exports/markdown
+continuity export markdown --output-dir exports/markdown
 ```
 
 Output shape:
@@ -353,8 +356,7 @@ Input:
 
 ```json
 {
-  "cwd": "~/workspace/example",
-  "db_path": "data/continuity.db"
+  "cwd": "~/workspace/example"
 }
 ```
 

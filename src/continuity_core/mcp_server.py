@@ -7,13 +7,13 @@ from mcp.server.fastmcp import FastMCP
 
 from continuity_core.capture.git import read_git_state
 from continuity_core.capture.handoff import persist_handoff
+from continuity_core.config import DEFAULT_WORKSPACE_ROOT, default_db_path
 from continuity_core.domain.models import HandoffPayload
 from continuity_core.management.distill import distill_project
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import resolve_project
 
-DEFAULT_WORKSPACE_ROOT = "~/workspace"
-DEFAULT_DB_PATH = str(Path.home() / ".local" / "share" / "continuity-core" / "continuity.db")
+DEFAULT_DB_PATH = default_db_path()
 
 
 def handle_resolve_project(cwd: str, workspace_root: str | None = None) -> dict[str, Any]:
