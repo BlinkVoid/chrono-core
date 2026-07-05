@@ -4,7 +4,7 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-from continuity_core.config import default_db_path
+from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.domain.models import ResumeContext
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import resolve_project
@@ -17,7 +17,7 @@ def _default_db_path() -> str:
 def get_resume_context(args: Namespace) -> ResumeContext:
     """Resolve project and return resume context from the store."""
     project_path = Path(getattr(args, "cwd", "."))
-    workspace_root = Path(getattr(args, "workspace_root", "~/workspace"))
+    workspace_root = Path(getattr(args, "workspace_root", None) or default_workspace_root())
     project = resolve_project(project_path, workspace_root=workspace_root)
 
     db_path = getattr(args, "db_path", None) or _default_db_path()

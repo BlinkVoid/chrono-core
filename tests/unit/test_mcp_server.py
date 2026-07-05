@@ -4,7 +4,6 @@ from pathlib import Path
 
 from continuity_core.domain.models import GitState, HandoffPayload
 from continuity_core.mcp_server import (
-    DEFAULT_WORKSPACE_ROOT,
     get_resume_context_tool,
     handle_get_resume_context,
     handle_record_blocker,
@@ -247,4 +246,6 @@ def test_record_decision_and_blocker_tools_wrap_handlers(tmp_path: Path):
 
 
 def test_mcp_server_constants():
-    assert Path(DEFAULT_WORKSPACE_ROOT).name == "workspace"
+    from continuity_core.config import default_workspace_root
+
+    assert Path(default_workspace_root()).name == "workspace"

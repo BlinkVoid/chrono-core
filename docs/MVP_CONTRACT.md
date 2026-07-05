@@ -12,6 +12,10 @@ canonical location shared by the CLI and the MCP server, so handoffs captured
 through one surface are visible from the other. Pass `--db-path` (CLI) or
 `db_path` (MCP) to override it.
 
+The workspace root defaults to `~/workspace`; set the
+`CONTINUITY_WORKSPACE_ROOT` environment variable (or pass
+`--workspace-root` / `workspace_root`) to override it.
+
 ### `continuity resolve`
 
 Resolve the current project from a path.

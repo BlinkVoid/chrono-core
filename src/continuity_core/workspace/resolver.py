@@ -4,15 +4,20 @@ import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-PROJECT_MARKERS = (
+STRONG_MARKERS = (
     ".git",
     "hive.project.json",
     "pyproject.toml",
     "package.json",
     "Cargo.toml",
     "go.mod",
-    "README.md",
 )
+
+# Weak markers only count when no ancestor carries a strong marker, so a
+# docs/ folder with a README cannot shadow the repository root above it.
+WEAK_MARKERS = ("README.md",)
+
+PROJECT_MARKERS = (*STRONG_MARKERS, *WEAK_MARKERS)
 
 
 @dataclass(frozen=True)
@@ -53,18 +58,20 @@ def resolve_project(cwd: Path, *, workspace_root: Path) -> ResolvedProject:
     workspace = workspace_root.expanduser().resolve()
 
     candidates = [current, *current.parents]
+    weak_candidate: tuple[Path, str] | None = None
     for candidate in candidates:
         if not _is_within(candidate, workspace):
             break
-        marker = _first_marker(candidate)
+        marker = _first_of(candidate, STRONG_MARKERS)
         if marker:
-            return ResolvedProject(
-                name=candidate.name,
-                path=str(candidate),
-                relative_path=str(candidate.relative_to(workspace)),
-                marker=marker,
-                known=False,
-            )
+            return _resolved(candidate, workspace, marker)
+        if weak_candidate is None:
+            weak_marker = _first_of(candidate, WEAK_MARKERS)
+            if weak_marker:
+                weak_candidate = (candidate, weak_marker)
+
+    if weak_candidate is not None:
+        return _resolved(weak_candidate[0], workspace, weak_candidate[1])
 
     if _is_within(current, workspace):
         return ResolvedProject(
@@ -78,8 +85,18 @@ def resolve_project(cwd: Path, *, workspace_root: Path) -> ResolvedProject:
     raise ValueError(f"{current} is outside workspace root {workspace}")
 
 
-def _first_marker(path: Path) -> str | None:
-    for marker in PROJECT_MARKERS:
+def _resolved(candidate: Path, workspace: Path, marker: str) -> ResolvedProject:
+    return ResolvedProject(
+        name=candidate.name,
+        path=str(candidate),
+        relative_path=str(candidate.relative_to(workspace)),
+        marker=marker,
+        known=False,
+    )
+
+
+def _first_of(path: Path, markers: tuple[str, ...]) -> str | None:
+    for marker in markers:
         if (path / marker).exists():
             return marker
     return None

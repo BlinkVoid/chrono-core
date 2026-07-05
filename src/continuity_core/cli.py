@@ -6,7 +6,7 @@ from pathlib import Path
 
 from continuity_core import __version__
 from continuity_core.capture.handoff import capture_handoff
-from continuity_core.config import DEFAULT_WORKSPACE_ROOT, default_db_path
+from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.export.markdown import export_markdown
 from continuity_core.integrations.gearcore import build_gearcore_install_plan
 from continuity_core.integrations.workspace_intelligence import ingest_existing_tools
@@ -30,11 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_resolve = sub.add_parser("resolve", help="resolve a project from cwd/path")
     p_resolve.add_argument("--cwd", default=".", help="working directory to resolve from")
-    p_resolve.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_resolve.add_argument("--workspace-root", default=default_workspace_root())
 
     p_resume = sub.add_parser("resume", help="show resume context for a project")
     p_resume.add_argument("--cwd", default=".")
-    p_resume.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_resume.add_argument("--workspace-root", default=default_workspace_root())
     p_resume.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
@@ -42,13 +42,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_distill = sub.add_parser("distill", help="distill captured records into project state")
     p_distill.add_argument("--cwd", default=".")
-    p_distill.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_distill.add_argument("--workspace-root", default=default_workspace_root())
     p_distill.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
     p_discover = sub.add_parser("discover", help="discover workspace projects")
-    p_discover.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_discover.add_argument("--workspace-root", default=default_workspace_root())
     p_discover.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
@@ -68,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_handoff = sub.add_parser("handoff", help="capture a session handoff")
     p_handoff.add_argument("--cwd", default=".")
-    p_handoff.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_handoff.add_argument("--workspace-root", default=default_workspace_root())
     p_handoff.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
@@ -136,7 +136,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY,
         help="path to workspace-intelligence SQLite registry",
     )
-    p_ingest.add_argument("--workspace-root", default=DEFAULT_WORKSPACE_ROOT)
+    p_ingest.add_argument("--workspace-root", default=default_workspace_root())
     p_ingest.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )

@@ -96,3 +96,28 @@ def test_store_get_resume_context(tmp_path: Path):
     assert len(context.active_blockers) == 1
     assert len(context.next_actions) == 1
     assert len(context.recent_decisions) == 1
+
+
+def test_upsert_same_path_different_id_reuses_existing_project(tmp_path: Path):
+    store = Store(tmp_path / "test.db")
+    store.init_schema()
+
+    first_id = store.upsert_project(
+        project_id="alpha-1111111111",
+        name="alpha",
+        path="/ws/alpha",
+        relative_path="alpha",
+    )
+    returned_id = store.upsert_project(
+        project_id="alpha-2222222222",
+        name="alpha-renamed",
+        path="/ws/alpha",
+        relative_path="deeper/alpha",
+    )
+
+    assert returned_id == first_id
+    conn = store._connect()
+    assert conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0] == 1
+    row = conn.execute("SELECT id, name FROM projects WHERE path = '/ws/alpha'").fetchone()
+    assert row["id"] == first_id
+    assert row["name"] == "alpha-renamed"

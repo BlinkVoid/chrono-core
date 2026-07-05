@@ -126,6 +126,12 @@ class Store:
                 phase=COALESCE(excluded.phase, phase),
                 summary=COALESCE(excluded.summary, summary),
                 updated_at=excluded.updated_at
+            ON CONFLICT(path) DO UPDATE SET
+                name=excluded.name,
+                relative_path=excluded.relative_path,
+                phase=COALESCE(excluded.phase, phase),
+                summary=COALESCE(excluded.summary, summary),
+                updated_at=excluded.updated_at
             """,
             (
                 project_id,
@@ -140,7 +146,10 @@ class Store:
             ),
         )
         self._commit()
-        return project_id
+        # The same path may already be registered under a different id (e.g.
+        # resolved under another workspace root); that row's id stays canonical.
+        row = conn.execute("SELECT id FROM projects WHERE path = ?", (path,)).fetchone()
+        return row["id"] if row else project_id
 
     def create_session(
         self,

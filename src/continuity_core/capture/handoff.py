@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from continuity_core.capture.git import read_git_state
-from continuity_core.config import default_db_path
+from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.domain.models import GitState, HandoffPayload
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import ResolvedProject
@@ -94,7 +94,7 @@ def capture_handoff(args: Namespace) -> dict[str, Any]:
     from continuity_core.workspace.resolver import resolve_project
 
     project_path = Path(getattr(args, "cwd", "."))
-    workspace_root = Path(getattr(args, "workspace_root", "~/workspace"))
+    workspace_root = Path(getattr(args, "workspace_root", None) or default_workspace_root())
     project = resolve_project(project_path, workspace_root=workspace_root)
     payload = build_handoff_payload(args)
     git_state = read_git_state(Path(project.path))

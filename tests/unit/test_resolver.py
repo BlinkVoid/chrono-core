@@ -45,3 +45,29 @@ def test_resolve_project_rejects_outside_workspace(tmp_path: Path):
         assert "outside workspace root" in str(exc)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_readme_only_subdir_does_not_shadow_repo_root(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    docs = project / "docs"
+    docs.mkdir(parents=True)
+    (project / ".git").mkdir()
+    (docs / "README.md").write_text("subdir docs")
+
+    resolved = resolve_project(docs, workspace_root=workspace)
+
+    assert resolved.path == str(project.resolve())
+    assert resolved.marker == ".git"
+
+
+def test_readme_only_project_still_resolves(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    notes = workspace / "notes"
+    notes.mkdir(parents=True)
+    (notes / "README.md").write_text("standalone notes project")
+
+    resolved = resolve_project(notes, workspace_root=workspace)
+
+    assert resolved.path == str(notes.resolve())
+    assert resolved.marker == "README.md"

@@ -113,15 +113,20 @@ An AI working inside any project should be able to call handoff directly.
 Resolution algorithm:
 
 1. Accept explicit `cwd`, path, or project id.
-2. Walk upward from `cwd` looking for markers:
+2. Walk upward from `cwd` looking for strong markers:
    - `.git` directory or file
    - `hive.project.json`
    - `pyproject.toml`
    - `package.json`
    - `Cargo.toml`
    - `go.mod`
-   - `README.md`
-3. Normalize against `~/workspace`.
+
+   `README.md` is a weak marker: it only wins when no ancestor carries a
+   strong marker. Why: a `docs/` folder containing a README must not shadow
+   the repository root above it, but a notes-only directory with just a
+   README should still resolve as a project.
+3. Normalize against the workspace root (default `~/workspace`,
+   overridable with the `CONTINUITY_WORKSPACE_ROOT` environment variable).
 4. If project is known, attach the session to it.
 5. If unknown, create a provisional project record.
 6. Capture current git branch, head, dirty state, and relevant manifest fields.

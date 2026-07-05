@@ -8,7 +8,7 @@ from mcp.server.fastmcp import FastMCP
 
 from continuity_core.capture.git import read_git_state
 from continuity_core.capture.handoff import persist_handoff
-from continuity_core.config import DEFAULT_WORKSPACE_ROOT, default_db_path
+from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.domain.models import HandoffPayload
 from continuity_core.management.distill import distill_project
 from continuity_core.store.store import Store
@@ -19,7 +19,7 @@ DEFAULT_DB_PATH = default_db_path()
 
 def handle_resolve_project(cwd: str, workspace_root: str | None = None) -> dict[str, Any]:
     """Resolve a project from *cwd* and return its identity metadata."""
-    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     return project.to_dict()
 
@@ -39,7 +39,7 @@ def handle_session_handoff(
     agent_name: str | None = None,
 ) -> dict[str, Any]:
     """Capture a session handoff for the project at *cwd*."""
-    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     payload = HandoffPayload(
         summary=summary,
@@ -63,7 +63,7 @@ def handle_get_resume_context(
     max_tokens: int | None = None,
 ) -> dict[str, Any]:
     """Return a compact resume context for the project at *cwd*."""
-    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = Store(db_path or DEFAULT_DB_PATH)
     store.init_schema()
@@ -105,7 +105,7 @@ def handle_record_decision(
     db_path: str | None = None,
 ) -> dict[str, Any]:
     """Record a project decision outside a session handoff."""
-    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = Store(db_path or DEFAULT_DB_PATH)
     store.init_schema()
@@ -130,7 +130,7 @@ def handle_record_blocker(
     db_path: str | None = None,
 ) -> dict[str, Any]:
     """Record a project blocker outside a session handoff."""
-    ws = Path(workspace_root or DEFAULT_WORKSPACE_ROOT)
+    ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = Store(db_path or DEFAULT_DB_PATH)
     store.init_schema()
@@ -192,7 +192,7 @@ def handle_distill_project(
     """Distill captured continuity records into compact project state."""
     return distill_project(
         cwd=cwd,
-        workspace_root=workspace_root or DEFAULT_WORKSPACE_ROOT,
+        workspace_root=workspace_root or default_workspace_root(),
         store=Store(db_path or DEFAULT_DB_PATH),
     )
 

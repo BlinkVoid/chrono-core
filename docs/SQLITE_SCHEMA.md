@@ -45,6 +45,14 @@ Multi-record operations (e.g. `persist_handoff`) additionally batch their
 store calls in `Store.transaction()` so a handoff is one atomic commit:
 either the session and all its records land, or none do.
 
+### Project path is the physical identity
+
+`projects.path` is UNIQUE. When an upsert arrives with a new project id but a
+path that is already registered (the same directory resolved under a different
+workspace root), the existing row and its id win; only the metadata is
+updated. This keeps sessions, blockers, and actions attached to one project
+record instead of raising an IntegrityError or splitting history across ids.
+
 ### Raw observations are preserved
 
 Management distillation should not destroy evidence. Raw handoff payloads and observations stay in the database even if a later management pass updates project state.
