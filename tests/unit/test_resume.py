@@ -23,6 +23,7 @@ def test_get_resume_context_for_unknown_project(tmp_path: Path):
 def test_get_resume_context_after_handoff(tmp_path: Path):
     store = Store(tmp_path / "test.db")
     store.init_schema()
+    (tmp_path / "workspace" / "example").mkdir(parents=True)
     project = resolve_project(
         tmp_path / "workspace" / "example", workspace_root=tmp_path / "workspace"
     )

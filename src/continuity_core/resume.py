@@ -14,6 +14,15 @@ def _default_db_path() -> str:
     return default_db_path()
 
 
+def validate_resume_path(context: ResumeContext) -> ResumeContext:
+    """Reject stored project locations that can no longer be resumed safely."""
+    if context.project_path and not Path(context.project_path).is_dir():
+        raise FileNotFoundError(
+            f"stored resume path no longer exists: {context.project_path}"
+        )
+    return context
+
+
 def get_resume_context(args: Namespace) -> ResumeContext:
     """Resolve project and return resume context from the store."""
     project_path = Path(getattr(args, "cwd", "."))
@@ -23,7 +32,7 @@ def get_resume_context(args: Namespace) -> ResumeContext:
     db_path = getattr(args, "db_path", None) or _default_db_path()
     store = Store(db_path)
     store.init_schema()
-    return store.get_resume_context(project.project_id)
+    return validate_resume_path(store.get_resume_context(project.project_id))
 
 
 def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:

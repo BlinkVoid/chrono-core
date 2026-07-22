@@ -11,6 +11,7 @@ from continuity_core.capture.handoff import persist_handoff
 from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.domain.models import HandoffPayload
 from continuity_core.management.distill import distill_project
+from continuity_core.resume import validate_resume_path
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import resolve_project
 
@@ -67,7 +68,7 @@ def handle_get_resume_context(
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = Store(db_path or DEFAULT_DB_PATH)
     store.init_schema()
-    context = store.get_resume_context(project.project_id)
+    context = validate_resume_path(store.get_resume_context(project.project_id))
     result = context.to_dict()
     if max_tokens:
         result = _fit_to_token_budget(result, max_tokens)
