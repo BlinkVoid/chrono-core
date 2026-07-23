@@ -11,6 +11,7 @@ from continuity_core.capture.handoff import persist_handoff
 from continuity_core.config import default_db_path, default_workspace_root
 from continuity_core.domain.models import HandoffPayload
 from continuity_core.management.distill import distill_project
+from continuity_core.management.review import review_project
 from continuity_core.resume import validate_resume_path
 from continuity_core.store.store import Store
 from continuity_core.workspace.resolver import resolve_project
@@ -198,6 +199,20 @@ def handle_distill_project(
     )
 
 
+def handle_review_project(
+    cwd: str,
+    *,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Run a project management review with doc drift and health output."""
+    return review_project(
+        cwd=cwd,
+        workspace_root=workspace_root or default_workspace_root(),
+        store=Store(db_path or DEFAULT_DB_PATH),
+    )
+
+
 mcp = FastMCP("continuity-core")
 
 
@@ -324,6 +339,16 @@ def distill_project_tool(
 ) -> dict[str, Any]:
     """Distill captured continuity records into compact project state."""
     return handle_distill_project(cwd, workspace_root=workspace_root, db_path=db_path)
+
+
+@mcp.tool(name="continuity_core_review_project")
+def review_project_tool(
+    cwd: str,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Run doc reconciliation, health review, advice, and review queue generation."""
+    return handle_review_project(cwd, workspace_root=workspace_root, db_path=db_path)
 
 
 def main() -> int:

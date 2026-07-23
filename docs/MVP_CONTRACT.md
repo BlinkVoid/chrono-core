@@ -269,10 +269,33 @@ Output shape:
 }
 ```
 
-### Future CLI Commands
+### `continuity review`
 
-- `continuity reconcile`
-- `continuity health`
+Run the Phase 3 management review for one project. The workflow distills captured records, reconciles Markdown docs against the roadmap phase, detects stale or contradictory phase claims, emits project health, generates improvement advice, and returns a review queue for wiki/export use.
+
+```bash
+continuity review --cwd ~/workspace/example
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "project_id": "example-abc12345",
+  "canonical_phase": "Phase 4",
+  "health": {
+    "status": "needs_review",
+    "open_blockers": 0,
+    "open_actions": 1,
+    "stale_docs": 1,
+    "contradictions": 1
+  },
+  "findings": [],
+  "improvement_advice": [],
+  "review_queue": []
+}
+```
 
 ## MCP Tools
 
@@ -453,6 +476,19 @@ Input:
 ```
 
 Output: same shape as `continuity search`.
+
+### `continuity_core_review_project`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "workspace_root": "~/workspace"
+}
+```
+
+Output: same shape as `continuity review`.
 
 ### `continuity_core_distill_project`
 

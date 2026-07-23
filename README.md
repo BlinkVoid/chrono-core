@@ -6,7 +6,7 @@ It began in Hub incubator as an incubator and now lives as its own workspace pro
 
 ## Current Status
 
-Phase 1 local core implemented with SQLite persistence, project resolution, workspace discovery, session handoff capture, resume context, markdown export, and workspace-intelligence ingestion. Phase 2 MCP server and GearCore install-plan adapter are implemented. Phase 3 has a deterministic project distillation workflow. Additional management workflows remain Phase 3.
+Phase 1 local core, Phase 2 agent interface, and Phase 3 management session workflows are implemented. Continuity Core now supports SQLite persistence, project resolution/discovery, session handoff capture, resume context, lifecycle closure, search, markdown/wiki export, workspace-intelligence ingestion, MCP/GearCore integration, deterministic distillation, doc reconciliation, stale/contradictory doc detection, project health review, improvement advice, and a review queue. Phase 4 cross-project intelligence is the next roadmap focus.
 
 Available CLI commands:
 
@@ -15,6 +15,7 @@ Available CLI commands:
 - `continuity handoff` — capture a session handoff into the continuity database.
 - `continuity resume` — show resume context for a project.
 - `continuity distill` — derive and persist compact project state from captured records.
+- `continuity review` — reconcile docs, report stale/contradictory state, generate health/advice, and build a review queue.
 - `continuity blocker resolve <id>` — mark an open blocker resolved (ids are shown in resume output).
 - `continuity action complete <id>` — mark an open next action done.
 - `continuity search <query>` — full-text search captured observations (FTS5).

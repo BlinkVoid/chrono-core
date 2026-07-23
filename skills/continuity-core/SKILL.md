@@ -62,6 +62,7 @@ When Continuity Core is installed as an MCP server (`continuity-mcp`), the follo
 - `continuity_core_complete_action` — mark an open next action done by id.
 - `continuity_core_distill_project` — derive and persist compact project state from captured records.
 - `continuity_core_search_observations` — full-text search captured observations across projects.
+- `continuity_core_review_project` — run doc reconciliation, health review, advice, and review queue generation.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
 
@@ -69,10 +70,16 @@ All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults u
 
 Only run a deeper management pass when explicitly asked. Management includes distillation, stale-doc detection, improvement advice, and wiki updates.
 
-For the current deterministic distillation workflow, run:
+For compact state distillation, run:
 
 ```bash
 continuity distill --cwd "$PWD"
+```
+
+For the full deterministic management review, run:
+
+```bash
+continuity review --cwd "$PWD"
 ```
 
 ## GearCore Registration

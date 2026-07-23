@@ -11,6 +11,7 @@ from continuity_core.export.markdown import export_markdown
 from continuity_core.integrations.gearcore import build_gearcore_install_plan
 from continuity_core.integrations.workspace_intelligence import ingest_existing_tools
 from continuity_core.management.distill import distill_project
+from continuity_core.management.review import review_project
 from continuity_core.resume import resume_command
 from continuity_core.store.store import Store
 from continuity_core.workspace.discovery import DiscoveryOptions, discover_workspace
@@ -44,6 +45,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_distill.add_argument("--cwd", default=".")
     p_distill.add_argument("--workspace-root", default=default_workspace_root())
     p_distill.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_review = sub.add_parser("review", help="run a project management review")
+    p_review.add_argument("--cwd", default=".")
+    p_review.add_argument("--workspace-root", default=default_workspace_root())
+    p_review.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
@@ -197,6 +205,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "distill":
         store = Store(args.db_path)
         result = distill_project(
+            cwd=args.cwd,
+            workspace_root=args.workspace_root,
+            store=store,
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "review":
+        store = Store(args.db_path)
+        result = review_project(
             cwd=args.cwd,
             workspace_root=args.workspace_root,
             store=store,

@@ -20,6 +20,7 @@ EXPECTED_TOOLS = {
     "continuity_core_complete_action",
     "continuity_core_distill_project",
     "continuity_core_search_observations",
+    "continuity_core_review_project",
 }
 
 

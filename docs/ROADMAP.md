@@ -31,8 +31,8 @@ Goal: useful local prototype without MCP dependency.
 
 Phase 1 persistence slice (completed): deterministic project IDs, `Store` CRUD,
 `continuity handoff` with `--summary` and optional JSON/CLI args, `continuity resume`
-reading from SQLite, and focused unit tests. Management/distillation and MCP server
-remain Phase 2/3.
+reading from SQLite, and focused unit tests. MCP, GearCore, and management workflows
+are now covered by Phase 2 and Phase 3.
 
 ## Phase 2 — Agent Interface
 
@@ -50,11 +50,11 @@ Goal: AI agents can use Continuity Core directly.
 Goal: project state becomes coherent and maintainable.
 
 - [x] `distill_project` workflow.
-- [ ] `reconcile_docs` workflow.
-- [ ] stale/contradictory doc detection.
-- [ ] improvement advice generator.
-- [ ] project health review output.
-- [ ] wiki export with review queue.
+- [x] `reconcile_docs` workflow.
+- [x] stale/contradictory doc detection.
+- [x] improvement advice generator.
+- [x] project health review output.
+- [x] wiki export with review queue.
 
 ## Phase 4 — Cross-Project Intelligence
 
