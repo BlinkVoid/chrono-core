@@ -69,7 +69,7 @@ def handle_get_resume_context(
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = Store(db_path or DEFAULT_DB_PATH)
     store.init_schema()
-    context = validate_resume_path(store.get_resume_context(project.project_id))
+    context = validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
     result = context.to_dict()
     if max_tokens:
         result = _fit_to_token_budget(result, max_tokens)

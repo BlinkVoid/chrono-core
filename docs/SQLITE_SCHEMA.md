@@ -52,6 +52,20 @@ path that is already registered (the same directory resolved under a different
 workspace root), the existing row and its id win; only the metadata is
 updated. This keeps sessions, blockers, and actions attached to one project
 record instead of raising an IntegrityError or splitting history across ids.
+
+**Reads must resolve through the same rule.** A project id hashes the
+workspace-*relative* path, so `cores/DesignCore` under `~/workspace` and
+`DesignCore` under `~/workspace/cores` are the same directory with different
+ids. Writers reconciled on path but readers did not, so a handoff captured
+under one root reported "No project found" under the other — the records were
+never lost, just unreachable. `Store.resolve_project_id()` is the read-only
+counterpart to `get_or_create_project()`: it prefers an id already registered
+for the absolute path and falls back to the computed id. Every read path that
+starts from a `ResolvedProject` goes through it (`resume.get_resume_context`,
+`mcp_server.handle_get_resume_context`); paths that write first
+(`distill`, `review`, `record_decision`, `record_blocker`) already reconcile
+via `get_or_create_project`.
+
 ### Raw observations are preserved
 
 Management distillation should not destroy evidence. Raw handoff payloads and observations stay in the database even if a later management pass updates project state.

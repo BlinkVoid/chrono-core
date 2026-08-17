@@ -72,3 +72,37 @@ def test_format_resume_json_output():
     context = ResumeContext(project_id="x", project_name="Example", project_path="/x")
     text = format_resume(context, as_json=True)
     assert '"project_name": "Example"' in text
+
+
+def test_resume_finds_project_recorded_under_a_different_workspace_root(tmp_path: Path):
+    """A project keeps its continuity when the workspace root changes.
+
+    project_id is a hash of the workspace-*relative* path, so the same
+    directory resolves to different ids under different roots. The write
+    path already reconciles on absolute path; reads must agree, or a
+    handoff captured under one root is invisible from the other.
+    """
+    project_dir = tmp_path / "workspace" / "cores" / "example"
+    (project_dir / ".git").mkdir(parents=True)
+    db_path = tmp_path / "test.db"
+
+    store = Store(db_path)
+    store.init_schema()
+    inner = resolve_project(project_dir, workspace_root=tmp_path / "workspace" / "cores")
+    stored_id = store.get_or_create_project(inner)
+    payload = HandoffPayload(summary="Captured under the inner root.")
+    store.create_session(stored_id, payload, GitState())
+
+    outer = resolve_project(project_dir, workspace_root=tmp_path / "workspace")
+    assert outer.project_id != stored_id, "precondition: the roots must disagree on id"
+
+    context = get_resume_context(
+        Namespace(
+            cwd=str(project_dir),
+            workspace_root=str(tmp_path / "workspace"),
+            db_path=str(db_path),
+        )
+    )
+
+    assert context.project_name == "example"
+    assert context.summary == "Captured under the inner root."

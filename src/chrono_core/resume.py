@@ -32,7 +32,7 @@ def get_resume_context(args: Namespace) -> ResumeContext:
     db_path = getattr(args, "db_path", None) or _default_db_path()
     store = Store(db_path)
     store.init_schema()
-    return validate_resume_path(store.get_resume_context(project.project_id))
+    return validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
 
 
 def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:

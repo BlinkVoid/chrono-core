@@ -102,6 +102,24 @@ class Store:
             relative_path=project.relative_path,
         )
 
+    def find_project_id_by_path(self, path: str) -> str | None:
+        """Return the id already registered for *path*, or None."""
+        conn = self._connect()
+        row = conn.execute("SELECT id FROM projects WHERE path = ?", (path,)).fetchone()
+        return row["id"] if row else None
+
+    def resolve_project_id(self, project: ResolvedProject) -> str:
+        """Canonical id for *project*, without creating a row.
+
+        The read-only counterpart to get_or_create_project. A project's
+        computed id hashes its workspace-*relative* path, so the same
+        directory resolves to different ids under different workspace
+        roots. The absolute path is the stable identity, so readers must
+        prefer an id already registered for that path — otherwise records
+        captured under one root are invisible from another.
+        """
+        return self.find_project_id_by_path(project.path) or project.project_id
+
     def upsert_project(
         self,
         project_id: str,
@@ -148,8 +166,7 @@ class Store:
         self._commit()
         # The same path may already be registered under a different id (e.g.
         # resolved under another workspace root); that row's id stays canonical.
-        row = conn.execute("SELECT id FROM projects WHERE path = ?", (path,)).fetchone()
-        return row["id"] if row else project_id
+        return self.find_project_id_by_path(path) or project_id
 
     def create_session(
         self,

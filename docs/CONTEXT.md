@@ -6,7 +6,10 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
 
 ## What Landed
 
-- Deterministic project IDs derived from workspace-relative path.
+- Deterministic project IDs derived from workspace-relative path. The absolute
+  path remains the true identity: reads and writes both reconcile through it,
+  so a changed workspace root cannot orphan a project's history (see
+  `docs/SQLITE_SCHEMA.md`, "Project path is the physical identity").
 - `chrono_core.store.Store` SQLite persistence with schema initialization.
 - `chrono handoff` persists projects, sessions, decisions, blockers, next actions, and observations.
   - Backwards-compatible `--summary`.
