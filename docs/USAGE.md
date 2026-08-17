@@ -1,4 +1,4 @@
-# Continuity Core Usage
+# Chrono Core Usage
 
 These are the default session patterns for AI CLI tools working in a project under `~/workspace`.
 
@@ -7,19 +7,19 @@ These are the default session patterns for AI CLI tools working in a project und
 At session start:
 
 ```bash
-continuity resume --cwd "$PWD"
+chrono resume --cwd "$PWD"
 ```
 
 At handoff:
 
 ```bash
-continuity handoff --cwd "$PWD" --summary "One-sentence session summary."
+chrono handoff --cwd "$PWD" --summary "One-sentence session summary."
 ```
 
-If GearCore is available, load the `continuity-core` skill first so the tool use is explicit:
+If GearCore is available, load the `chrono-core` skill first so the tool use is explicit:
 
 ```bash
-gearcore request-skill continuity-core
+gearcore request-skill chrono-core
 ```
 
 ## Claude
@@ -27,39 +27,39 @@ gearcore request-skill continuity-core
 At session start:
 
 ```bash
-continuity resume --cwd "$PWD"
+chrono resume --cwd "$PWD"
 ```
 
 At handoff:
 
 ```bash
-continuity handoff --cwd "$PWD" --summary "One-sentence session summary."
+chrono handoff --cwd "$PWD" --summary "One-sentence session summary."
 ```
 
 If the MCP server is connected, use:
 
-- `continuity_core_get_resume_context`
-- `continuity_core_session_handoff`
-- `continuity_core_review_project`
+- `chrono_core_get_resume_context`
+- `chrono_core_session_handoff`
+- `chrono_core_review_project`
 
 ## Kimi
 
 At session start:
 
 ```bash
-continuity resume --cwd "$PWD"
+chrono resume --cwd "$PWD"
 ```
 
 At handoff:
 
 ```bash
-continuity handoff --cwd "$PWD" --summary "One-sentence session summary."
+chrono handoff --cwd "$PWD" --summary "One-sentence session summary."
 ```
 
 If the GearCore hub is available, use:
 
 ```bash
-gearcore request-skill continuity-core
+gearcore request-skill chrono-core
 ```
 
 ## Shared Rules
@@ -67,5 +67,5 @@ gearcore request-skill continuity-core
 - Resolve the project before capturing state.
 - Include summary, files changed, tests, decisions, blockers, next actions, and risks in the handoff.
 - Prefer structured records over free-form notes when the tool is available.
-- Close finished work: `continuity blocker resolve <id>` and `continuity action complete <id>` keep resume context and the distilled phase truthful.
-- Reserve deeper management workflows for dedicated review sessions. Use `continuity review --cwd "$PWD"` for doc reconciliation, health review, improvement advice, and review queue output.
+- Close finished work: `chrono blocker resolve <id>` and `chrono action complete <id>` keep resume context and the distilled phase truthful.
+- Reserve deeper management workflows for dedicated review sessions. Use `chrono review --cwd "$PWD"` for doc reconciliation, health review, improvement advice, and review queue output.

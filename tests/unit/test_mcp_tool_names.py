@@ -4,23 +4,23 @@ import re
 
 import anyio
 
-from continuity_core import mcp_server
+from chrono_core import mcp_server
 
 # Anthropic API tool-name constraint; dots are rejected by MCP clients that
 # pass names through verbatim.
 TOOL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
 
 EXPECTED_TOOLS = {
-    "continuity_core_resolve_project",
-    "continuity_core_session_handoff",
-    "continuity_core_get_resume_context",
-    "continuity_core_record_decision",
-    "continuity_core_record_blocker",
-    "continuity_core_resolve_blocker",
-    "continuity_core_complete_action",
-    "continuity_core_distill_project",
-    "continuity_core_search_observations",
-    "continuity_core_review_project",
+    "chrono_core_resolve_project",
+    "chrono_core_session_handoff",
+    "chrono_core_get_resume_context",
+    "chrono_core_record_decision",
+    "chrono_core_record_blocker",
+    "chrono_core_resolve_blocker",
+    "chrono_core_complete_action",
+    "chrono_core_distill_project",
+    "chrono_core_search_observations",
+    "chrono_core_review_project",
 }
 
 

@@ -2,11 +2,11 @@
 
 ## Positioning
 
-Continuity Core sits above existing workspace tooling.
+Chrono Core sits above existing workspace tooling.
 
 - `workspace-intelligence` tracks project inventory, git state, and lightweight metadata.
 - `_MetaFactory` collects and consolidates cross-project knowledge snapshots.
-- Continuity Core coordinates operational memory: sessions, decisions, blockers, next actions, docs, and reusable patterns.
+- Chrono Core coordinates operational memory: sessions, decisions, blockers, next actions, docs, and reusable patterns.
 
 The first implementation should integrate with those systems where practical, then decide later whether to supersede parts of them.
 
@@ -19,7 +19,7 @@ AI Agent / Human
 MCP tools + CLI
       |
       v
-Continuity service layer
+Chrono Core service layer
       |
       +-- Project resolver / workspace traversal
       +-- Session capture
@@ -59,7 +59,7 @@ A later graph engine such as Kuzu or Neo4j can be added if traversal queries bec
 
 ## Plugin-Level Packaging
 
-Continuity Core is a plugin-level capability. MCP is one runtime interface, not the whole product.
+Chrono Core is a plugin-level capability. MCP is one runtime interface, not the whole product.
 
 The package should expose:
 
@@ -72,7 +72,7 @@ The package should expose:
 - public plugin manifests
 - markdown/wiki export templates
 
-GearCore is the personal workspace distribution layer. Public users should be able to install and run Continuity Core through standard package/plugin/MCP paths without GearCore.
+GearCore is the personal workspace distribution layer. Public users should be able to install and run Chrono Core through standard package/plugin/MCP paths without GearCore.
 
 ## Primary Interfaces
 
@@ -80,27 +80,27 @@ GearCore is the personal workspace distribution layer. Public users should be ab
 
 AI agents are the primary users. The MCP server should expose:
 
-- `continuity_core_resolve_project`
-- `continuity_core_session_handoff`
-- `continuity_core_get_resume_context`
-- `continuity_core_record_decision`
-- `continuity_core_record_blocker`
-- `continuity_core_distill_project`
-- `continuity_core_reconcile_docs`
-- `continuity_core_review_project_health`
-- `continuity_core_find_reusable_patterns`
+- `chrono_core_resolve_project`
+- `chrono_core_session_handoff`
+- `chrono_core_get_resume_context`
+- `chrono_core_record_decision`
+- `chrono_core_record_blocker`
+- `chrono_core_distill_project`
+- `chrono_core_reconcile_docs`
+- `chrono_core_review_project_health`
+- `chrono_core_find_reusable_patterns`
 
 ### CLI Second
 
 The CLI should support diagnostics and manual use:
 
-- `continuity discover`
-- `continuity status <project>`
-- `continuity handoff <project>`
-- `continuity resume <project>`
-- `continuity distill <project>`
-- `continuity reconcile <project>`
-- `continuity doctor`
+- `chrono discover`
+- `chrono status <project>`
+- `chrono handoff <project>`
+- `chrono resume <project>`
+- `chrono distill <project>`
+- `chrono reconcile <project>`
+- `chrono doctor`
 
 ### Dashboard Later
 
@@ -126,14 +126,14 @@ Resolution algorithm:
    the repository root above it, but a notes-only directory with just a
    README should still resolve as a project.
 3. Normalize against the workspace root (default `~/workspace`,
-   overridable with the `CONTINUITY_WORKSPACE_ROOT` environment variable).
+   overridable with the `CHRONO_WORKSPACE_ROOT` environment variable).
 4. If project is known, attach the session to it.
 5. If unknown, create a provisional project record.
 6. Capture current git branch, head, dirty state, and relevant manifest fields.
 
 ## Capture vs Management
 
-Continuity Core separates two modes.
+Chrono Core separates two modes.
 
 ### Project Agent Capture
 
@@ -161,6 +161,6 @@ Deeper periodic maintenance:
 
 ## Documentation Policy
 
-Continuity Core should enforce: if it is not documented, it did not happen.
+Chrono Core should enforce: if it is not documented, it did not happen.
 
 That does not mean every project agent must write perfect docs. It means every session must leave structured evidence, and management sessions must convert evidence into durable project documentation.

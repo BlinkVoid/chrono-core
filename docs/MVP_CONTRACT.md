@@ -7,21 +7,21 @@ This is the first executable contract. It favors low-friction session handoff an
 ## CLI Commands
 
 All commands read and write the continuity database at
-`~/.local/share/continuity-core/continuity.db` by default. This is the single
+`~/.local/share/chrono-core/chrono.db` by default. This is the single
 canonical location shared by the CLI and the MCP server, so handoffs captured
 through one surface are visible from the other. Pass `--db-path` (CLI) or
 `db_path` (MCP) to override it.
 
 The workspace root defaults to `~/workspace`; set the
-`CONTINUITY_WORKSPACE_ROOT` environment variable (or pass
+`CHRONO_WORKSPACE_ROOT` environment variable (or pass
 `--workspace-root` / `workspace_root`) to override it.
 
-### `continuity resolve`
+### `chrono resolve`
 
 Resolve the current project from a path.
 
 ```bash
-continuity resolve --cwd ~/workspace/projects/example-agent
+chrono resolve --cwd ~/workspace/projects/example-agent
 ```
 
 Output shape:
@@ -36,12 +36,12 @@ Output shape:
 }
 ```
 
-### `continuity handoff`
+### `chrono handoff`
 
 Capture a session handoff.
 
 ```bash
-continuity handoff --cwd . --summary "Updated Discord bot setup docs."
+chrono handoff --cwd . --summary "Updated Discord bot setup docs."
 ```
 
 MVP persistence fields:
@@ -56,12 +56,12 @@ MVP persistence fields:
 - tests/verification
 - touched files
 
-### `continuity resume`
+### `chrono resume`
 
 Return a compact resume context.
 
 ```bash
-continuity resume --cwd .
+chrono resume --cwd .
 ```
 
 Output tiers:
@@ -75,12 +75,12 @@ Output tiers:
 7. Docs to read first.
 8. Stale-doc warnings.
 
-### `continuity distill`
+### `chrono distill`
 
 Derive compact project state from captured sessions, blockers, next actions, and decisions.
 
 ```bash
-continuity distill --cwd .
+chrono distill --cwd .
 ```
 
 Output shape:
@@ -99,14 +99,14 @@ Output shape:
 }
 ```
 
-### `continuity blocker resolve` / `continuity action complete`
+### `chrono blocker resolve` / `chrono action complete`
 
 Close captured records so resume context and distilled phase stay accurate.
-Blocker and next-action ids appear in `continuity resume` output.
+Blocker and next-action ids appear in `chrono resume` output.
 
 ```bash
-continuity blocker resolve blk_1a2b3c4d5e6f7a8b
-continuity action complete act_1a2b3c4d5e6f7a8b
+chrono blocker resolve blk_1a2b3c4d5e6f7a8b
+chrono action complete act_1a2b3c4d5e6f7a8b
 ```
 
 Output shape:
@@ -121,14 +121,14 @@ Output shape:
 
 Unknown ids return `"ok": false`, `"status": "not_found"`, and exit code 1.
 
-### `continuity search`
+### `chrono search`
 
 Full-text search captured observations (changed files, tests, risks, imported
 metadata) using SQLite FTS5 match syntax.
 
 ```bash
-continuity search "credential" --limit 10
-continuity search "deploy AND pipeline" --project-id example-abc123
+chrono search "credential" --limit 10
+chrono search "deploy AND pipeline" --project-id example-abc123
 ```
 
 Output shape:
@@ -152,12 +152,12 @@ Output shape:
 }
 ```
 
-### `continuity ingest-existing-tools`
+### `chrono ingest-existing-tools`
 
 Import project metadata from the Workspace Intelligence SQLite registry and archive the legacy `project-tracking` directory as source evidence.
 
 ```bash
-continuity ingest-existing-tools \
+chrono ingest-existing-tools \
   --registry-path ~/.local/state/workspace-intelligence/registry.db \
   --workspace-root ~/workspace
 ```
@@ -210,12 +210,12 @@ Output shape:
 }
 ```
 
-### `continuity export markdown`
+### `chrono export markdown`
 
 Write a derived Markdown project index and one resume-style project page per project.
 
 ```bash
-continuity export markdown --output-dir exports/markdown
+chrono export markdown --output-dir exports/markdown
 ```
 
 Output shape:
@@ -237,12 +237,12 @@ Output shape:
 }
 ```
 
-### `continuity gearcore install-plan`
+### `chrono gearcore install-plan`
 
-Print explicit GearCore registration commands for the Continuity Core skill and MCP server without mutating GearCore config.
+Print explicit GearCore registration commands for the Chrono Core skill and MCP server without mutating GearCore config.
 
 ```bash
-continuity gearcore install-plan
+chrono gearcore install-plan
 ```
 
 Output shape:
@@ -252,16 +252,16 @@ Output shape:
   "ok": true,
   "scope": "global",
   "project_root": null,
-  "skill_path": "~/workspace/continuity-core/skills/continuity-core",
+  "skill_path": "~/workspace/chrono-core/skills/chrono-core",
   "symlink": true,
   "mcp_server": {
-    "id": "continuity-core",
+    "id": "chrono-core",
     "type": "stdio",
-    "command": "continuity-mcp"
+    "command": "chrono-mcp"
   },
   "commands": [
     {
-      "description": "Register Continuity Core skill",
+      "description": "Register Chrono Core skill",
       "argv": ["gearcore", "add-skill", "--scope", "global", "--symlink", "..."],
       "shell": "gearcore add-skill --scope global --symlink ..."
     }
@@ -269,12 +269,12 @@ Output shape:
 }
 ```
 
-### `continuity review`
+### `chrono review`
 
 Run the Phase 3 management review for one project. The workflow distills captured records, reconciles Markdown docs against the roadmap phase, detects stale or contradictory phase claims, emits project health, generates improvement advice, and returns a review queue for wiki/export use.
 
 ```bash
-continuity review --cwd ~/workspace/example
+chrono review --cwd ~/workspace/example
 ```
 
 Output shape:
@@ -299,11 +299,11 @@ Output shape:
 
 ## MCP Tools
 
-Tool names use underscores only (`continuity_core_<verb>`), never dots:
+Tool names use underscores only (`chrono_core_<verb>`), never dots:
 Anthropic's API constrains tool names to `^[a-zA-Z0-9_-]+$`, and clients that
 pass MCP tool names through verbatim reject dotted names.
 
-### `continuity_core_resolve_project`
+### `chrono_core_resolve_project`
 
 Input:
 
@@ -314,9 +314,9 @@ Input:
 }
 ```
 
-Output: same as `continuity resolve`.
+Output: same as `chrono resolve`.
 
-### `continuity_core_session_handoff`
+### `chrono_core_session_handoff`
 
 Input:
 
@@ -354,7 +354,7 @@ Output:
 }
 ```
 
-### `continuity_core_get_resume_context`
+### `chrono_core_get_resume_context`
 
 Input:
 
@@ -386,7 +386,7 @@ budget (~4 characters per token on the serialized JSON) and gains a
 `next_actions`, then `active_blockers`, then shortens `summary`; project
 identity and current status always survive.
 
-### `continuity_core_record_decision`
+### `chrono_core_record_decision`
 
 Input:
 
@@ -412,7 +412,7 @@ Output:
 }
 ```
 
-### `continuity_core_record_blocker`
+### `chrono_core_record_blocker`
 
 Input:
 
@@ -440,7 +440,7 @@ Output:
 }
 ```
 
-### `continuity_core_resolve_blocker` / `continuity_core_complete_action`
+### `chrono_core_resolve_blocker` / `chrono_core_complete_action`
 
 Input:
 
@@ -460,10 +460,10 @@ Output:
 }
 ```
 
-`continuity_core_complete_action` takes `action_id` and reports `"status": "done"`.
+`chrono_core_complete_action` takes `action_id` and reports `"status": "done"`.
 Unknown ids return `"ok": false` with `"status": "not_found"`.
 
-### `continuity_core_search_observations`
+### `chrono_core_search_observations`
 
 Input:
 
@@ -475,9 +475,9 @@ Input:
 }
 ```
 
-Output: same shape as `continuity search`.
+Output: same shape as `chrono search`.
 
-### `continuity_core_review_project`
+### `chrono_core_review_project`
 
 Input:
 
@@ -488,9 +488,9 @@ Input:
 }
 ```
 
-Output: same shape as `continuity review`.
+Output: same shape as `chrono review`.
 
-### `continuity_core_distill_project`
+### `chrono_core_distill_project`
 
 Input:
 
@@ -500,12 +500,12 @@ Input:
 }
 ```
 
-Output: same shape as `continuity distill`.
+Output: same shape as `chrono distill`.
 
 ### Management Tools
 
 Not MVP persistence-critical, but contract names are reserved:
 
-- `continuity_core_reconcile_docs`
-- `continuity_core_review_project_health`
-- `continuity_core_find_reusable_patterns`
+- `chrono_core_reconcile_docs`
+- `chrono_core_review_project_health`
+- `chrono_core_find_reusable_patterns`

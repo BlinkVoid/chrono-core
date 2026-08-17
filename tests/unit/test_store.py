@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import make_project_id, resolve_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import make_project_id, resolve_project
 
 
 def test_make_project_id_is_deterministic():
@@ -41,7 +41,7 @@ def test_store_creates_session_and_records(tmp_path: Path):
     )
     project_id = store.get_or_create_project(project)
 
-    from continuity_core.domain.models import GitState, HandoffPayload
+    from chrono_core.domain.models import GitState, HandoffPayload
 
     payload = HandoffPayload(
         summary="Implemented handoff.",
@@ -76,7 +76,7 @@ def test_store_get_resume_context(tmp_path: Path):
     )
     project_id = store.get_or_create_project(project)
 
-    from continuity_core.domain.models import GitState, HandoffPayload
+    from chrono_core.domain.models import GitState, HandoffPayload
 
     payload = HandoffPayload(
         summary="First session.",

@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 from typing import Any
 
-from continuity_core.management.distill import distill_project
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.management.distill import distill_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 PHASE_PATTERN = re.compile(r"\bPhase\s+(\d+)\b", re.IGNORECASE)
 CHECKBOX_PATTERN = re.compile(r"^\s*-\s+\[(?P<mark>[ xX])\]\s+(?P<text>.+)")

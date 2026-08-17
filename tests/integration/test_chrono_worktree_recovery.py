@@ -5,11 +5,11 @@ from argparse import Namespace
 
 import pytest
 
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.mcp_server import handle_get_resume_context
-from continuity_core.resume import get_resume_context
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.mcp_server import handle_get_resume_context
+from chrono_core.resume import get_resume_context
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def test_resume_rejects_or_recovers_missing_active_tmp_worktree(tmp_path):
@@ -18,7 +18,7 @@ def test_resume_rejects_or_recovers_missing_active_tmp_worktree(tmp_path):
     volatile_worktree = workspace / "tmp" / "hive-v2-assess"
     volatile_worktree.mkdir(parents=True)
     (volatile_worktree / ".git").write_text("gitdir: /tmp/missing-admin-dir\n")
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     project = resolve_project(volatile_worktree, workspace_root=workspace)
     store = Store(db_path)

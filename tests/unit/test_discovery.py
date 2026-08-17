@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.discovery import DiscoveryOptions, discover_workspace
-from continuity_core.workspace.resolver import make_project_id
+from chrono_core.store.store import Store
+from chrono_core.workspace.discovery import DiscoveryOptions, discover_workspace
+from chrono_core.workspace.resolver import make_project_id
 
 
 def test_discover_workspace_finds_marker_projects_and_skips_generated_dirs(tmp_path: Path):
@@ -32,17 +32,17 @@ def test_discover_workspace_finds_marker_projects_and_skips_generated_dirs(tmp_p
 
 def test_discover_workspace_persists_projects(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    project_path = workspace / "continuity-core"
+    project_path = workspace / "chrono-core"
     project_path.mkdir(parents=True)
     (project_path / "hive.project.json").write_text("{}", encoding="utf-8")
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
 
     result = discover_workspace(workspace_root=workspace, store=store)
 
-    project_id = make_project_id("continuity-core")
+    project_id = make_project_id("chrono-core")
     assert result.persisted_count == 1
     context = store.get_resume_context(project_id)
-    assert context.project_name == "continuity-core"
+    assert context.project_name == "chrono-core"
     assert context.current_status == "No sessions captured yet."
 
 

@@ -5,15 +5,15 @@ docs against canonical state (the code), distilled from a real multi-wave run in
 InternalProject project (June 2026). This is the concrete realization of
 [Management Workflows](MANAGEMENT_WORKFLOWS.md) Workflow 4 (Documentation
 Reconciliation) and a dedicated management session — captured here as an input to
-Continuity Core's design.
+Chrono Core's design.
 
 ## Why this is here
 
-Continuity Core's whole premise is that project state drifts: README says Phase 1,
+Chrono Core's whole premise is that project state drifts: README says Phase 1,
 sessions say Phase 2; two design docs recommend incompatible approaches; a decision
 lives in a handoff but never reached an ADR. The InternalProject run hit every one of these
 and resolved them with a repeatable loop. The mechanics below are candidate behaviors
-for Continuity Core's management session and documentation-reconciliation workflow.
+for Chrono Core's management session and documentation-reconciliation workflow.
 
 ## The problem it solved
 
@@ -88,7 +88,7 @@ step as each task's bookkeeping.
   review clean)` plus any discrepancies and deferred Minor findings.
 - The commits it names exist in git even when the coordinator no longer remembers
   creating them. **On resume, trust the ledger + `git log` over recollection.**
-- This is exactly Continuity Core's handoff/resume contract at the granularity of a
+- This is exactly Chrono Core's handoff/resume contract at the granularity of a
   single management run — the ledger is a session-handoff record for an in-flight job.
 
 ## The discrepancy log (Workflow 4 output, made concrete)
@@ -114,7 +114,7 @@ prioritized, evidence-backed worklist.
   copied forward through handoffs. Reconciliation must check *carried-forward claims*
   against current code, not just doc-vs-doc.
 - **Citations drift silently.** Line numbers rot every time code moves. Most review
-  findings were off-by-a-few line refs. Implication for Continuity Core: prefer
+  findings were off-by-a-few line refs. Implication for Chrono Core: prefer
   symbol/anchor references over raw line numbers where possible, or re-validate line
   refs mechanically.
 - **A bad checker command poisons the gate.** A link-checker that omitted a flag emitted
@@ -125,9 +125,9 @@ prioritized, evidence-backed worklist.
   unanswerable without inspecting the worker's transcript timestamp and its file-edit
   mtimes. A management run should surface heartbeat/progress, not just start/finish.
 
-## What Continuity Core should take from this
+## What Chrono Core should take from this
 
-| Mechanic here | Continuity Core home |
+| Mechanic here | Chrono Core home |
 |---|---|
 | Durable ledger, resume from it | Session handoff + resume (the canonical write/read path) |
 | Discrepancy log, queued for review | Workflow 4 documentation-drift report |

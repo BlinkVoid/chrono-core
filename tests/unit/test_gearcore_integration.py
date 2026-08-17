@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core.cli import build_parser, main
-from continuity_core.integrations.gearcore import build_gearcore_install_plan
+from chrono_core.cli import build_parser, main
+from chrono_core.integrations.gearcore import build_gearcore_install_plan
 
 
 def test_gearcore_install_plan_defaults_to_global_symlink_registration():
@@ -13,11 +13,11 @@ def test_gearcore_install_plan_defaults_to_global_symlink_registration():
 
     assert data["ok"] is True
     assert data["scope"] == "global"
-    assert data["skill_path"].endswith("skills/continuity-core")
+    assert data["skill_path"].endswith("skills/chrono-core")
     assert data["mcp_server"] == {
-        "id": "continuity-core",
+        "id": "chrono-core",
         "type": "stdio",
-        "command": "continuity-mcp",
+        "command": "chrono-mcp",
     }
     assert data["commands"][0]["argv"] == [
         "gearcore",
@@ -31,11 +31,11 @@ def test_gearcore_install_plan_defaults_to_global_symlink_registration():
         "gearcore",
         "add-mcp",
         "--id",
-        "continuity-core",
+        "chrono-core",
         "--type",
         "stdio",
         "--command",
-        "continuity-mcp",
+        "chrono-mcp",
         "--scope",
         "global",
     ]
@@ -75,14 +75,14 @@ def test_gearcore_install_plan_parser_defaults():
     assert args.gearcore_command == "install-plan"
     assert args.scope == "global"
     assert args.symlink is True
-    assert args.mcp_command == "continuity-mcp"
+    assert args.mcp_command == "chrono-mcp"
 
 
 def test_gearcore_install_plan_main_emits_json(capsys):
-    code = main(["gearcore", "install-plan", "--mcp-command", "custom-continuity-mcp"])
+    code = main(["gearcore", "install-plan", "--mcp-command", "custom-chrono-mcp"])
 
     captured = capsys.readouterr()
     data = json.loads(captured.out)
     assert code == 0
-    assert data["mcp_server"]["command"] == "custom-continuity-mcp"
-    assert data["commands"][1]["argv"][7] == "custom-continuity-mcp"
+    assert data["mcp_server"]["command"] == "custom-chrono-mcp"
+    assert data["commands"][1]["argv"][7] == "custom-chrono-mcp"

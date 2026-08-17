@@ -2,11 +2,11 @@
 
 ## Skill Name
 
-`continuity-core`
+`chrono-core`
 
 ## Purpose
 
-Make Continuity Core available as a lightweight project-work ritual across AI CLI tools.
+Make Chrono Core available as a lightweight project-work ritual across AI CLI tools.
 
 The skill should help agents know when to load project continuity context and when to save a session handoff.
 
@@ -14,17 +14,17 @@ The skill should help agents know when to load project continuity context and wh
 
 ```markdown
 ---
-name: continuity-core
+name: chrono-core
 description: Project continuity, session handoff, resume context, and documentation management for workspace projects.
 ---
 
-# Continuity Core
+# Chrono Core
 
 Use this skill when working on a software/project repository where continuity across sessions matters.
 
 ## When To Use
 
-Use Continuity Core when the user asks to:
+Use Chrono Core when the user asks to:
 
 - handoff
 - wrap up
@@ -43,7 +43,7 @@ For non-trivial project work, prefer loading a resume context before making chan
 If starting or resuming project work, run:
 
 ```bash
-continuity resume --cwd "$PWD"
+chrono resume --cwd "$PWD"
 ```
 
 Use the returned context to understand project status, blockers, decisions, and next actions.
@@ -53,7 +53,7 @@ Use the returned context to understand project status, blockers, decisions, and 
 When the user says `handoff` or equivalent, prepare a concise structured handoff and run:
 
 ```bash
-continuity handoff --cwd "$PWD"
+chrono handoff --cwd "$PWD"
 ```
 
 Include:
@@ -66,7 +66,7 @@ Include:
 - next actions
 - risks or uncertainties
 
-If the CLI is not implemented yet, write the handoff in the response using the Continuity Core handoff schema and note that persistence is pending.
+If the CLI is not implemented yet, write the handoff in the response using the Chrono Core handoff schema and note that persistence is pending.
 
 ## Management Pass
 

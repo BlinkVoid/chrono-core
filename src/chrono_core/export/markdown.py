@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from continuity_core.domain.models import ResumeContext
-from continuity_core.management.review import review_project
-from continuity_core.store.store import Store
+from chrono_core.domain.models import ResumeContext
+from chrono_core.management.review import review_project
+from chrono_core.store.store import Store
 
 
 def export_markdown(store: Store, output_dir: str | Path) -> dict[str, Any]:

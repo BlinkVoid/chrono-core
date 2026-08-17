@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from continuity_core.domain.models import GitState
+from chrono_core.domain.models import GitState
 
 
 def read_git_state(project_path: Path) -> GitState:

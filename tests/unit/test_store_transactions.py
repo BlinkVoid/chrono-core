@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _resolved_project(workspace: Path):

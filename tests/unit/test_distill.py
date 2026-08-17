@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core.cli import build_parser, main
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.management.distill import distill_project
-from continuity_core.mcp_server import distill_project_tool, handle_distill_project
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.cli import build_parser, main
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.management.distill import distill_project
+from chrono_core.mcp_server import distill_project_tool, handle_distill_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _seed_project(store: Store, workspace: Path) -> Path:
@@ -33,7 +33,7 @@ def _seed_project(store: Store, workspace: Path) -> Path:
 
 def test_distill_project_updates_project_state(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     store = Store(db_path)
     project_path = _seed_project(store, workspace)
 
@@ -65,7 +65,7 @@ def test_distill_project_for_project_without_sessions_is_unknown(tmp_path: Path)
     project_path = workspace / "empty"
     project_path.mkdir(parents=True)
     (project_path / ".git").mkdir()
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
 
     result = distill_project(cwd=project_path, workspace_root=workspace, store=store)
 
@@ -79,14 +79,14 @@ def test_distill_parser_defaults():
 
     assert args.command == "distill"
     assert args.cwd == "."
-    from continuity_core.config import default_db_path
+    from chrono_core.config import default_db_path
 
     assert args.db_path == default_db_path()
 
 
 def test_distill_main_emits_json(tmp_path: Path, capsys):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_project(Store(db_path), workspace)
 
     code = main(
@@ -109,7 +109,7 @@ def test_distill_main_emits_json(tmp_path: Path, capsys):
 
 def test_mcp_distill_project_wraps_handler(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_project(Store(db_path), workspace)
 
     handler_result = handle_distill_project(

@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core.cli import main
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.export.markdown import export_markdown
-from continuity_core.management.review import review_project
-from continuity_core.mcp_server import handle_review_project, review_project_tool
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.cli import main
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.export.markdown import export_markdown
+from chrono_core.management.review import review_project
+from chrono_core.mcp_server import handle_review_project, review_project_tool
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _seed_review_project(store: Store, workspace: Path) -> Path:
@@ -51,7 +51,7 @@ def _seed_review_project(store: Store, workspace: Path) -> Path:
 
 def test_review_project_detects_doc_drift_and_builds_health_queue(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_review_project(Store(db_path), workspace)
 
     result = review_project(
@@ -72,8 +72,8 @@ def test_review_project_detects_doc_drift_and_builds_health_queue(tmp_path: Path
 
 
 def test_review_parser_defaults():
-    from continuity_core.cli import build_parser
-    from continuity_core.config import default_db_path
+    from chrono_core.cli import build_parser
+    from chrono_core.config import default_db_path
 
     args = build_parser().parse_args(["review"])
 
@@ -84,7 +84,7 @@ def test_review_parser_defaults():
 
 def test_review_main_emits_json(tmp_path: Path, capsys):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_review_project(Store(db_path), workspace)
 
     code = main(
@@ -107,7 +107,7 @@ def test_review_main_emits_json(tmp_path: Path, capsys):
 
 def test_mcp_review_project_wraps_handler(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_review_project(Store(db_path), workspace)
 
     handler_result = handle_review_project(
@@ -127,7 +127,7 @@ def test_mcp_review_project_wraps_handler(tmp_path: Path):
 
 def test_export_markdown_includes_review_queue(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     _seed_review_project(Store(db_path), workspace)
 
     result = export_markdown(Store(db_path), tmp_path / "export")
@@ -141,7 +141,7 @@ def test_export_markdown_includes_review_queue(tmp_path: Path):
 
 def test_export_markdown_handles_nested_projects(tmp_path: Path):
     workspace = tmp_path / "workspace"
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = workspace / "incubator" / "example"
     project_path.mkdir(parents=True)
     (project_path / ".git").mkdir()

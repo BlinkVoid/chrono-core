@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_SKILL_PATH = REPO_ROOT / "skills" / "continuity-core"
-DEFAULT_MCP_SERVER_ID = "continuity-core"
-DEFAULT_MCP_COMMAND = "continuity-mcp"
+DEFAULT_SKILL_PATH = REPO_ROOT / "skills" / "chrono-core"
+DEFAULT_MCP_SERVER_ID = "chrono-core"
+DEFAULT_MCP_COMMAND = "chrono-mcp"
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class GearCoreCommand:
 
 @dataclass(frozen=True)
 class GearCoreInstallPlan:
-    """Registration plan for exposing Continuity Core through GearCore."""
+    """Registration plan for exposing Chrono Core through GearCore."""
 
     scope: str
     skill_path: Path
@@ -102,7 +102,7 @@ def build_gearcore_install_plan(
         mcp_server_id=mcp_server_id,
         mcp_command=mcp_command,
         commands=[
-            GearCoreCommand("Register Continuity Core skill", skill_argv),
-            GearCoreCommand("Register Continuity Core MCP server", mcp_argv),
+            GearCoreCommand("Register Chrono Core skill", skill_argv),
+            GearCoreCommand("Register Chrono Core MCP server", mcp_argv),
         ],
     )

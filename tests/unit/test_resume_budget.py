@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core import mcp_server
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core import mcp_server
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _seed_busy_project(db_path: Path, workspace: Path) -> Path:
@@ -31,7 +31,7 @@ def _seed_busy_project(db_path: Path, workspace: Path) -> Path:
 
 
 def test_max_tokens_trims_result_to_budget(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_busy_project(db_path, tmp_path / "workspace")
 
     result = mcp_server.handle_get_resume_context(
@@ -47,7 +47,7 @@ def test_max_tokens_trims_result_to_budget(tmp_path: Path):
 
 
 def test_generous_max_tokens_keeps_everything(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_busy_project(db_path, tmp_path / "workspace")
 
     result = mcp_server.handle_get_resume_context(
@@ -64,7 +64,7 @@ def test_generous_max_tokens_keeps_everything(tmp_path: Path):
 
 
 def test_tiny_budget_still_returns_project_identity(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_busy_project(db_path, tmp_path / "workspace")
 
     result = mcp_server.handle_get_resume_context(
@@ -82,7 +82,7 @@ def test_tiny_budget_still_returns_project_identity(tmp_path: Path):
 
 
 def test_no_max_tokens_leaves_result_untouched(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_path = _seed_busy_project(db_path, tmp_path / "workspace")
 
     result = mcp_server.handle_get_resume_context(

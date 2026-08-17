@@ -4,10 +4,10 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-from continuity_core.capture.handoff import build_handoff_payload, persist_handoff
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.capture.handoff import build_handoff_payload, persist_handoff
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def test_build_handoff_payload_from_summary_only():

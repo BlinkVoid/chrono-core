@@ -6,11 +6,11 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Any
 
-from continuity_core.capture.git import read_git_state
-from continuity_core.config import default_db_path, default_workspace_root
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import ResolvedProject
+from chrono_core.capture.git import read_git_state
+from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import ResolvedProject
 
 
 def _parse_cli_value(value: str) -> dict[str, Any]:
@@ -91,7 +91,7 @@ def persist_handoff(
 
 def capture_handoff(args: Namespace) -> dict[str, Any]:
     """Resolve project, build payload, and persist from CLI args."""
-    from continuity_core.workspace.resolver import resolve_project
+    from chrono_core.workspace.resolver import resolve_project
 
     project_path = Path(getattr(args, "cwd", "."))
     workspace_root = Path(getattr(args, "workspace_root", None) or default_workspace_root())

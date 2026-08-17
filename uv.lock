@@ -127,7 +127,7 @@ wheels = [
 ]
 
 [[package]]
-name = "continuity-core"
+name = "chrono-core"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -142,7 +142,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mcp", specifier = ">=1.0" },
+    { name = "mcp", specifier = ">=1.0,<2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
 ]

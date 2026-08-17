@@ -2,7 +2,7 @@
 
 ## Decision
 
-Continuity Core is a plugin-level capability, not just an MCP server.
+Chrono Core is a plugin-level capability, not just an MCP server.
 
 MCP is one runtime interface. The product should package a core library, local store, CLI, MCP tools, GearCore skill/instructions, plugin manifests, and export templates as one coherent capability.
 
@@ -14,7 +14,7 @@ Personal mode is optimized for `~/workspace` and AI agents launched through Gear
 
 Goals:
 
-- make Continuity Core available across Codex, Claude, Kimi, and future AI CLIs
+- make Chrono Core available across Codex, Claude, Kimi, and future AI CLIs
 - use GearCore as the cross-tool distribution and progressive-disclosure layer
 - support workspace traversal over `~/workspace`
 - integrate with local Incubator, `workspace-intelligence`, and `_MetaFactory`
@@ -38,14 +38,14 @@ Goals:
 ## Package Shape
 
 ```text
-continuity-core/
+chrono-core/
   pyproject.toml
   README.md
   .mcp.json
   .codex-plugin/plugin.json
   skills/
-    continuity-core/SKILL.md
-  src/continuity_core/
+    chrono-core/SKILL.md
+  src/chrono_core/
     domain/
     store/
     workspace/
@@ -70,7 +70,7 @@ GearCore provides:
 - core-skill auto-activation
 - cross-client sync
 
-GearCore does not currently appear to provide true workflow hooks such as `on_session_end` or `on_project_start`. Continuity Core should therefore rely on skill instructions and explicit commands for MVP.
+GearCore does not currently appear to provide true workflow hooks such as `on_session_end` or `on_project_start`. Chrono Core should therefore rely on skill instructions and explicit commands for MVP.
 
 ## Handoff Trigger Behavior
 
@@ -89,12 +89,12 @@ When triggered inside a project, the agent should:
 1. Resolve the current project from `cwd`.
 2. Inspect relevant git/test/doc state if needed.
 3. Build a structured handoff.
-4. Save it through Continuity Core.
+4. Save it through Chrono Core.
 5. Return a compact human-readable summary.
 
 ## Core Skill Strategy
 
-For personal use, once stable, Continuity Core can be configured as a GearCore core skill.
+For personal use, once stable, Chrono Core can be configured as a GearCore core skill.
 
 Global example:
 
@@ -103,7 +103,7 @@ version: 2
 
 disclosure:
   core_skills:
-    - continuity-core
+    - chrono-core
 ```
 
 Project example:
@@ -117,11 +117,11 @@ context:
 scope:
   skills:
     include:
-      - continuity-core
+      - chrono-core
 
 disclosure:
   core_skills:
-    - continuity-core
+    - chrono-core
 ```
 
 The skill should not force a full management pass on every session. It should make low-friction capture easy and reserve distillation/reconciliation for dedicated management sessions.
@@ -131,27 +131,27 @@ The skill should not force a full management pass on every session. It should ma
 The MVP adapter does not mutate GearCore config directly. It emits an explicit installation plan:
 
 ```bash
-continuity gearcore install-plan
+chrono gearcore install-plan
 ```
 
 For project-scoped registration:
 
 ```bash
-continuity gearcore install-plan --scope project --project-root /path/to/project
+chrono gearcore install-plan --scope project --project-root /path/to/project
 ```
 
-The plan includes one `gearcore add-skill` command for `skills/continuity-core` and one `gearcore add-mcp` command for `continuity-mcp`.
+The plan includes one `gearcore add-skill` command for `skills/chrono-core` and one `gearcore add-mcp` command for `chrono-mcp`.
 
 ## Future Hook Support
 
-If GearCore later adds hooks, Continuity Core could support:
+If GearCore later adds hooks, Chrono Core could support:
 
 ```yaml
 hooks:
   on_project_start:
-    - continuity resume --cwd .
+    - chrono resume --cwd .
   on_session_end:
-    - continuity handoff --cwd .
+    - chrono handoff --cwd .
 ```
 
 Do not make MVP depend on hooks because AI client lifecycle events are inconsistent across tools.

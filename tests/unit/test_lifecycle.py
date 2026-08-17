@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core import mcp_server
-from continuity_core.cli import build_parser, main
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.management.distill import distill_project
-from continuity_core.resume import format_resume
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core import mcp_server
+from chrono_core.cli import build_parser, main
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.management.distill import distill_project
+from chrono_core.resume import format_resume
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _seed_project_with_records(store: Store, workspace: Path) -> tuple[str, str, str]:
@@ -104,7 +104,7 @@ def test_action_complete_parser_defaults():
 
 
 def test_blocker_resolve_main_emits_json(tmp_path: Path, capsys):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     store = Store(db_path)
     _, blocker_id, _ = _seed_project_with_records(store, tmp_path / "workspace")
 
@@ -118,7 +118,7 @@ def test_blocker_resolve_main_emits_json(tmp_path: Path, capsys):
 
 
 def test_blocker_resolve_main_fails_for_unknown_id(tmp_path: Path, capsys):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     Store(db_path).init_schema()
 
     code = main(["blocker", "resolve", "blk_missing", "--db-path", str(db_path)])
@@ -129,7 +129,7 @@ def test_blocker_resolve_main_fails_for_unknown_id(tmp_path: Path, capsys):
 
 
 def test_action_complete_main_emits_json(tmp_path: Path, capsys):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     store = Store(db_path)
     _, _, action_id = _seed_project_with_records(store, tmp_path / "workspace")
 
@@ -143,7 +143,7 @@ def test_action_complete_main_emits_json(tmp_path: Path, capsys):
 
 
 def test_mcp_handle_resolve_blocker(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     store = Store(db_path)
     _, blocker_id, _ = _seed_project_with_records(store, tmp_path / "workspace")
 
@@ -155,7 +155,7 @@ def test_mcp_handle_resolve_blocker(tmp_path: Path):
 
 
 def test_mcp_handle_complete_action(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     store = Store(db_path)
     _, _, action_id = _seed_project_with_records(store, tmp_path / "workspace")
 
@@ -171,8 +171,8 @@ def test_mcp_lifecycle_tools_registered():
 
     tools = anyio.run(mcp_server.mcp.list_tools)
     names = {tool.name for tool in tools}
-    assert "continuity_core_resolve_blocker" in names
-    assert "continuity_core_complete_action" in names
+    assert "chrono_core_resolve_blocker" in names
+    assert "chrono_core_complete_action" in names
 
 
 def test_format_resume_shows_ids_for_blockers_and_actions(tmp_path: Path):

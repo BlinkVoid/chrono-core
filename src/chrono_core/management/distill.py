@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def distill_project(

@@ -1,4 +1,4 @@
-# Continuity Core — Project Brief
+# Chrono Core — Project Brief
 
 ## Mission
 
@@ -8,7 +8,7 @@ The system should make it cheap for any agent to record what happened, easy for 
 
 ## Scope
 
-Continuity Core is not a Incubator-only tool. Incubator hosts the incubator, but the product operates over `~/workspace` and should eventually become a standalone package, MCP server, and GearCore-compatible capability.
+Chrono Core is not a Incubator-only tool. Incubator hosts the incubator, but the product operates over `~/workspace` and should eventually become a standalone package, MCP server, and GearCore-compatible capability.
 
 ## Users
 
@@ -31,7 +31,7 @@ A working local-first continuity prototype with:
 
 - deterministic project resolver and registry import from `workspace-intelligence`
 - SQLite-backed `Store` for projects, sessions, decisions, blockers, next actions, observations, and edges
-- `continuity` CLI for resolve, handoff, resume, and workspace-intelligence ingestion
+- `chrono` CLI for resolve, handoff, resume, and workspace-intelligence ingestion
 - MCP server exposing `resolve_project`, `session_handoff`, and `get_resume_context`
 - distillation/management workflow design
 - graph-shaped data model

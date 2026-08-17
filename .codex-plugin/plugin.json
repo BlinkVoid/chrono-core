@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "name": "continuity-core",
+  "name": "chrono-core",
   "version": "0.1.0",
   "description": "Workspace continuity, session handoff, resume context, and documentation management.",
-  "skills": ["skills/continuity-core"],
+  "skills": ["skills/chrono-core"],
   "mcp_servers": {
-    "continuity-core": {
-      "command": "continuity-mcp",
+    "chrono-core": {
+      "command": "chrono-mcp",
       "args": []
     }
   }

@@ -6,15 +6,15 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from continuity_core.capture.git import read_git_state
-from continuity_core.capture.handoff import persist_handoff
-from continuity_core.config import default_db_path, default_workspace_root
-from continuity_core.domain.models import HandoffPayload
-from continuity_core.management.distill import distill_project
-from continuity_core.management.review import review_project
-from continuity_core.resume import validate_resume_path
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.capture.git import read_git_state
+from chrono_core.capture.handoff import persist_handoff
+from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.domain.models import HandoffPayload
+from chrono_core.management.distill import distill_project
+from chrono_core.management.review import review_project
+from chrono_core.resume import validate_resume_path
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 DEFAULT_DB_PATH = default_db_path()
 
@@ -213,16 +213,16 @@ def handle_review_project(
     )
 
 
-mcp = FastMCP("continuity-core")
+mcp = FastMCP("chrono-core")
 
 
-@mcp.tool(name="continuity_core_resolve_project")
+@mcp.tool(name="chrono_core_resolve_project")
 def resolve_project_tool(cwd: str, workspace_root: str | None = None) -> dict[str, Any]:
     """Resolve the project that contains *cwd* within the workspace."""
     return handle_resolve_project(cwd, workspace_root)
 
 
-@mcp.tool(name="continuity_core_session_handoff")
+@mcp.tool(name="chrono_core_session_handoff")
 def session_handoff_tool(
     cwd: str,
     summary: str,
@@ -252,7 +252,7 @@ def session_handoff_tool(
     )
 
 
-@mcp.tool(name="continuity_core_get_resume_context")
+@mcp.tool(name="chrono_core_get_resume_context")
 def get_resume_context_tool(
     cwd: str,
     workspace_root: str | None = None,
@@ -268,7 +268,7 @@ def get_resume_context_tool(
     )
 
 
-@mcp.tool(name="continuity_core_record_decision")
+@mcp.tool(name="chrono_core_record_decision")
 def record_decision_tool(
     cwd: str,
     title: str,
@@ -286,7 +286,7 @@ def record_decision_tool(
     )
 
 
-@mcp.tool(name="continuity_core_record_blocker")
+@mcp.tool(name="chrono_core_record_blocker")
 def record_blocker_tool(
     cwd: str,
     title: str,
@@ -306,19 +306,19 @@ def record_blocker_tool(
     )
 
 
-@mcp.tool(name="continuity_core_resolve_blocker")
+@mcp.tool(name="chrono_core_resolve_blocker")
 def resolve_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[str, Any]:
     """Mark an open blocker as resolved so resume context stops reporting it."""
     return handle_resolve_blocker(blocker_id, db_path=db_path)
 
 
-@mcp.tool(name="continuity_core_complete_action")
+@mcp.tool(name="chrono_core_complete_action")
 def complete_action_tool(action_id: str, db_path: str | None = None) -> dict[str, Any]:
     """Mark an open next action as done so resume context stops reporting it."""
     return handle_complete_action(action_id, db_path=db_path)
 
 
-@mcp.tool(name="continuity_core_search_observations")
+@mcp.tool(name="chrono_core_search_observations")
 def search_observations_tool(
     query: str,
     project_id: str | None = None,
@@ -331,7 +331,7 @@ def search_observations_tool(
     )
 
 
-@mcp.tool(name="continuity_core_distill_project")
+@mcp.tool(name="chrono_core_distill_project")
 def distill_project_tool(
     cwd: str,
     workspace_root: str | None = None,
@@ -341,7 +341,7 @@ def distill_project_tool(
     return handle_distill_project(cwd, workspace_root=workspace_root, db_path=db_path)
 
 
-@mcp.tool(name="continuity_core_review_project")
+@mcp.tool(name="chrono_core_review_project")
 def review_project_tool(
     cwd: str,
     workspace_root: str | None = None,
@@ -352,6 +352,6 @@ def review_project_tool(
 
 
 def main() -> int:
-    """Run the Continuity Core MCP server over stdio."""
+    """Run the Chrono Core MCP server over stdio."""
     mcp.run(transport="stdio")
     return 0

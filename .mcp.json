@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "continuity-core": {
-      "command": "continuity-mcp",
+    "chrono-core": {
+      "command": "chrono-mcp",
       "args": []
     }
   }

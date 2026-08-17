@@ -2,7 +2,7 @@
 
 ## Workflow 1: Direct Session Handoff
 
-An agent working in any project calls `continuity_core_session_handoff`.
+An agent working in any project calls `chrono_core_session_handoff`.
 
 The tool resolves the project from `cwd`, records raw facts, links changed files and git state, and updates the latest project state.
 
@@ -12,7 +12,7 @@ This is the lowest-friction write path and should work even for unknown projects
 
 A human or agent asks: "what is this project and what next?"
 
-Continuity Core returns:
+Chrono Core returns:
 
 - one-paragraph project identity
 - current phase
@@ -60,7 +60,7 @@ Findings are queued as review items rather than silently overwritten.
 
 ## Workflow 5: Cross-Project Reuse
 
-Continuity Core should connect current project problems to prior work.
+Chrono Core should connect current project problems to prior work.
 
 Examples:
 
@@ -71,7 +71,7 @@ Examples:
 Sources:
 
 - MetaFactory consolidated patterns
-- prior Continuity Core insights
+- prior Chrono Core insights
 - project/session graph relationships
 - workspace-intelligence registry metadata
 

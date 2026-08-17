@@ -1,10 +1,10 @@
 [project]
-name = "continuity-core"
+name = "chrono-core"
 version = "0.1.0"
 description = "Workspace-level project continuity, session handoff, and documentation management infrastructure"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["mcp>=1.0"]
+dependencies = ["mcp>=1.0,<2"]
 
 [project.optional-dependencies]
 dev = [
@@ -13,8 +13,11 @@ dev = [
 ]
 
 [project.scripts]
-continuity = "continuity_core.cli:main"
-continuity-mcp = "continuity_core.mcp_server:main"
+chrono = "chrono_core.cli:main"
+chrono-mcp = "chrono_core.mcp_server:main"
+# Transitional aliases for scripts and clients using the former product name.
+continuity = "chrono_core.cli:main"
+continuity-mcp = "chrono_core.mcp_server:main"
 
 [build-system]
 requires = ["hatchling"]

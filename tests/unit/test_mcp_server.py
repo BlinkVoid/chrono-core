@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.mcp_server import (
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.mcp_server import (
     get_resume_context_tool,
     handle_get_resume_context,
     handle_record_blocker,
@@ -15,8 +15,8 @@ from continuity_core.mcp_server import (
     resolve_project_tool,
     session_handoff_tool,
 )
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def test_handle_resolve_project_finds_marker(tmp_path: Path):
@@ -61,7 +61,7 @@ def test_handle_session_handoff_persists_records(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = handle_session_handoff(
         str(project),
@@ -95,7 +95,7 @@ def test_session_handoff_tool_wraps_handler(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = session_handoff_tool(
         str(project),
@@ -113,7 +113,7 @@ def test_handle_get_resume_context_for_existing_project(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     store = Store(str(db_path))
     store.init_schema()
@@ -139,7 +139,7 @@ def test_handle_get_resume_context_for_unknown_project(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = handle_get_resume_context(
         str(project),
@@ -155,7 +155,7 @@ def test_get_resume_context_tool_passes_max_tokens(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = get_resume_context_tool(
         str(project),
@@ -173,7 +173,7 @@ def test_handle_record_decision_persists_sessionless_decision(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = handle_record_decision(
         str(project),
@@ -198,7 +198,7 @@ def test_handle_record_blocker_persists_sessionless_blocker(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     result = handle_record_blocker(
         str(project),
@@ -224,7 +224,7 @@ def test_record_decision_and_blocker_tools_wrap_handlers(tmp_path: Path):
     project = workspace / "example"
     project.mkdir(parents=True)
     (project / ".git").mkdir()
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
 
     decision = record_decision_tool(
         str(project),
@@ -246,6 +246,6 @@ def test_record_decision_and_blocker_tools_wrap_handlers(tmp_path: Path):
 
 
 def test_mcp_server_constants():
-    from continuity_core.config import default_workspace_root
+    from chrono_core.config import default_workspace_root
 
     assert Path(default_workspace_root()).name == "workspace"

@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from continuity_core import mcp_server
-from continuity_core.cli import build_parser, main
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core import mcp_server
+from chrono_core.cli import build_parser, main
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _seed_observations(store: Store, workspace: Path, name: str = "example") -> str:
@@ -81,7 +81,7 @@ def test_search_parser_defaults():
 
 
 def test_search_main_emits_json(tmp_path: Path, capsys):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     _seed_observations(Store(db_path), tmp_path / "workspace")
 
     code = main(["search", "credential", "--db-path", str(db_path)])
@@ -94,7 +94,7 @@ def test_search_main_emits_json(tmp_path: Path, capsys):
 
 
 def test_mcp_handle_search_observations(tmp_path: Path):
-    db_path = tmp_path / "continuity.db"
+    db_path = tmp_path / "chrono.db"
     project_id = _seed_observations(Store(db_path), tmp_path / "workspace")
 
     result = mcp_server.handle_search_observations("credential", db_path=str(db_path))

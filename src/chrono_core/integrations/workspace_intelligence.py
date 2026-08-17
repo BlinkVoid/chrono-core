@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import make_project_id
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import make_project_id
 
 
 @dataclass
@@ -56,7 +56,7 @@ def import_workspace_intelligence(
     registry_path: str | Path,
     workspace_root: str | Path,
 ) -> ImportResult:
-    """Import projects from the Workspace Intelligence SQLite registry into Continuity."""
+    """Import projects from the Workspace Intelligence SQLite registry into Chrono Core."""
     registry = Path(registry_path)
     workspace = Path(workspace_root)
     result = ImportResult(

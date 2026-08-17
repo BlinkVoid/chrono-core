@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from continuity_core.workspace.resolver import make_project_id, resolve_project
+from chrono_core.workspace.resolver import make_project_id, resolve_project
 
 
 def test_resolve_project_from_nested_git_marker(tmp_path: Path):

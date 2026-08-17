@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.export.markdown import export_markdown
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.export.markdown import export_markdown
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def test_export_markdown_writes_project_index_and_project_page(tmp_path: Path):
     workspace = tmp_path / "workspace"
     project_path = workspace / "example"
     project_path.mkdir(parents=True)
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
     store.init_schema()
     project = resolve_project(project_path, workspace_root=workspace)
     store.get_or_create_project(project)

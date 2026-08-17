@@ -4,18 +4,18 @@ import argparse
 import json
 from pathlib import Path
 
-from continuity_core import __version__
-from continuity_core.capture.handoff import capture_handoff
-from continuity_core.config import default_db_path, default_workspace_root
-from continuity_core.export.markdown import export_markdown
-from continuity_core.integrations.gearcore import build_gearcore_install_plan
-from continuity_core.integrations.workspace_intelligence import ingest_existing_tools
-from continuity_core.management.distill import distill_project
-from continuity_core.management.review import review_project
-from continuity_core.resume import resume_command
-from continuity_core.store.store import Store
-from continuity_core.workspace.discovery import DiscoveryOptions, discover_workspace
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core import __version__
+from chrono_core.capture.handoff import capture_handoff
+from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.export.markdown import export_markdown
+from chrono_core.integrations.gearcore import build_gearcore_install_plan
+from chrono_core.integrations.workspace_intelligence import ingest_existing_tools
+from chrono_core.management.distill import distill_project
+from chrono_core.management.review import review_project
+from chrono_core.resume import resume_command
+from chrono_core.store.store import Store
+from chrono_core.workspace.discovery import DiscoveryOptions, discover_workspace
+from chrono_core.workspace.resolver import resolve_project
 
 DEFAULT_DB_PATH = default_db_path()
 DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = str(
@@ -24,7 +24,7 @@ DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = str(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="continuity", description="Continuity Core")
+    parser = argparse.ArgumentParser(prog="chrono", description="Chrono Core")
     parser.add_argument("--version", action="store_true", help="print version and exit")
 
     sub = parser.add_subparsers(dest="command")
@@ -173,10 +173,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--project-root", default=None, help="project root for project-scoped registration"
     )
     p_gearcore_plan.add_argument(
-        "--skill-path", default=None, help="override Continuity Core skill path"
+        "--skill-path", default=None, help="override Chrono Core skill path"
     )
     p_gearcore_plan.add_argument(
-        "--mcp-command", default="continuity-mcp", help="MCP server command"
+        "--mcp-command", default="chrono-mcp", help="MCP server command"
     )
     p_gearcore_plan.add_argument(
         "--copy", dest="symlink", action="store_false", help="copy skill instead of symlinking"
@@ -191,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.version:
-        print(f"continuity-core {__version__}")
+        print(f"chrono-core {__version__}")
         return 0
 
     if args.command == "resolve":

@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import PROJECT_MARKERS, ResolvedProject
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import PROJECT_MARKERS, ResolvedProject
 
 DEFAULT_SKIP_DIRS = {
     ".cache",

@@ -4,10 +4,10 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
-from continuity_core.config import default_db_path, default_workspace_root
-from continuity_core.domain.models import ResumeContext
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.domain.models import ResumeContext
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def _default_db_path() -> str:
@@ -67,7 +67,7 @@ def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:
 
 
 def resume_command(args: Namespace) -> int:
-    """CLI entry point for continuity resume."""
+    """CLI entry point for chrono resume."""
     context = get_resume_context(args)
     as_json = getattr(args, "json", False)
     print(format_resume(context, as_json=as_json))

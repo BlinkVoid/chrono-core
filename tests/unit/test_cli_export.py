@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from continuity_core.cli import build_parser
+from chrono_core.cli import build_parser
 
 
 def test_export_markdown_parser_defaults():

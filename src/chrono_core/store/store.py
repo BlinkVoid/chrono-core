@@ -9,9 +9,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from continuity_core.domain.models import GitState, HandoffPayload, ResumeContext
-from continuity_core.store.schema import DDL, SCHEMA_VERSION
-from continuity_core.workspace.resolver import ResolvedProject
+from chrono_core.domain.models import GitState, HandoffPayload, ResumeContext
+from chrono_core.store.schema import DDL, SCHEMA_VERSION
+from chrono_core.workspace.resolver import ResolvedProject
 
 
 def utc_now() -> str:
@@ -27,7 +27,7 @@ def make_entity_id(prefix: str) -> str:
 
 
 class Store:
-    """SQLite-backed persistence for Continuity Core."""
+    """SQLite-backed persistence for Chrono Core."""
 
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)

@@ -4,12 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from continuity_core import mcp_server, resume
-from continuity_core.capture import handoff
-from continuity_core.cli import build_parser
-from continuity_core.config import default_db_path
+from chrono_core import mcp_server, resume
+from chrono_core.capture import handoff
+from chrono_core.cli import build_parser
+from chrono_core.config import default_db_path
 
-CANONICAL = str(Path.home() / ".local" / "share" / "continuity-core" / "continuity.db")
+CANONICAL = str(Path.home() / ".local" / "share" / "chrono-core" / "chrono.db")
 
 
 def test_default_db_path_is_canonical_xdg_location():

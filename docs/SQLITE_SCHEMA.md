@@ -16,7 +16,7 @@ Schema version: `2`
 
 ## Canonical Tables
 
-The initial executable DDL lives in `src/continuity_core/store/schema.py`.
+The initial executable DDL lives in `src/chrono_core/store/schema.py`.
 
 Core tables:
 
@@ -52,7 +52,6 @@ path that is already registered (the same directory resolved under a different
 workspace root), the existing row and its id win; only the metadata is
 updated. This keeps sessions, blockers, and actions attached to one project
 record instead of raising an IntegrityError or splitting history across ids.
-
 ### Raw observations are preserved
 
 Management distillation should not destroy evidence. Raw handoff payloads and observations stay in the database even if a later management pass updates project state.

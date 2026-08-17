@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "name": "continuity-core",
-  "sandbox": "continuity-core",
+  "name": "chrono-core",
+  "sandbox": "chrono-core",
   "kind": "workspace-infrastructure",
   "description": "Workspace-level project continuity, session handoff, documentation reconciliation, and cross-project knowledge management system.",
   "phase": "phase-1-local-core",
   "project_root": ".",
   "hive": {
-    "target_path": "../continuity-core",
+    "target_path": "../cores/chrono-core",
     "preferred_worker": "",
     "required_capabilities": [
       "reasoning",

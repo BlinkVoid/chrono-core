@@ -4,13 +4,13 @@ import json
 import sqlite3
 from pathlib import Path
 
-from continuity_core.cli import DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY, build_parser
-from continuity_core.integrations.workspace_intelligence import (
+from chrono_core.cli import DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY, build_parser
+from chrono_core.integrations.workspace_intelligence import (
     import_project_tracking,
     import_workspace_intelligence,
 )
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import make_project_id
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import make_project_id
 
 
 def test_ingest_existing_tools_defaults_to_state_registry():
@@ -113,7 +113,7 @@ def test_import_project_tracking_uses_archived_source_when_original_moved(tmp_pa
     archived_tracking = workspace / "_archive_projects" / "project-tracking-2026-07-02"
     archived_tracking.mkdir(parents=True)
     (archived_tracking / "README.md").write_text("# Project Tracking\n\nArchived source.")
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
 
     result = import_project_tracking(store, workspace_root=workspace)
 
@@ -127,7 +127,7 @@ def test_import_workspace_intelligence_registry_into_continuity_store(tmp_path: 
     workspace = tmp_path / "workspace"
     registry = tmp_path / "workspace-intelligence" / "registry.db"
     _create_workspace_intelligence_db(registry, workspace)
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
 
     result = import_workspace_intelligence(
         store,
@@ -178,7 +178,7 @@ def test_import_workspace_intelligence_registry_into_continuity_store(tmp_path: 
 
 
 def test_import_workspace_intelligence_missing_registry_is_structured_skip(tmp_path: Path):
-    store = Store(tmp_path / "continuity.db")
+    store = Store(tmp_path / "chrono.db")
 
     result = import_workspace_intelligence(
         store,

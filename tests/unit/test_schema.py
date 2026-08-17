@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from continuity_core.store.schema import DDL
+from chrono_core.store.schema import DDL
 
 
 def test_schema_bootstraps_in_memory_database():

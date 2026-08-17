@@ -3,10 +3,10 @@ from __future__ import annotations
 from argparse import Namespace
 from pathlib import Path
 
-from continuity_core.domain.models import GitState, HandoffPayload
-from continuity_core.resume import format_resume, get_resume_context
-from continuity_core.store.store import Store
-from continuity_core.workspace.resolver import resolve_project
+from chrono_core.domain.models import GitState, HandoffPayload
+from chrono_core.resume import format_resume, get_resume_context
+from chrono_core.store.store import Store
+from chrono_core.workspace.resolver import resolve_project
 
 
 def test_get_resume_context_for_unknown_project(tmp_path: Path):
@@ -46,7 +46,7 @@ def test_get_resume_context_after_handoff(tmp_path: Path):
 
 
 def test_format_resume_text_output():
-    from continuity_core.domain.models import ResumeContext
+    from chrono_core.domain.models import ResumeContext
 
     context = ResumeContext(
         project_id="x",
@@ -67,7 +67,7 @@ def test_format_resume_text_output():
 
 
 def test_format_resume_json_output():
-    from continuity_core.domain.models import ResumeContext
+    from chrono_core.domain.models import ResumeContext
 
     context = ResumeContext(project_id="x", project_name="Example", project_path="/x")
     text = format_resume(context, as_json=True)
