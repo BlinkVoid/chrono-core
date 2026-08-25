@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chrono Core — Project Memory &amp; Session Handoff for AI Agents (MCP, SQLite)</title>
+<meta name="description" content="Chrono Core gives humans and AI agents local-first project memory: structured session handoffs, branch-scoped resume context, cross-project bug tracking over SQLite.">
+<meta name="keywords" content="mcp server, agent memory, project continuity, session handoff, ai coding agents, sqlite fts5, developer tools">
+<meta property="og:title" content="Chrono Core — Project Memory &amp; Session Handoff for AI Agents (MCP, SQLite)">
+<meta property="og:description" content="Chrono Core gives humans and AI agents local-first project memory: structured session handoffs, branch-scoped resume context, cross-project bug tracking over SQLite.">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Chrono Core",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Cross-platform",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}
+</script>
+<style>
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #2a313c;
+  --text: #e6edf3;
+  --muted: #9aa7b4;
+  --accent: #4ec9b0;
+  --code-bg: #10151c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+}
+main, header.site, footer.site { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+header.site { padding-top: 4rem; padding-bottom: 2rem; }
+h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; letter-spacing: -0.02em; }
+h1 .brand { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tagline { color: var(--muted); margin-top: 0.75rem; font-size: 1.05rem; max-width: 46ch; }
+nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 1.25rem; margin-top: 1.75rem; }
+nav a { color: var(--accent); text-decoration: none; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; }
+nav a:hover { text-decoration: underline; }
+section { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+h2 { font-size: 1.35rem; margin-bottom: 1rem; letter-spacing: -0.01em; }
+h2::before { content: "# "; color: var(--accent); font-family: ui-monospace, monospace; }
+section p + p { margin-top: 0.75rem; }
+dl { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0.9rem 1.5rem; }
+dt { font-weight: 600; color: var(--accent); }
+dd { color: var(--muted); }
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); border-radius: 4px; padding: 0.1em 0.35em; }
+pre code { background: none; padding: 0; }
+.faq-item { margin-bottom: 1.25rem; }
+.faq-item dt { color: var(--text); }
+footer.site {
+  padding-top: 2rem; padding-bottom: 3rem; border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 0.85rem;
+}
+@media (max-width: 600px) {
+  dl { grid-template-columns: 1fr; gap: 0.25rem; }
+  dd { margin-bottom: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <h1><span class="brand">chrono-core</span> — project memory &amp; session handoff for AI agents</h1>
+  <p class="tagline">Local-first continuity for humans and agents working across many projects in parallel. Structured handoffs, branch-scoped resume context, and cross-project bug tracking over a single local SQLite database.</p>
+  <nav aria-label="Page sections">
+    <ul>
+      <li><a href="#what">what</a></li>
+      <li><a href="#why">why</a></li>
+      <li><a href="#features">features</a></li>
+      <li><a href="#how-it-works">how it works</a></li>
+      <li><a href="#quick-start">quick start</a></li>
+      <li><a href="#faq">faq</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+
+<section id="what">
+  <h2>What is Chrono Core?</h2>
+  <p>Chrono Core is a local-first project memory tool that captures what happened in your work sessions and makes it queryable later. It records structured handoffs — summaries, files changed, tests run, decisions, blockers, next actions, risks, and git state — into a canonical local SQLite store.</p>
+  <p>Any AI coding agent can call it through the Model Context Protocol (MCP), and humans can use the same features from the <code>chrono</code> CLI. Everything stays on your machine: no cloud, no accounts, no telemetry.</p>
+</section>
+
+<section id="why">
+  <h2>Why?</h2>
+  <p>Project state gets scattered across TODO files, plans, chat sessions, issue notes, and half-updated docs. After a project pauses for weeks, simple questions become hard: what happened last? What is blocked? Which decisions still matter? Which docs are stale or contradictory?</p>
+  <p>Chrono Core treats continuity as an explicit artifact: captured at handoff time, distilled over time, and surfaced exactly when you or your agent resume — scoped to the branch you are actually on.</p>
+</section>
+
+<section id="features">
+  <h2>Features</h2>
+  <dl>
+    <dt>Session handoff capture</dt>
+    <dd><code>chrono handoff</code> records summary, changed files, tests, decisions, blockers, next actions, risks, and git state via flags or a JSON payload.</dd>
+    <dt>Branch-scoped resume</dt>
+    <dd><code>chrono resume</code> shows only the current workstream's open items; <code>--all</code>, <code>--branch</code>, and <code>--limit</code> widen or trim the view.</dd>
+    <dt>Full lifecycle verbs</dt>
+    <dd>Complete, cancel, edit, reopen, or supersede actions and blockers so corrections replace stale state instead of duplicating it.</dd>
+    <dt>Cross-project bug tracking</dt>
+    <dd><code>chrono bug report/list/show/update</code> tracks bugs across every project in the workspace, exposed via MCP tools too.</dd>
+    <dt>Full-text search</dt>
+    <dd><code>chrono search</code> runs SQLite FTS5 queries over captured observations.</dd>
+    <dt>Markdown export</dt>
+    <dd>Derived project wiki pages and a top-level <code>ReviewQueue.md</code> for human review.</dd>
+    <dt>Deterministic review heuristics</dt>
+    <dd>Doc reconciliation, stale-doc detection, health scoring, and improvement advice — deterministic heuristics, not semantic/AI reconciliation.</dd>
+    <dt>MCP server</dt>
+    <dd><code>chrono-mcp</code> exposes 20 tools backed by the same store and code paths as the CLI.</dd>
+  </dl>
+</section>
+
+<section id="how-it-works">
+  <h2>How it works</h2>
+<pre>
+AI Agent / Human
+      |
+      v
+MCP tools + CLI          (chrono-mcp: 20 tools · chrono: 13 command groups)
+      |
+      v
+Chrono Core service layer
+      +-- Project resolver / workspace traversal
+      +-- Session capture
+      +-- Management distillation
+      +-- Documentation reconciliation
+      +-- Resume-context generator
+      |
+      v
+Store (canonical local state)
+      +-- SQLite tables (WAL mode)
+      +-- FTS indexes
+      +-- graph-shaped edge table
+      |
+      v
+Derived views
+      +-- project wiki markdown
+      +-- ReviewQueue.md
+</pre>
+  <p>The database is canonical; markdown exports are readable views on top of it.</p>
+</section>
+
+<section id="quick-start">
+  <h2>Quick start</h2>
+  <p>Requires Python &ge; 3.12. PyPI publication is pending — install from a checkout today:</p>
+<pre><code># once published:
+uv tool install chrono-core
+
+# today, from a clone of this repository:
+uv pip install -e .</code></pre>
+  <p>Capture a session handoff from inside any project:</p>
+<pre><code>chrono handoff \
+  --summary "Implemented JWT token refresh; tests green." \
+  --file src/auth/tokens.py \
+  --test "pytest tests/test_tokens.py" \
+  --decision "Use short-lived access tokens with rotating refresh tokens" \
+  --blocker "Staging Redis credentials not provisioned yet" \
+  --next "Wire refresh endpoint into the client SDK"</code></pre>
+  <p>Later — even weeks afterwards — get back up to speed:</p>
+<pre><code>$ chrono resume
+
+Project: demo-app
+Status: Latest session on spike/queue-backend.
+Latest session: Spiked Redis Streams vs SQS; leaning Redis Streams.
+
+Open blockers (spike/queue-backend):
+Next actions (spike/queue-backend):
+  - [act_dbd199039c1c49a1] Write spike findings into docs/queue-spike.md
+  (+1 more on other branches: --all to show)</code></pre>
+</section>
+
+<section id="faq">
+  <h2>FAQ</h2>
+  <dl>
+    <div class="faq-item">
+      <dt>Is it AI-based?</dt>
+      <dd>No. Distillation and review run on deterministic heuristics — predictable, inspectable, and reproducible.</dd>
+    </div>
+    <div class="faq-item">
+      <dt>Does it need the cloud?</dt>
+      <dd>No. Everything lives in a local SQLite database (WAL mode with FTS5 indexes). No network access required.</dd>
+    </div>
+    <div class="faq-item">
+      <dt>Which agents does it work with?</dt>
+      <dd>Anything that speaks MCP. The <code>chrono-mcp</code> server exposes 20 tools; humans get identical functionality via the CLI.</dd>
+    </div>
+  </dl>
+</section>
+
+</main>
+
+<footer class="site">
+  <p>Not yet published — local preview artifact.</p>
+  <p>Chrono Core is released under the <a href="https://opensource.org/licenses/MIT" style="color:var(--accent)">MIT License</a>.</p>
+</footer>
+
+</body>
+</html>
