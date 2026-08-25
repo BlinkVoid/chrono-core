@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+ACTION_STATUSES = ("open", "done", "cancelled", "superseded")
+BLOCKER_STATUSES = ("open", "resolved", "cancelled")
+BUG_SEVERITIES = ("low", "medium", "high", "critical")
+BUG_STATUSES = ("open", "confirmed", "in_progress", "fixed", "wont_fix", "cancelled")
+
 
 @dataclass(frozen=True)
 class ResumeContext:

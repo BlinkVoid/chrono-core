@@ -318,6 +318,185 @@ class Store:
         self._commit()
         return cursor.rowcount > 0
 
+    @staticmethod
+    def _append_history(current_json: str | None, entry: dict[str, Any]) -> str:
+        try:
+            history = json.loads(current_json or "[]")
+        except ValueError:
+            history = []
+        history.append(entry)
+        return json.dumps(history, ensure_ascii=False)
+
+    def _load_entity(self, table: str, entity_id: str) -> sqlite3.Row | None:
+        return (
+            self._connect()
+            .execute(f"SELECT * FROM {table} WHERE id = ?", (entity_id,))
+            .fetchone()
+        )
+
+    def cancel_next_action(self, action_id: str, reason: str | None = None) -> dict[str, Any]:
+        row = self._load_entity("next_actions", action_id)
+        if row is None:
+            return {"ok": False, "action_id": action_id, "status": "not_found"}
+        if row["status"] == "cancelled":
+            return {"ok": True, "already": True, "action_id": action_id, "status": "cancelled"}
+        now = utc_now()
+        conn = self._connect()
+        conn.execute(
+            """
+            UPDATE next_actions
+            SET status = 'cancelled', cancelled_at = ?, raw_history_json = ?
+            WHERE id = ?
+            """,
+            (
+                now,
+                self._append_history(
+                    row["raw_history_json"],
+                    {"op": "cancel", "at": now, "reason": reason or ""},
+                ),
+                action_id,
+            ),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "action_id": action_id, "status": "cancelled"}
+
+    def reopen_next_action(self, action_id: str) -> dict[str, Any]:
+        row = self._load_entity("next_actions", action_id)
+        if row is None:
+            return {"ok": False, "action_id": action_id, "status": "not_found"}
+        if row["status"] == "open":
+            return {"ok": True, "already": True, "action_id": action_id, "status": "open"}
+        conn = self._connect()
+        conn.execute(
+            """
+            UPDATE next_actions
+            SET status = 'open', completed_at = NULL, cancelled_at = NULL,
+                raw_history_json = ?
+            WHERE id = ?
+            """,
+            (
+                self._append_history(
+                    row["raw_history_json"], {"op": "reopen", "at": utc_now()}
+                ),
+                action_id,
+            ),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "action_id": action_id, "status": "open"}
+
+    def edit_next_action(self, action_id: str, new_text: str) -> dict[str, Any]:
+        row = self._load_entity("next_actions", action_id)
+        if row is None:
+            return {"ok": False, "action_id": action_id, "status": "not_found"}
+        now = utc_now()
+        conn = self._connect()
+        conn.execute(
+            """
+            UPDATE next_actions
+            SET text = ?, raw_history_json = ?
+            WHERE id = ?
+            """,
+            (
+                new_text,
+                self._append_history(
+                    row["raw_history_json"],
+                    {"op": "edit", "at": now, "previous_text": row["text"]},
+                ),
+                action_id,
+            ),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "action_id": action_id, "status": row["status"]}
+
+    def supersede_next_action(self, old_action_id: str, new_text: str) -> dict[str, Any]:
+        old = self._load_entity("next_actions", old_action_id)
+        if old is None:
+            return {"ok": False, "action_id": old_action_id, "status": "not_found"}
+        if old["status"] == "superseded":
+            return {
+                "ok": True,
+                "already": True,
+                "action_id": old_action_id,
+                "status": "superseded",
+                "new_action_id": None,
+            }
+        now = utc_now()
+        new_id = make_entity_id("act")
+        conn = self._connect()
+        conn.execute(
+            """
+            INSERT INTO next_actions
+                (id, project_id, session_id, text, status, supersedes_id, created_at)
+            VALUES (?, ?, ?, ?, 'open', ?, ?)
+            """,
+            (new_id, old["project_id"], old["session_id"], new_text, old_action_id, now),
+        )
+        conn.execute(
+            """
+            UPDATE next_actions
+            SET status = 'superseded', raw_history_json = ?
+            WHERE id = ?
+            """,
+            (
+                self._append_history(
+                    old["raw_history_json"],
+                    {"op": "superseded_by", "at": now, "successor": new_id},
+                ),
+                old_action_id,
+            ),
+        )
+        self._commit()
+        return {
+            "ok": True,
+            "already": False,
+            "action_id": old_action_id,
+            "status": "superseded",
+            "new_action_id": new_id,
+        }
+
+    def cancel_blocker(self, blocker_id: str, reason: str | None = None) -> dict[str, Any]:
+        row = self._load_entity("blockers", blocker_id)
+        if row is None:
+            return {"ok": False, "blocker_id": blocker_id, "status": "not_found"}
+        if row["status"] == "cancelled":
+            return {
+                "ok": True,
+                "already": True,
+                "blocker_id": blocker_id,
+                "status": "cancelled",
+            }
+        conn = self._connect()
+        conn.execute(
+            "UPDATE blockers SET status = 'cancelled', cancelled_at = ? WHERE id = ?",
+            (utc_now(), blocker_id),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "blocker_id": blocker_id, "status": "cancelled"}
+
+    def edit_blocker(self, blocker_id: str, new_title: str) -> dict[str, Any]:
+        row = self._load_entity("blockers", blocker_id)
+        if row is None:
+            return {"ok": False, "blocker_id": blocker_id, "status": "not_found"}
+        conn = self._connect()
+        conn.execute("UPDATE blockers SET title = ? WHERE id = ?", (new_title, blocker_id))
+        self._commit()
+        return {"ok": True, "already": False, "blocker_id": blocker_id, "status": row["status"]}
+
+    def reopen_blocker(self, blocker_id: str) -> dict[str, Any]:
+        row = self._load_entity("blockers", blocker_id)
+        if row is None:
+            return {"ok": False, "blocker_id": blocker_id, "status": "not_found"}
+        if row["status"] == "open":
+            return {"ok": True, "already": True, "blocker_id": blocker_id, "status": "open"}
+        conn = self._connect()
+        conn.execute(
+            "UPDATE blockers SET status = 'open', resolved_at = NULL, cancelled_at = NULL"
+            " WHERE id = ?",
+            (blocker_id,),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "blocker_id": blocker_id, "status": "open"}
+
     def search_observations(
         self, query: str, *, project_id: str | None = None, limit: int = 20
     ) -> list[dict[str, Any]]:
