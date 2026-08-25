@@ -68,7 +68,7 @@ def handle_get_resume_context(
     store = services.open_store(db_path)
     context = validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
     result = context.to_dict()
-    if max_tokens:
+    if max_tokens is not None:
         result = _fit_to_token_budget(result, max_tokens)
     return result
 
@@ -160,9 +160,9 @@ def handle_search_observations(
     limit: int = 20,
 ) -> dict[str, Any]:
     """Full-text search captured observations across projects."""
-    store = services.open_store(db_path)
-    results = store.search_observations(query, project_id=project_id, limit=limit)
-    return {"ok": True, "query": query, "count": len(results), "results": results}
+    return services.search_observations_safe(
+        db_path, query, project_id=project_id, limit=limit
+    )
 
 
 def handle_distill_project(

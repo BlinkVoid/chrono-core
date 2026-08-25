@@ -19,6 +19,7 @@ def read_git_state(project_path: Path) -> GitState:
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=10,
             )
             .stdout.strip()
             or None
@@ -30,6 +31,7 @@ def read_git_state(project_path: Path) -> GitState:
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=10,
             )
             .stdout.strip()
             or None
@@ -41,6 +43,7 @@ def read_git_state(project_path: Path) -> GitState:
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=10,
             )
             .stdout.strip()
             != ""

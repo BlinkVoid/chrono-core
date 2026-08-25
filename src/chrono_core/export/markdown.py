@@ -52,6 +52,16 @@ def export_markdown(store: Store, output_dir: str | Path) -> dict[str, Any]:
     }
 
 
+def _render_escape(text: str) -> str:
+    """Escape characters that could inject markdown structure when rendered."""
+    return (
+        text.replace("\\", "\\\\")
+        .replace("#", "\\#")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+    )
+
+
 def _render_project_index(projects: list[dict[str, str]]) -> str:
     lines = ["# Projects", ""]
     if not projects:
@@ -59,22 +69,23 @@ def _render_project_index(projects: list[dict[str, str]]) -> str:
         return "\n".join(lines) + "\n"
 
     for project in projects:
-        lines.append(f"- [{project['name']}]({project['relative_path']})")
+        name = _render_escape(project["name"])
+        lines.append(f"- [{name}]({project['relative_path']})")
     return "\n".join(lines) + "\n"
 
 
 def _render_project_page(context: ResumeContext, review: dict[str, Any] | None = None) -> str:
     lines = [
-        f"# {context.project_name}",
+        f"# {_render_escape(context.project_name)}",
         "",
         f"- Project ID: `{context.project_id}`",
         f"- Path: `{context.project_path}`",
-        f"- Status: {context.current_status or 'Unknown'}",
+        f"- Status: {_render_escape(context.current_status or 'Unknown')}",
         "",
     ]
 
     if context.summary:
-        lines.extend(["## Latest Session", "", context.summary, ""])
+        lines.extend(["## Latest Session", "", _render_escape(context.summary), ""])
 
     _append_items(lines, "Open Blockers", context.active_blockers, "title")
     _append_items(lines, "Next Actions", context.next_actions, "text")
@@ -95,7 +106,7 @@ def _append_items(
         return
     lines.extend([f"## {heading}", ""])
     for item in items:
-        content = str(item.get(content_key, "")).strip()
+        content = _render_escape(str(item.get(content_key, "")).strip())
         if content:
             lines.append(f"- {content}")
     lines.append("")
@@ -106,7 +117,7 @@ def _append_queue(lines: list[str], items: list[dict[str, Any]]) -> None:
         return
     lines.extend(["## Review Queue", ""])
     for item in items:
-        summary = str(item.get("summary", "")).strip()
+        summary = _render_escape(str(item.get("summary", "")).strip())
         target = str(item.get("target", "")).strip()
         item_type = str(item.get("type", "review")).strip()
         if summary:
@@ -120,10 +131,10 @@ def _render_review_queue(items: list[dict[str, str]]) -> str:
         lines.append("No review items.")
         return "\n".join(lines) + "\n"
     for item in items:
-        project = item.get("project", "unknown")
+        project = _render_escape(item.get("project", "unknown"))
         item_type = item.get("type", "review")
         target = item.get("target", "")
-        summary = item.get("summary", "")
+        summary = _render_escape(item.get("summary", ""))
         severity = item.get("severity", "normal")
         lines.append(f"- **{project}** [{severity}] {item_type} `{target}`: {summary}")
     return "\n".join(lines) + "\n"

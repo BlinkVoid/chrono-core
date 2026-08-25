@@ -28,11 +28,14 @@ def build_handoff_payload(args: Namespace) -> HandoffPayload:
     """Build a HandoffPayload from argparse args or a JSON payload."""
     if getattr(args, "json", None):
         source = args.json
-        if source == "-":
-            data = json.load(sys.stdin)
-        else:
-            with Path(source).open("r", encoding="utf-8") as fh:
-                data = json.load(fh)
+        try:
+            if source == "-":
+                data = json.load(sys.stdin)
+            else:
+                with Path(source).open("r", encoding="utf-8") as fh:
+                    data = json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"unreadable --json payload: {source} ({exc})") from exc
         return HandoffPayload(
             summary=data.get("summary", ""),
             files_changed=list(data.get("files_changed", [])),

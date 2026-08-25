@@ -1,6 +1,7 @@
 """Shared operations used by both the CLI and the MCP server."""
 from __future__ import annotations
 
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -158,3 +159,21 @@ def update_bug(db_path: str | None, bug_id: str, **fields: Any) -> dict[str, Any
         return open_store(db_path).update_bug(bug_id, **fields)
     except ValueError as exc:
         return {"ok": False, "bug_id": bug_id, "error": str(exc)}
+
+
+def search_observations_safe(
+    db_path: str | None, query: str, *, project_id: str | None = None, limit: int = 20
+) -> dict[str, Any]:
+    """Full-text observation search that reports malformed FTS queries structurally."""
+    try:
+        results = open_store(db_path).search_observations(
+            query, project_id=project_id, limit=max(limit, 0)
+        )
+    except sqlite3.OperationalError as exc:
+        return {
+            "ok": False,
+            "query": query,
+            "error": f"invalid query: {exc}",
+            "results": [],
+        }
+    return {"ok": True, "query": query, "count": len(results), "results": results}

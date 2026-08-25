@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from chrono_core import __version__, services
@@ -338,18 +339,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "handoff":
         if not args.summary.strip() and not args.json:
             parser.error("handoff requires --summary or --json")
-        result = capture_handoff(args)
+        try:
+            result = capture_handoff(args)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
         print(json.dumps(result, indent=2))
         return 0
 
     if args.command == "search":
-        store = services.open_store(args.db_path)
-        results = store.search_observations(
-            args.query, project_id=args.project_id, limit=args.limit
+        result = services.search_observations_safe(
+            args.db_path, args.query, project_id=args.project_id, limit=args.limit
         )
-        result = {"ok": True, "query": args.query, "count": len(results), "results": results}
         print(json.dumps(result, indent=2))
-        return 0
+        return 0 if result["ok"] else 1
 
     if args.command == "blocker":
         if args.blocker_command == "resolve":
