@@ -20,6 +20,9 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
 - MCP server (`chrono-mcp`) exposing resume, handoff, lifecycle, search, distill, and review tools backed by the same Store/resolver/capture paths as the CLI.
 - Deterministic management review with doc reconciliation, stale/contradictory doc detection, project health, improvement advice, and review queue output.
 - Markdown/wiki export now writes project pages plus a `ReviewQueue.md`.
+- `chrono export json` emits per-project records (decisions, blockers, next
+  actions) as stable, date-filterable JSON for consumer backfill/incremental
+  sync (see `docs/superpowers/specs/2026-08-26-record-export-json-design.md`).
 - Focused unit tests covering resolver, store, handoff, resume, MCP tool handlers, distillation, review, and export.
 
 ## Project Location

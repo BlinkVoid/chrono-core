@@ -261,6 +261,34 @@ def build_parser() -> argparse.ArgumentParser:
         default="exports/markdown",
         help="directory for markdown export output",
     )
+    p_export_json = export_sub.add_parser(
+        "json", help="export project records (decisions, blockers, next actions) as JSON"
+    )
+    json_selectors = p_export_json.add_mutually_exclusive_group(required=True)
+    json_selectors.add_argument("--project-id", default=None, help="export this project id")
+    json_selectors.add_argument("--cwd", default=None, help="resolve the project from this path")
+    p_export_json.add_argument("--workspace-root", default=default_workspace_root())
+    p_export_json.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+    p_export_json.add_argument(
+        "--since",
+        default=None,
+        help="only include records created at or after this ISO 8601 timestamp (inclusive)",
+    )
+    p_export_json.add_argument(
+        "--include-closed",
+        action="store_true",
+        help="include resolved/cancelled blockers and completed actions with their terminal status",
+    )
+    p_export_json.add_argument(
+        "--type",
+        dest="type",
+        action="append",
+        choices=["decisions", "blockers", "next_actions"],
+        default=None,
+        help="restrict output to a record type; repeatable",
+    )
 
     p_gearcore = sub.add_parser("gearcore", help="GearCore adapter utilities")
     gearcore_sub = p_gearcore.add_subparsers(dest="gearcore_command")
@@ -434,6 +462,10 @@ def main(argv: list[str] | None = None) -> int:
             result = export_markdown(store, args.output_dir)
             print(json.dumps(result, indent=2))
             return 0 if result["ok"] else 1
+        if args.export_command == "json":
+            from chrono_core.export.json import export_json_command
+
+            return export_json_command(args)
         parser.error("export requires a subcommand")
 
     if args.command == "gearcore":
