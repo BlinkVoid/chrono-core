@@ -668,3 +668,124 @@ class Store:
             hidden_actions=hidden_actions,
             hidden_blockers=hidden_blockers,
         )
+
+    def report_bug(
+        self,
+        project_id: str | None,
+        title: str,
+        *,
+        detail: str = "",
+        severity: str = "medium",
+        found_in_session_id: str | None = None,
+    ) -> str:
+        from chrono_core.domain.models import BUG_SEVERITIES
+
+        if severity not in BUG_SEVERITIES:
+            raise ValueError(
+                f"invalid severity '{severity}'; expected one of {BUG_SEVERITIES}"
+            )
+        conn = self._connect()
+        now = utc_now()
+        bug_id = make_entity_id("bug")
+        conn.execute(
+            """
+            INSERT INTO bugs (
+                id, project_id, title, detail, severity, status,
+                found_in_session_id, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, 'open', ?, ?, ?)
+            """,
+            (bug_id, project_id, title, detail, severity, found_in_session_id, now, now),
+        )
+        self._commit()
+        return bug_id
+
+    def list_bugs(
+        self,
+        *,
+        status: str | None = "open",
+        severity: str | None = None,
+        project_id: str | None = None,
+        include_workspace_wide: bool = True,
+    ) -> list[dict[str, Any]]:
+        sql = """
+            SELECT b.*, COALESCE(p.name, '(workspace)') AS project_name
+            FROM bugs b LEFT JOIN projects p ON p.id = b.project_id
+            WHERE 1=1
+        """
+        params: list[Any] = []
+        if status is not None:
+            sql += " AND b.status = ?"
+            params.append(status)
+        if severity is not None:
+            sql += " AND b.severity = ?"
+            params.append(severity)
+        if project_id is not None:
+            sql += " AND b.project_id = ?"
+            params.append(project_id)
+        elif not include_workspace_wide:
+            sql += " AND b.project_id IS NOT NULL"
+        sql += " ORDER BY b.created_at DESC"
+        return [dict(r) for r in self._connect().execute(sql, params).fetchall()]
+
+    def get_bug(self, bug_id: str) -> dict[str, Any] | None:
+        row = self._connect().execute(
+            """
+            SELECT b.*, COALESCE(p.name, '(workspace)') AS project_name
+            FROM bugs b LEFT JOIN projects p ON p.id = b.project_id
+            WHERE b.id = ?
+            """,
+            (bug_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def update_bug(
+        self,
+        bug_id: str,
+        *,
+        status: str | None = None,
+        severity: str | None = None,
+        detail: str | None = None,
+        fixed_in_session_id: str | None = None,
+    ) -> dict[str, Any]:
+        from chrono_core.domain.models import BUG_SEVERITIES, BUG_STATUSES
+
+        if status is not None and status not in BUG_STATUSES:
+            raise ValueError(f"invalid status '{status}'; expected one of {BUG_STATUSES}")
+        if severity is not None and severity not in BUG_SEVERITIES:
+            raise ValueError(f"invalid severity '{severity}'")
+        current = self.get_bug(bug_id)
+        if current is None:
+            return {"ok": False, "bug_id": bug_id, "status": "not_found"}
+        closed = {"fixed", "wont_fix", "cancelled"}
+        # resolved_at is written directly (not COALESCE'd): an explicit status
+        # transition stamps/clears it, while a field-only edit preserves the
+        # current value.
+        resolved_at = current["resolved_at"]
+        if status is not None:
+            resolved_at = utc_now() if status in closed else None
+        self._connect().execute(
+            """
+            UPDATE bugs SET
+                status = COALESCE(?, status),
+                severity = COALESCE(?, severity),
+                detail = COALESCE(?, detail),
+                fixed_in_session_id = COALESCE(?, fixed_in_session_id),
+                resolved_at = ?,
+                updated_at = ?
+            WHERE id = ?
+            """,
+            (status, severity, detail, fixed_in_session_id, resolved_at, utc_now(), bug_id),
+        )
+        self._commit()
+        return {"ok": True, "already": False, "bug_id": bug_id, "bug": self.get_bug(bug_id)}
+
+    def search_bugs(self, query: str, *, limit: int = 20) -> list[dict[str, Any]]:
+        rows = self._connect().execute(
+            """
+            SELECT b.* FROM bug_fts f JOIN bugs b ON b.rowid = f.rowid
+            WHERE bug_fts MATCH ? ORDER BY rank LIMIT ?
+            """,
+            (query, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
