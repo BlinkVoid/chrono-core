@@ -4,14 +4,11 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
+from chrono_core.capture.git import read_git_state
 from chrono_core.config import default_db_path, default_workspace_root
 from chrono_core.domain.models import ResumeContext
 from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import resolve_project
-
-
-def _default_db_path() -> str:
-    return default_db_path()
 
 
 def validate_resume_path(context: ResumeContext) -> ResumeContext:
@@ -24,15 +21,27 @@ def validate_resume_path(context: ResumeContext) -> ResumeContext:
 
 
 def get_resume_context(args: Namespace) -> ResumeContext:
-    """Resolve project and return resume context from the store."""
+    """Resolve project and return branch-scoped resume context from the store."""
     project_path = Path(getattr(args, "cwd", "."))
     workspace_root = Path(getattr(args, "workspace_root", None) or default_workspace_root())
     project = resolve_project(project_path, workspace_root=workspace_root)
 
-    db_path = getattr(args, "db_path", None) or _default_db_path()
+    db_path = getattr(args, "db_path", None) or default_db_path()
     store = Store(db_path)
     store.init_schema()
-    return validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
+
+    include_all = getattr(args, "all", False)
+    branch = getattr(args, "branch", None)
+    if not include_all and branch is None:
+        branch = read_git_state(project_path).branch
+
+    context = store.get_resume_context(
+        store.resolve_project_id(project),
+        branch=branch,
+        include_all=include_all,
+        limit=getattr(args, "limit", 20),
+    )
+    return validate_resume_path(context)
 
 
 def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:
@@ -48,15 +57,24 @@ def format_resume(context: ResumeContext, *, as_json: bool = False) -> str:
     if context.summary:
         lines.append(f"Latest session: {context.summary}")
 
-    if context.active_blockers:
-        lines.append("\nOpen blockers:")
+    scope = "all branches" if context.branch == "" else context.branch
+    if context.active_blockers or context.hidden_blockers:
+        lines.append(f"\nOpen blockers ({scope}):")
         for blocker in context.active_blockers:
             lines.append(f"  - [{blocker.get('id', '')}] {blocker.get('title', '')}")
+        if context.hidden_blockers:
+            lines.append(
+                f"  (+{context.hidden_blockers} more on other branches: --all to show)"
+            )
 
-    if context.next_actions:
-        lines.append("\nNext actions:")
+    if context.next_actions or context.hidden_actions:
+        lines.append(f"\nNext actions ({scope}):")
         for action in context.next_actions:
             lines.append(f"  - [{action.get('id', '')}] {action.get('text', '')}")
+        if context.hidden_actions:
+            lines.append(
+                f"  (+{context.hidden_actions} more on other branches: --all to show)"
+            )
 
     if context.recent_decisions:
         lines.append("\nRecent decisions:")

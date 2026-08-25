@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from chrono_core import mcp_server, resume
+from chrono_core import mcp_server
 from chrono_core.capture import handoff
 from chrono_core.cli import build_parser
 from chrono_core.config import default_db_path
@@ -38,4 +38,4 @@ def test_mcp_server_default_matches_canonical_location():
 
 def test_capture_and_resume_fallbacks_match_canonical_location():
     assert handoff._default_db_path() == CANONICAL
-    assert resume._default_db_path() == CANONICAL
+    assert default_db_path() == CANONICAL

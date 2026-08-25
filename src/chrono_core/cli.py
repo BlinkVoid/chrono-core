@@ -40,6 +40,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
     p_resume.add_argument("--json", action="store_true", help="emit JSON")
+    p_resume.add_argument("--all", action="store_true", help="show actions from all branches")
+    p_resume.add_argument("--branch", default=None, help="override the workstream branch")
+    p_resume.add_argument(
+        "--limit", type=int, default=20, help="max open items per category"
+    )
 
     p_distill = sub.add_parser("distill", help="distill captured records into project state")
     p_distill.add_argument("--cwd", default=".")
