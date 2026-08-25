@@ -395,6 +395,60 @@ def reopen_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[str
     return handle_reopen_blocker(blocker_id, db_path=db_path)
 
 
+def handle_report_bug(
+    cwd: str,
+    title: str,
+    *,
+    severity: str = "medium",
+    detail: str = "",
+    workspace_wide: bool = False,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """File a bug against the project at *cwd*, or against the whole workspace."""
+    return services.report_bug(
+        db_path,
+        cwd,
+        title=title,
+        severity=severity,
+        detail=detail,
+        workspace_wide=workspace_wide,
+        workspace_root=workspace_root,
+    )
+
+
+def handle_list_bugs(
+    *,
+    status: str | None = "open",
+    severity: str | None = None,
+    project_id: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """List bugs filtered by status, severity, and/or project."""
+    return services.list_bugs(
+        db_path, status=status, severity=severity, project_id=project_id
+    )
+
+
+def handle_update_bug(
+    bug_id: str,
+    *,
+    status: str | None = None,
+    severity: str | None = None,
+    detail: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Update mutable fields on an existing bug."""
+    fields: dict[str, Any] = {}
+    if status is not None:
+        fields["status"] = status
+    if severity is not None:
+        fields["severity"] = severity
+    if detail is not None:
+        fields["detail"] = detail
+    return services.update_bug(db_path, bug_id, **fields)
+
+
 @mcp.tool(name="chrono_core_search_observations")
 def search_observations_tool(
     query: str,
@@ -405,6 +459,55 @@ def search_observations_tool(
     """Full-text search captured observations (files, tests, risks, imported metadata)."""
     return handle_search_observations(
         query, project_id=project_id, db_path=db_path, limit=limit
+    )
+
+
+@mcp.tool(name="chrono_core_report_bug")
+def report_bug_tool(
+    cwd: str,
+    title: str,
+    severity: str = "medium",
+    detail: str = "",
+    workspace: bool = False,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """File a bug against the project at cwd, or workspace-wide."""
+    return handle_report_bug(
+        cwd,
+        title,
+        severity=severity,
+        detail=detail,
+        workspace_wide=workspace,
+        workspace_root=workspace_root,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="chrono_core_list_bugs")
+def list_bugs_tool(
+    status: str | None = "open",
+    severity: str | None = None,
+    project_id: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """List bugs, defaulting to open ones across the workspace."""
+    return handle_list_bugs(
+        status=status, severity=severity, project_id=project_id, db_path=db_path
+    )
+
+
+@mcp.tool(name="chrono_core_update_bug")
+def update_bug_tool(
+    bug_id: str,
+    status: str | None = None,
+    severity: str | None = None,
+    detail: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Update a bug's status, severity, or detail."""
+    return handle_update_bug(
+        bug_id, status=status, severity=severity, detail=detail, db_path=db_path
     )
 
 

@@ -280,3 +280,76 @@ def test_registered_tools_include_lifecycle():
         "chrono_core_edit_blocker",
         "chrono_core_reopen_blocker",
     } <= names
+
+
+def test_registered_tools_include_bugs():
+    from chrono_core.mcp_server import mcp
+
+    registered = asyncio.run(mcp.list_tools())
+    names = {t.name for t in registered}
+    assert {
+        "chrono_core_report_bug",
+        "chrono_core_list_bugs",
+        "chrono_core_update_bug",
+    } <= names
+
+
+def test_report_bug_tool_round_trip(tmp_path: Path):
+    from chrono_core.mcp_server import (
+        list_bugs_tool,
+        report_bug_tool,
+        update_bug_tool,
+    )
+
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    db = str(tmp_path / "chrono.db")
+
+    reported = report_bug_tool(
+        str(project),
+        "Resume shows stale actions",
+        severity="high",
+        detail="Flat query leaks other workstreams.",
+        workspace_root=str(workspace),
+        db_path=db,
+    )
+    assert reported["ok"] is True
+    assert reported["bug"]["severity"] == "high"
+    bug_id = reported["bug_id"]
+
+    open_list = list_bugs_tool(db_path=db)
+    assert open_list["count"] == 1
+    assert open_list["bugs"][0]["id"] == bug_id
+
+    updated = update_bug_tool(bug_id, status="confirmed", db_path=db)
+    assert updated["ok"] is True and updated["bug"]["status"] == "confirmed"
+
+    closed = list_bugs_tool(status="open", db_path=db)
+    assert closed["count"] == 0
+    confirmed = list_bugs_tool(status="confirmed", db_path=db)
+    assert confirmed["count"] == 1
+
+
+def test_report_bug_tool_workspace_wide(tmp_path: Path):
+    from chrono_core.mcp_server import report_bug_tool
+
+    db = str(tmp_path / "ws.db")
+
+    result = report_bug_tool(
+        str(tmp_path),
+        "Workspace-wide defect",
+        workspace=True,
+        db_path=db,
+    )
+    assert result["ok"] is True
+    assert result["project_id"] is None
+
+
+def test_update_bug_tool_rejects_unknown_bug(tmp_path: Path):
+    from chrono_core.mcp_server import update_bug_tool
+
+    db = str(tmp_path / "none.db")
+    result = update_bug_tool("nope", status="fixed", db_path=db)
+    assert result["ok"] is False

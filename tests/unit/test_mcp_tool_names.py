@@ -28,6 +28,9 @@ EXPECTED_TOOLS = {
     "chrono_core_distill_project",
     "chrono_core_search_observations",
     "chrono_core_review_project",
+    "chrono_core_report_bug",
+    "chrono_core_list_bugs",
+    "chrono_core_update_bug",
 }
 
 
