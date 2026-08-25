@@ -11,7 +11,8 @@ from chrono_core.config import default_db_path
 CANONICAL = str(Path.home() / ".local" / "share" / "chrono-core" / "chrono.db")
 
 
-def test_default_db_path_is_canonical_xdg_location():
+def test_default_db_path_is_canonical_xdg_location(monkeypatch):
+    monkeypatch.delenv("CHRONO_DB_PATH", raising=False)
     assert default_db_path() == CANONICAL
 
 
@@ -26,9 +27,9 @@ def test_default_db_path_is_canonical_xdg_location():
         ["export", "markdown"],
     ],
 )
-def test_cli_db_path_defaults_to_canonical_location(argv: list[str]):
+def test_cli_db_path_defaults_resolve_at_call_time(argv: list[str]):
     args = build_parser().parse_args(argv)
-    assert args.db_path == CANONICAL
+    assert args.db_path is None
 
 
 def test_mcp_server_default_matches_canonical_location(monkeypatch, tmp_path):

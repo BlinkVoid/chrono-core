@@ -246,10 +246,14 @@ def test_record_decision_and_blocker_tools_wrap_handlers(tmp_path: Path):
     assert blocker["blocker"]["status"] == "open"
 
 
-def test_mcp_server_constants():
+def test_mcp_server_falls_back_to_cwd_without_env(monkeypatch, tmp_path):
     from chrono_core.config import default_workspace_root
 
-    assert Path(default_workspace_root()).name == "workspace"
+    monkeypatch.delenv("CHRONO_WORKSPACE_ROOT", raising=False)
+    monkeypatch.delenv("CONTINUITY_WORKSPACE_ROOT", raising=False)
+    monkeypatch.chdir(tmp_path)
+
+    assert Path(default_workspace_root()) == tmp_path
 
 
 def test_cancel_action_via_handle(monkeypatch, tmp_path):

@@ -1,3 +1,13 @@
+"""One-off ops script: copy the legacy continuity DB and remap moved projects.
+
+Not part of the installed package; run ad hoc with the project venv, e.g.::
+
+    uv run python scripts/migrate_legacy_db.py  # or import from a REPL
+
+The workspace layout it remaps (and WORKSPACE_ROOT below) is specific to this
+machine's migration history.
+"""
+
 from __future__ import annotations
 
 import sqlite3

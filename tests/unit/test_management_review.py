@@ -73,13 +73,12 @@ def test_review_project_detects_doc_drift_and_builds_health_queue(tmp_path: Path
 
 def test_review_parser_defaults():
     from chrono_core.cli import build_parser
-    from chrono_core.config import default_db_path
 
     args = build_parser().parse_args(["review"])
 
     assert args.command == "review"
     assert args.cwd == "."
-    assert args.db_path == default_db_path()
+    assert args.db_path is None
 
 
 def test_review_main_emits_json(tmp_path: Path, capsys):

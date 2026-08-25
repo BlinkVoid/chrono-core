@@ -6,18 +6,16 @@ from pathlib import Path
 
 from chrono_core import __version__, services
 from chrono_core.capture.handoff import capture_handoff
-from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.config import default_workspace_root
 from chrono_core.export.markdown import export_markdown
 from chrono_core.integrations.gearcore import build_gearcore_install_plan
 from chrono_core.integrations.workspace_intelligence import ingest_existing_tools
 from chrono_core.management.distill import distill_project
 from chrono_core.management.review import review_project
 from chrono_core.resume import resume_command
-from chrono_core.store.store import Store
 from chrono_core.workspace.discovery import DiscoveryOptions, discover_workspace
 from chrono_core.workspace.resolver import resolve_project
 
-DEFAULT_DB_PATH = default_db_path()
 DEFAULT_WORKSPACE_INTELLIGENCE_REGISTRY = str(
     Path.home() / ".local" / "state" / "workspace-intelligence" / "registry.db"
 )
@@ -37,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_resume.add_argument("--cwd", default=".")
     p_resume.add_argument("--workspace-root", default=default_workspace_root())
     p_resume.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
     p_resume.add_argument("--json", action="store_true", help="emit JSON")
     p_resume.add_argument("--all", action="store_true", help="show actions from all branches")
@@ -50,20 +48,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_distill.add_argument("--cwd", default=".")
     p_distill.add_argument("--workspace-root", default=default_workspace_root())
     p_distill.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_review = sub.add_parser("review", help="run a project management review")
     p_review.add_argument("--cwd", default=".")
     p_review.add_argument("--workspace-root", default=default_workspace_root())
     p_review.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_discover = sub.add_parser("discover", help="discover workspace projects")
     p_discover.add_argument("--workspace-root", default=default_workspace_root())
     p_discover.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
     p_discover.add_argument(
         "--max-depth", type=int, default=3, help="maximum directory depth to scan"
@@ -83,7 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_handoff.add_argument("--cwd", default=".")
     p_handoff.add_argument("--workspace-root", default=default_workspace_root())
     p_handoff.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
     p_handoff.add_argument("--summary", default="", help="short handoff summary")
     p_handoff.add_argument(
@@ -122,7 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument("--project-id", default=None, help="limit results to one project")
     p_search.add_argument("--limit", type=int, default=20, help="maximum results")
     p_search.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_blocker = sub.add_parser("blocker", help="manage blocker lifecycle")
@@ -130,21 +128,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_blocker_resolve = blocker_sub.add_parser("resolve", help="mark a blocker resolved")
     p_blocker_resolve.add_argument("blocker_id", help="blocker id (see resume output)")
     p_blocker_resolve.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_blocker_cancel = blocker_sub.add_parser("cancel", help="close a blocker as cancelled")
     p_blocker_cancel.add_argument("blocker_id")
     p_blocker_cancel.add_argument("--reason", default=None)
     p_blocker_cancel.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_blocker_edit = blocker_sub.add_parser("edit", help="rewrite a blocker's title")
     p_blocker_edit.add_argument("blocker_id")
     p_blocker_edit.add_argument("--text", required=True)
     p_blocker_edit.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_blocker_reopen = blocker_sub.add_parser(
@@ -152,7 +150,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_blocker_reopen.add_argument("blocker_id")
     p_blocker_reopen.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_action = sub.add_parser("action", help="manage next-action lifecycle")
@@ -160,7 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_action_complete = action_sub.add_parser("complete", help="mark a next action done")
     p_action_complete.add_argument("action_id", help="next action id (see resume output)")
     p_action_complete.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_action_cancel = action_sub.add_parser(
@@ -169,14 +167,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_action_cancel.add_argument("action_id")
     p_action_cancel.add_argument("--reason", default=None)
     p_action_cancel.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_action_edit = action_sub.add_parser("edit", help="rewrite an action's text")
     p_action_edit.add_argument("action_id")
     p_action_edit.add_argument("--text", required=True)
     p_action_edit.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_action_reopen = action_sub.add_parser(
@@ -184,7 +182,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_action_reopen.add_argument("action_id")
     p_action_reopen.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_action_supersede = action_sub.add_parser(
@@ -193,7 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_action_supersede.add_argument("action_id")
     p_action_supersede.add_argument("--text", required=True)
     p_action_supersede.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_bug = sub.add_parser("bug", help="track bugs across projects")
@@ -210,7 +208,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_bug_report.add_argument("--cwd", default=".")
     p_bug_report.add_argument("--workspace-root", default=default_workspace_root())
-    p_bug_report.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+    p_bug_report.add_argument("--db-path", "--db", default=None)
 
     p_bug_list = bug_sub.add_parser("list", help="list bugs across projects")
     p_bug_list.add_argument("--status", default="open")
@@ -219,11 +217,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_bug_list.add_argument("--json", action="store_true")
     p_bug_list.add_argument("--cwd", default=".")
     p_bug_list.add_argument("--workspace-root", default=default_workspace_root())
-    p_bug_list.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+    p_bug_list.add_argument("--db-path", "--db", default=None)
 
     p_bug_show = bug_sub.add_parser("show", help="show one bug")
     p_bug_show.add_argument("bug_id")
-    p_bug_show.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+    p_bug_show.add_argument("--db-path", "--db", default=None)
 
     p_bug_update = bug_sub.add_parser("update", help="change bug status/severity/detail")
     p_bug_update.add_argument("bug_id")
@@ -236,7 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_bug_update.add_argument("--detail")
     p_bug_update.add_argument("--cwd", default=".")
     p_bug_update.add_argument("--workspace-root", default=default_workspace_root())
-    p_bug_update.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+    p_bug_update.add_argument("--db-path", "--db", default=None)
 
     p_ingest = sub.add_parser(
         "ingest-existing-tools", help="import workspace-intelligence registry into Continuity"
@@ -248,14 +246,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_ingest.add_argument("--workspace-root", default=default_workspace_root())
     p_ingest.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
 
     p_export = sub.add_parser("export", help="export derived continuity artifacts")
     export_sub = p_export.add_subparsers(dest="export_command")
     p_export_markdown = export_sub.add_parser("markdown", help="export project markdown")
     p_export_markdown.add_argument(
-        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+        "--db-path", "--db", default=None, help="continuity database path"
     )
     p_export_markdown.add_argument(
         "--output-dir",
@@ -305,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         return resume_command(args)
 
     if args.command == "distill":
-        store = Store(args.db_path)
+        store = services.open_store(args.db_path)
         result = distill_project(
             cwd=args.cwd,
             workspace_root=args.workspace_root,
@@ -315,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["ok"] else 1
 
     if args.command == "review":
-        store = Store(args.db_path)
+        store = services.open_store(args.db_path)
         result = review_project(
             cwd=args.cwd,
             workspace_root=args.workspace_root,
@@ -325,7 +323,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["ok"] else 1
 
     if args.command == "discover":
-        store = None if args.no_persist else Store(args.db_path)
+        store = None if args.no_persist else services.open_store(args.db_path)
         result = discover_workspace(
             workspace_root=args.workspace_root,
             store=store,
@@ -345,8 +343,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "search":
-        store = Store(args.db_path)
-        store.init_schema()
+        store = services.open_store(args.db_path)
         results = store.search_observations(
             args.query, project_id=args.project_id, limit=args.limit
         )
@@ -419,7 +416,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result.get("ok") else 1
 
     if args.command == "ingest-existing-tools":
-        store = Store(args.db_path)
+        store = services.open_store(args.db_path)
         result = ingest_existing_tools(
             store,
             registry_path=args.registry_path,
@@ -430,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "export":
         if args.export_command == "markdown":
-            store = Store(args.db_path)
+            store = services.open_store(args.db_path)
             result = export_markdown(store, args.output_dir)
             print(json.dumps(result, indent=2))
             return 0 if result["ok"] else 1

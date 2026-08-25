@@ -18,9 +18,10 @@ def test_product_and_gearcore_registration_use_chrono_core_identity():
     assert project["scripts"]["chrono"] == "chrono_core.cli:main"
     assert project["scripts"]["chrono-mcp"] == "chrono_core.mcp_server:main"
 
-    plan = build_gearcore_install_plan().to_dict()
-    assert plan["skill_path"].endswith("skills/chrono-core")
-    assert plan["mcp_server"] == {
+    plan = build_gearcore_install_plan(skill_path=REPO_ROOT / "skills" / "chrono-core")
+    plan_data = plan.to_dict()
+    assert plan_data["skill_path"].endswith("skills/chrono-core")
+    assert plan_data["mcp_server"] == {
         "id": "chrono-core",
         "type": "stdio",
         "command": "chrono-mcp",

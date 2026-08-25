@@ -79,9 +79,7 @@ def test_distill_parser_defaults():
 
     assert args.command == "distill"
     assert args.cwd == "."
-    from chrono_core.config import default_db_path
-
-    assert args.db_path == default_db_path()
+    assert args.db_path is None
 
 
 def test_distill_main_emits_json(tmp_path: Path, capsys):

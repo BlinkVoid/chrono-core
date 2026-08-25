@@ -1,12 +1,26 @@
 from __future__ import annotations
 
+import importlib.util
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-from chrono_core.migrations import migrate_legacy_database
 from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import make_project_id
+
+
+def _load_ops_script():
+    script = (
+        Path(__file__).resolve().parents[2] / "scripts" / "migrate_legacy_db.py"
+    )
+    spec = importlib.util.spec_from_file_location("migrate_legacy_db", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+migrate_legacy_database = _load_ops_script().migrate_legacy_database
 
 
 def test_identity_migration_preserves_observations_fts_and_foreign_keys(tmp_path: Path):

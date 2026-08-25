@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_SKILL_PATH = REPO_ROOT / "skills" / "chrono-core"
 DEFAULT_MCP_SERVER_ID = "chrono-core"
 DEFAULT_MCP_COMMAND = "chrono-mcp"
 
@@ -31,7 +29,7 @@ class GearCoreInstallPlan:
     """Registration plan for exposing Chrono Core through GearCore."""
 
     scope: str
-    skill_path: Path
+    skill_path: Path | None
     symlink: bool
     project_root: Path | None
     mcp_server_id: str
@@ -43,7 +41,7 @@ class GearCoreInstallPlan:
             "ok": True,
             "scope": self.scope,
             "project_root": str(self.project_root) if self.project_root else None,
-            "skill_path": str(self.skill_path),
+            "skill_path": str(self.skill_path) if self.skill_path else None,
             "symlink": self.symlink,
             "mcp_server": {
                 "id": self.mcp_server_id,
@@ -63,23 +61,30 @@ def build_gearcore_install_plan(
     mcp_server_id: str = DEFAULT_MCP_SERVER_ID,
     mcp_command: str = DEFAULT_MCP_COMMAND,
 ) -> GearCoreInstallPlan:
-    """Build explicit GearCore registration commands without mutating config."""
+    """Build explicit GearCore registration commands without mutating config.
+
+    ``skill_path`` must be supplied explicitly; there is no machine-specific
+    default, so skill-copy commands are omitted from the plan when absent.
+    """
     if scope not in {"global", "project"}:
         raise ValueError("scope must be 'global' or 'project'")
     if scope == "project" and project_root is None:
         raise ValueError("project_root is required when scope is 'project'")
 
-    resolved_skill_path = Path(skill_path) if skill_path else DEFAULT_SKILL_PATH
+    resolved_skill_path = Path(skill_path) if skill_path else None
     resolved_project_root = Path(project_root) if project_root else None
 
     prefix = ["gearcore"]
     if resolved_project_root is not None:
         prefix.extend(["--project", str(resolved_project_root)])
 
-    skill_argv = [*prefix, "add-skill", "--scope", scope]
-    if symlink:
-        skill_argv.append("--symlink")
-    skill_argv.append(str(resolved_skill_path))
+    commands: list[GearCoreCommand] = []
+    if resolved_skill_path is not None:
+        skill_argv = [*prefix, "add-skill", "--scope", scope]
+        if symlink:
+            skill_argv.append("--symlink")
+        skill_argv.append(str(resolved_skill_path))
+        commands.append(GearCoreCommand("Register Chrono Core skill", skill_argv))
 
     mcp_argv = [
         *prefix,
@@ -93,6 +98,7 @@ def build_gearcore_install_plan(
         "--scope",
         scope,
     ]
+    commands.append(GearCoreCommand("Register Chrono Core MCP server", mcp_argv))
 
     return GearCoreInstallPlan(
         scope=scope,
@@ -101,8 +107,5 @@ def build_gearcore_install_plan(
         project_root=resolved_project_root,
         mcp_server_id=mcp_server_id,
         mcp_command=mcp_command,
-        commands=[
-            GearCoreCommand("Register Chrono Core skill", skill_argv),
-            GearCoreCommand("Register Chrono Core MCP server", mcp_argv),
-        ],
+        commands=commands,
     )
