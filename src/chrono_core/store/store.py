@@ -80,13 +80,13 @@ class Store:
         applied = {
             row["version"] for row in conn.execute("SELECT version FROM schema_migrations")
         }
-        if SCHEMA_VERSION not in applied:
+        if SCHEMA_VERSION >= 2 and 2 not in applied:
             # Version 2 added FTS sync triggers; reindex rows written before them.
             conn.execute("INSERT INTO observation_fts (observation_fts) VALUES ('rebuild')")
-            conn.execute(
-                "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (?, ?)",
-                (SCHEMA_VERSION, utc_now()),
-            )
+
+        from chrono_core.store.migrations import apply_pending
+
+        apply_pending(conn)
         self._commit()
 
     def close(self) -> None:

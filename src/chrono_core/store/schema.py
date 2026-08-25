@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 DDL = """
 PRAGMA foreign_keys = ON;
@@ -119,4 +119,9 @@ AFTER UPDATE ON observations BEGIN
     INSERT INTO observation_fts (rowid, content, source)
     VALUES (new.rowid, new.content, new.source);
 END;
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version INTEGER PRIMARY KEY,
+    applied_at TEXT NOT NULL
+);
 """
