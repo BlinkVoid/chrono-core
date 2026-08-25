@@ -71,6 +71,30 @@ def test_review_project_detects_doc_drift_and_builds_health_queue(tmp_path: Path
     assert any("Resolve" in item["advice"] for item in result["improvement_advice"])
 
 
+def test_review_health_applies_bug_pressure_penalty(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    db_path = tmp_path / "chrono.db"
+    store = Store(db_path)
+    project_path = _seed_review_project(store, workspace)
+    project = resolve_project(project_path, workspace_root=workspace)
+    project_id = store.get_or_create_project(project)
+    for index in range(4):
+        store.report_bug(project_id, f"critical flaw {index}", severity="critical")
+
+    result = review_project(
+        cwd=project_path,
+        workspace_root=workspace,
+        store=Store(db_path),
+    )
+
+    assert result["health"]["score"] == 85
+    assert result["health"]["open_high_severity_bugs"] == 4
+    assert any(
+        "open high-severity bug(s) need triage" in item["advice"]
+        for item in result["improvement_advice"]
+    )
+
+
 def test_review_parser_defaults():
     from chrono_core.cli import build_parser
 

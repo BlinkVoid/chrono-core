@@ -74,6 +74,71 @@ def test_distill_project_for_project_without_sessions_is_unknown(tmp_path: Path)
     assert result["summary"] == "No sessions captured yet."
 
 
+def test_distill_health_unchanged_without_open_high_severity_bugs(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    db_path = tmp_path / "chrono.db"
+    project_path = _seed_project(Store(db_path), workspace)
+
+    result = distill_project(cwd=project_path, workspace_root=workspace, store=Store(db_path))
+
+    assert result["health"]["score"] == 100
+    assert result["health"]["open_high_severity_bugs"] == 0
+    assert result["advice"] == []
+
+
+def test_distill_one_critical_bug_reduces_score_and_adds_advice(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    db_path = tmp_path / "chrono.db"
+    store = Store(db_path)
+    project_path = _seed_project(store, workspace)
+    project = resolve_project(project_path, workspace_root=workspace)
+    project_id = store.get_or_create_project(project)
+    store.report_bug(project_id, "critical flaw", severity="critical")
+
+    result = distill_project(cwd=project_path, workspace_root=workspace, store=Store(db_path))
+
+    assert result["health"]["score"] == 95
+    assert result["health"]["open_high_severity_bugs"] == 1
+    assert any(
+        "1 open high-severity bug(s) need triage" in str(line) for line in result["advice"]
+    )
+
+
+def test_distill_bug_pressure_caps_at_fifteen_points(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    db_path = tmp_path / "chrono.db"
+    store = Store(db_path)
+    project_path = _seed_project(store, workspace)
+    project = resolve_project(project_path, workspace_root=workspace)
+    project_id = store.get_or_create_project(project)
+    for index in range(3):
+        store.report_bug(project_id, f"critical flaw {index}", severity="critical")
+    store.report_bug(project_id, "minor nit", severity="low")
+
+    result = distill_project(cwd=project_path, workspace_root=workspace, store=Store(db_path))
+
+    assert result["health"]["score"] == 85
+    assert result["health"]["open_high_severity_bugs"] == 3
+
+
+def test_distill_ignores_closed_and_medium_severity_bugs(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    db_path = tmp_path / "chrono.db"
+    store = Store(db_path)
+    project_path = _seed_project(store, workspace)
+    project = resolve_project(project_path, workspace_root=workspace)
+    project_id = store.get_or_create_project(project)
+    high_id = store.report_bug(project_id, "high flaw", severity="high")
+    store.report_bug(project_id, "medium flaw", severity="medium")
+
+    result = distill_project(cwd=project_path, workspace_root=workspace, store=Store(db_path))
+    assert result["health"]["score"] == 95
+
+    store.update_bug(high_id, status="fixed")
+    result = distill_project(cwd=project_path, workspace_root=workspace, store=Store(db_path))
+    assert result["health"]["score"] == 100
+
+
 def test_distill_parser_defaults():
     args = build_parser().parse_args(["distill"])
 

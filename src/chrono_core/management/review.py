@@ -4,7 +4,11 @@ import re
 from pathlib import Path
 from typing import Any
 
-from chrono_core.management.distill import distill_project
+from chrono_core.management.distill import (
+    bug_pressure,
+    distill_project,
+    high_severity_bug_count,
+)
 from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import resolve_project
 
@@ -38,8 +42,8 @@ def review_project(
         for doc in scanned_documents
     ]
     findings = _find_doc_drift(documents, canonical_phase)
-    health = _build_health(context, findings)
-    advice = _build_advice(context, findings, canonical_phase)
+    health = _build_health(context, findings, store, project_id)
+    advice = _build_advice(context, findings, canonical_phase, store, project_id)
     review_queue = _build_review_queue(context, findings)
 
     return {
@@ -218,11 +222,18 @@ def _find_doc_drift(
     return findings
 
 
-def _build_health(context: Any, findings: list[dict[str, Any]]) -> dict[str, Any]:
+def _build_health(
+    context: Any,
+    findings: list[dict[str, Any]],
+    store: Store,
+    project_id: str,
+) -> dict[str, Any]:
     open_blockers = len(context.active_blockers)
     open_actions = len(context.next_actions)
     stale_docs = sum(1 for finding in findings if finding["kind"] == "stale_doc")
     contradictions = sum(1 for finding in findings if finding["kind"] == "contradictory_doc")
+    penalty = bug_pressure(store, project_id)
+    bug_count = high_severity_bug_count(store, project_id)
     if open_blockers:
         status = "blocked"
     elif contradictions or stale_docs:
@@ -233,6 +244,8 @@ def _build_health(context: Any, findings: list[dict[str, Any]]) -> dict[str, Any
         status = "healthy"
     return {
         "status": status,
+        "score": max(0, 100 - penalty),
+        "open_high_severity_bugs": bug_count,
         "open_blockers": open_blockers,
         "open_actions": open_actions,
         "recent_decisions": len(context.recent_decisions),
@@ -242,7 +255,11 @@ def _build_health(context: Any, findings: list[dict[str, Any]]) -> dict[str, Any
 
 
 def _build_advice(
-    context: Any, findings: list[dict[str, Any]], canonical_phase: str | None
+    context: Any,
+    findings: list[dict[str, Any]],
+    canonical_phase: str | None,
+    store: Store,
+    project_id: str,
 ) -> list[dict[str, str]]:
     advice: list[dict[str, str]] = []
     for blocker in context.active_blockers:
@@ -254,6 +271,14 @@ def _build_advice(
                     "advice": f"Resolve or explicitly defer blocker: {title}",
                 }
             )
+    bug_count = high_severity_bug_count(store, project_id)
+    if bug_count:
+        advice.append(
+            {
+                "priority": "high",
+                "advice": f"{bug_count} open high-severity bug(s) need triage",
+            }
+        )
     if findings:
         advice.append(
             {

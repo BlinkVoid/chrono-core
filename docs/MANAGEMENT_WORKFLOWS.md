@@ -89,6 +89,17 @@ Advice categories:
 - risky untested changes
 - poor project phase definition
 - reusable patterns not yet applied
+- open high-severity bugs
+
+### Bug pressure in health scores
+
+Both `distill` and `review` fold open high-severity bugs into a deterministic
+health score: each open `high`/`critical` bug subtracts 5 points from a base of
+100, capped at 15 points total (`bug_pressure` in
+`src/chrono_core/management/distill.py`, reused by `review.py` so both surfaces
+agree). When any such bug is open, an advice line
+"N open high-severity bug(s) need triage" is emitted. Closed bugs and
+lower severities do not affect the score.
 - projects that should be paused, archived, or promoted
 
 The advice should be evidence-backed and link to the observed records/docs that triggered it.

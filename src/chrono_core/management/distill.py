@@ -23,6 +23,16 @@ def distill_project(
     summary = _derive_summary(context.summary, context.current_status)
     store.update_project_state(project_id, phase=phase, summary=summary)
 
+    bug_count = high_severity_bug_count(store, project_id)
+    penalty = bug_pressure(store, project_id)
+    health = {
+        "score": max(0, 100 - penalty),
+        "open_high_severity_bugs": bug_count,
+    }
+    advice = []
+    if bug_count:
+        advice.append(f"{bug_count} open high-severity bug(s) need triage")
+
     return {
         "ok": True,
         "project_id": project_id,
@@ -30,6 +40,8 @@ def distill_project(
         "project_path": context.project_path,
         "phase": phase,
         "summary": summary,
+        "health": health,
+        "advice": advice,
         "current_status": context.current_status,
         "active_blocker_count": len(context.active_blockers),
         "next_action_count": len(context.next_actions),
@@ -38,6 +50,20 @@ def distill_project(
         "next_actions": context.next_actions,
         "recent_decisions": context.recent_decisions,
     }
+
+
+def high_severity_bug_count(store: Store, project_id: str) -> int:
+    """Count open bugs with severity high or critical for one project."""
+    return sum(
+        1
+        for bug in store.list_bugs(status="open", project_id=project_id)
+        if bug.get("severity") in {"high", "critical"}
+    )
+
+
+def bug_pressure(store: Store, project_id: str) -> int:
+    """Score penalty (capped at 15) for open high/critical bugs in one project."""
+    return min(15, 5 * high_severity_bug_count(store, project_id))
 
 
 def _derive_phase(
