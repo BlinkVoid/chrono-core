@@ -69,3 +69,34 @@ gearcore request-skill chrono-core
 - Prefer structured records over free-form notes when the tool is available.
 - Close finished work: `chrono blocker resolve <id>` and `chrono action complete <id>` keep resume context and the distilled phase truthful.
 - Reserve deeper management workflows for dedicated review sessions. Use `chrono review --cwd "$PWD"` for doc reconciliation, health review, improvement advice, and review queue output.
+
+## Lifecycle Verbs
+
+Resume context is workstream-scoped by default (the current git branch):
+
+```bash
+chrono resume --cwd "$PWD"                 # current branch only
+chrono resume --all                        # every branch
+chrono resume --branch feat/x              # explicit branch override
+chrono resume --limit 50                   # cap open items per category
+```
+
+Next-action lifecycle (`chrono action ...`): `complete`, `cancel <id> [--reason]`,
+`edit <id> <text>`, `reopen <id>`, `supersede <old-id> <new-text>` (creates a
+replacement action linked via `supersedes_id`; cancelling a superseded action
+is rejected).
+
+Blocker lifecycle (`chrono blocker ...`): `resolve`, `cancel <id>`,
+`edit <id> <title>`, `reopen <id>`.
+
+Bug tracking (`chrono bug ...`): `report --cwd "$PWD" <title> [--severity S]`,
+`list [--status] [--severity]`, `show <id>`, `update <id> [--status] [--severity]`.
+
+Search covers observations and bug text in one envelope:
+
+```bash
+chrono search "parser"                     # results + bugs keys, counts for each
+```
+
+The same verbs are exposed over MCP via the `chrono_core_*` tools listed in
+`docs/MVP_CONTRACT.md`.

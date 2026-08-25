@@ -8,6 +8,7 @@
 - `Task` — actionable unit of work.
 - `Milestone` — larger project objective.
 - `Blocker` — condition preventing progress.
+- `Bug` — tracked defect with severity and lifecycle status (`bugs` table).
 - `Decision` — design/product/ops choice with rationale.
 - `Spec` — expected behavior or design contract.
 - `DesignDoc` — project documentation artifact.
@@ -57,6 +58,19 @@ Initial tables:
 - `observations`
 
 `observations` stores raw captured facts before distillation. This prevents management synthesis from overwriting original evidence.
+
+## Lifecycle Statuses
+
+- `next_actions.status`: `open` → `done` | `cancelled` | `superseded`.
+  Cancelling a superseded action is rejected (`ok: false`) — reopen or
+  supersede instead. `supersede` inserts a new open action whose
+  `supersedes_id` points at the old row, forming a replacement chain;
+  lifecycle edits append entries to `raw_history_json`.
+- `blockers.status`: `open` → `resolved` | `cancelled`; `reopen` returns a
+  resolved/cancelled blocker to `open`.
+- `bugs.status`: `open` | `confirmed` | `in_progress` → `fixed` |
+  `wont_fix` | `cancelled`; entering a closed status stamps `resolved_at`,
+  any non-closed status clears it.
 
 ## Canonical vs Derived
 

@@ -6,13 +6,32 @@ Start with SQLite plus FTS and graph-shaped edges. Do not introduce a dedicated 
 
 ## Version
 
-Schema version: `2`
+Schema version: `3`
 
 - v1: initial tables and the `observation_fts` virtual table.
 - v2: FTS sync triggers on `observations` (insert/update/delete). The
   `observation_fts` table is external-content, so without triggers it stayed
   permanently empty. Migrating to v2 runs an FTS `rebuild` so rows captured
   under v1 become searchable.
+- v3 (`store/migrations.py`, "lifecycle columns, bugs table + FTS, first
+  indexes"): adds lifecycle columns to `next_actions`
+  (`cancelled_at`, `supersedes_id` self-reference, `raw_history_json`) and
+  `blockers` (`cancelled_at`); adds the `bugs` table with an external-content
+  `bug_fts` index plus sync triggers; adds per-table indexes on
+  `(project_id, status, created_at)` for sessions/actions/blockers/bugs/
+  decisions and `observations(project_id)`.
+
+## Migration Framework
+
+Per-version migrations live in `src/chrono_core/store/migrations.py`. Each
+migration is a `(version, label)` entry with ordered SQL statements in
+`_STATEMENTS`; `apply_pending()` applies pending versions in order, records
+them in `schema_migrations`, refuses databases newer than the code's
+`SCHEMA_VERSION`, and backfills ledger entries for pre-framework versions so
+the ledger stays contiguous from 1 to `SCHEMA_VERSION`. `ALTER TABLE ... ADD
+COLUMN` statements are guarded against columns that already exist (SQLite has
+no `ADD COLUMN IF NOT EXISTS`). `Store.init_schema()` runs the monolithic DDL,
+the v2 FTS rebuild, and then `apply_pending()`.
 
 ## Canonical Tables
 
@@ -24,11 +43,13 @@ Core tables:
 - `sessions`
 - `decisions`
 - `blockers`
-- `next_actions`
+- `next_actions` (v3 adds `cancelled_at`, `supersedes_id`, `raw_history_json`)
+- `bugs` (v3: severity/status lifecycle, optional session links, remote ids)
 - `documents`
 - `observations`
 - `edges`
-- `observation_fts`
+- `observation_fts` (external-content over `observations`)
+- `bug_fts` (external-content over `bugs.title`/`bugs.detail`, v3)
 
 ## Design Notes
 
@@ -90,6 +111,6 @@ FTS indexes help find evidence and prior context. They are derived search surfac
 Every schema change must have:
 
 - a migration number
-- upgrade SQL
+- upgrade SQL registered in `store/migrations.py`
 - tests against an empty database
 - tests against the previous schema once schema v2 exists

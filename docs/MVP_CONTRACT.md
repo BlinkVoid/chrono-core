@@ -361,9 +361,16 @@ Input:
 ```json
 {
   "cwd": "~/workspace/example",
-  "max_tokens": 2000
+  "max_tokens": 2000,
+  "branch": null,
+  "include_all": false,
+  "limit": 20
 }
 ```
+
+Scopes to the project's current git branch unless `include_all` is true or an
+explicit `branch` is given (mirroring `chrono resume` semantics); `limit`
+caps open items per category in every mode.
 
 Output:
 
@@ -463,6 +470,34 @@ Output:
 `chrono_core_complete_action` takes `action_id` and reports `"status": "done"`.
 Unknown ids return `"ok": false` with `"status": "not_found"`.
 
+### Lifecycle tools
+
+Seven more lifecycle verbs mirror the CLI subcommands. All take an entity id
+(plus optional fields) and return `{"ok": bool, "<entity>_id": ..., "status": ...}`;
+unknown ids report `"status": "not_found"`.
+
+- `chrono_core_cancel_action(action_id, reason?)` — cancels an open action;
+  cancelling a superseded action returns `"ok": false` with
+  `"error": "already superseded; reopen or supersede instead"`.
+- `chrono_core_edit_action(action_id, text)` — rewrites the text, keeping the
+  previous wording in history.
+- `chrono_core_reopen_action(action_id)` — returns the action to open.
+- `chrono_core_supersede_action(action_id, text)` — creates a replacement open
+  action linked via `supersedes_id`; the response carries `new_action_id`.
+- `chrono_core_cancel_blocker(blocker_id, reason?)`
+- `chrono_core_edit_blocker(blocker_id, text)`
+- `chrono_core_reopen_blocker(blocker_id)`
+
+### Bug tools
+
+- `chrono_core_report_bug(cwd, title, severity?, detail?, workspace?, workspace_root?)`
+  — files a bug for the project at `cwd`, or workspace-wide with
+  `"workspace": true`; returns `{"ok": true, "bug_id": ..., "bug": {...}}`.
+- `chrono_core_list_bugs(status?, severity?, project_id?)` — defaults to open
+  bugs across the workspace; returns `{"ok": true, "count": n, "bugs": [...]}`.
+- `chrono_core_update_bug(bug_id, status?, severity?, detail?)` — returns
+  `{"ok": bool, "bug_id": ..., "bug": {...}}`.
+
 ### `chrono_core_search_observations`
 
 Input:
@@ -475,7 +510,9 @@ Input:
 }
 ```
 
-Output: same shape as `chrono search`.
+Output: same shape as `chrono search` — `{"ok": true, "query": ..., "count": n,
+"results": [...], "bugs": [...], "bug_count": n}`; the search covers both
+observation text and bug title/detail FTS.
 
 ### `chrono_core_review_project`
 
