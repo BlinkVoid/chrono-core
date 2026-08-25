@@ -52,6 +52,34 @@ def test_branchless_items_stay_visible(tmp_path: Path):
     assert [a["text"] for a in ctx.next_actions] == ["legacy action"]
 
 
+def _seed_many(store: Store, count: int) -> str:
+    store.init_schema()
+    project_id = store.upsert_project(
+        project_id="p_bulk", name="b", path="/tmp/b", relative_path="b"
+    )
+    sid = store.create_session(
+        project_id, HandoffPayload(summary="bulk session"), GitState(branch="feat/novel")
+    )
+    store.record_next_actions(project_id, sid, [f"action {i}" for i in range(count)])
+    return project_id
+
+
+def test_include_all_counts_hidden_beyond_limit(tmp_path: Path):
+    store = Store(tmp_path / "db.sqlite")
+    pid = _seed_many(store, 25)
+    ctx = store.get_resume_context(pid, include_all=True, limit=20)
+    assert len(ctx.next_actions) == 20
+    assert ctx.hidden_actions == 5
+
+
+def test_legacy_flat_callers_get_honest_counts_without_filtering(tmp_path: Path):
+    store = Store(tmp_path / "db.sqlite")
+    pid = _seed_many(store, 25)
+    ctx = store.get_resume_context(pid)
+    assert len(ctx.next_actions) == 20
+    assert ctx.hidden_actions == 5
+
+
 def test_limit_bounds_lists_and_reports_hidden(tmp_path: Path):
     store = Store(tmp_path / "db.sqlite")
     pid = _seed(store)

@@ -4,10 +4,10 @@ import json
 from argparse import Namespace
 from pathlib import Path
 
+from chrono_core import services
 from chrono_core.capture.git import read_git_state
-from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.config import default_workspace_root
 from chrono_core.domain.models import ResumeContext
-from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import resolve_project
 
 
@@ -26,9 +26,8 @@ def get_resume_context(args: Namespace) -> ResumeContext:
     workspace_root = Path(getattr(args, "workspace_root", None) or default_workspace_root())
     project = resolve_project(project_path, workspace_root=workspace_root)
 
-    db_path = getattr(args, "db_path", None) or default_db_path()
-    store = Store(db_path)
-    store.init_schema()
+    db_path = getattr(args, "db_path", None)
+    store = services.open_store(db_path)
 
     include_all = getattr(args, "all", False)
     branch = getattr(args, "branch", None)

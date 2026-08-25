@@ -53,6 +53,22 @@ def test_good_fts_query_reports_ok_with_results(tmp_path):
     assert result["ok"] is True
     assert result["count"] == 1
     assert result["results"][0]["content"] == "src/main.py"
+    assert "bugs" in result
+    assert result["bug_count"] == 0
+
+
+def test_search_covers_both_observations_and_bugs(tmp_path):
+    db = str(tmp_path / "d.db")
+    store = services.open_store(db)
+    pid = store.upsert_project(project_id="p", name="p", path="/tmp/p", relative_path="p")
+    store.record_observations(pid, None, "file", ["fix the parser bug"])
+    store.report_bug(pid, "parser crashes on unicode")
+
+    result = services.search_observations_safe(db, "parser")
+    assert result["ok"] is True
+    assert [r["content"] for r in result["results"]] == ["fix the parser bug"]
+    assert result["bug_count"] == 1
+    assert result["bugs"][0]["title"] == "parser crashes on unicode"
 
 
 def test_negative_limit_is_clamped_to_zero(tmp_path):

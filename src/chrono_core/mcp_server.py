@@ -61,12 +61,28 @@ def handle_get_resume_context(
     workspace_root: str | None = None,
     db_path: str | None = None,
     max_tokens: int | None = None,
+    branch: str | None = None,
+    include_all: bool = False,
+    limit: int = 20,
 ) -> dict[str, Any]:
-    """Return a compact resume context for the project at *cwd*."""
+    """Return a compact resume context for the project at *cwd*.
+
+    Scopes to the project's current git branch unless *include_all* is set or an
+    explicit *branch* is given (mirroring ``chrono resume`` CLI semantics).
+    """
     ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
     store = services.open_store(db_path)
-    context = validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
+    if not include_all and branch is None:
+        branch = read_git_state(Path(cwd)).branch
+    context = validate_resume_path(
+        store.get_resume_context(
+            store.resolve_project_id(project),
+            branch=branch,
+            include_all=include_all,
+            limit=limit,
+        )
+    )
     result = context.to_dict()
     if max_tokens is not None:
         result = _fit_to_token_budget(result, max_tokens)
@@ -238,13 +254,23 @@ def get_resume_context_tool(
     workspace_root: str | None = None,
     db_path: str | None = None,
     max_tokens: int | None = None,
+    branch: str | None = None,
+    include_all: bool = False,
+    limit: int = 20,
 ) -> dict[str, Any]:
-    """Return a compact resume context for the project at *cwd*."""
+    """Return a compact resume context for the project at *cwd*.
+
+    Scopes to the project's current git branch unless include_all is true or an
+    explicit branch is given; limit caps returned items in every mode.
+    """
     return handle_get_resume_context(
         cwd,
         workspace_root=workspace_root,
         db_path=db_path,
         max_tokens=max_tokens,
+        branch=branch,
+        include_all=include_all,
+        limit=limit,
     )
 
 

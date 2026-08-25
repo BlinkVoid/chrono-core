@@ -340,6 +340,13 @@ class Store:
             return {"ok": False, "action_id": action_id, "status": "not_found"}
         if row["status"] == "cancelled":
             return {"ok": True, "already": True, "action_id": action_id, "status": "cancelled"}
+        if row["status"] == "superseded":
+            return {
+                "ok": False,
+                "action_id": action_id,
+                "status": "superseded",
+                "error": "already superseded; reopen or supersede instead",
+            }
         now = utc_now()
         conn = self._connect()
         conn.execute(
@@ -610,8 +617,30 @@ class Store:
         ).fetchall()
 
         if scoped:
-            hidden_actions = 0
-            hidden_blockers = 0
+            # Unscoped modes (include_all or legacy flat callers) apply no branch
+            # filter, so hidden = total open minus the rows actually returned.
+            hidden_blockers = max(
+                0,
+                conn.execute(
+                    """
+                    SELECT COUNT(*) AS n FROM blockers
+                    WHERE project_id = :pid AND status = 'open'
+                    """,
+                    {"pid": project_id},
+                ).fetchone()["n"]
+                - len(blockers),
+            )
+            hidden_actions = max(
+                0,
+                conn.execute(
+                    """
+                    SELECT COUNT(*) AS n FROM next_actions
+                    WHERE project_id = :pid AND status = 'open'
+                    """,
+                    {"pid": project_id},
+                ).fetchone()["n"]
+                - len(actions),
+            )
         else:
             hidden_blockers = conn.execute(
                 f"""

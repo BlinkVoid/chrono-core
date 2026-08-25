@@ -37,6 +37,24 @@ def test_cancel_then_reopen(tmp_path):
     assert r3["status"] == "open"
 
 
+def test_cancel_rejected_for_superseded_action(tmp_path):
+    store = Store(tmp_path / "d.db")
+    old_id = _seed_action(store, "wrong wording")
+    sup = store.supersede_next_action(old_id, "right wording")
+    assert sup["ok"] is True
+    r = store.cancel_next_action(old_id)
+    assert r == {
+        "ok": False,
+        "action_id": old_id,
+        "status": "superseded",
+        "error": "already superseded; reopen or supersede instead",
+    }
+    row = store._connect().execute(
+        "SELECT status FROM next_actions WHERE id=?", (old_id,)
+    ).fetchone()
+    assert row["status"] == "superseded"
+
+
 def test_edit_appends_history(tmp_path):
     store = Store(tmp_path / "d.db")
     aid = _seed_action(store, "old text")

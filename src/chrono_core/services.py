@@ -164,16 +164,28 @@ def update_bug(db_path: str | None, bug_id: str, **fields: Any) -> dict[str, Any
 def search_observations_safe(
     db_path: str | None, query: str, *, project_id: str | None = None, limit: int = 20
 ) -> dict[str, Any]:
-    """Full-text observation search that reports malformed FTS queries structurally."""
+    """Full-text search over observations and bugs; malformed FTS queries are
+    reported structurally."""
     try:
-        results = open_store(db_path).search_observations(
+        store = open_store(db_path)
+        results = store.search_observations(
             query, project_id=project_id, limit=max(limit, 0)
         )
+        bugs = store.search_bugs(query, limit=max(limit, 0))
     except sqlite3.OperationalError as exc:
         return {
             "ok": False,
             "query": query,
             "error": f"invalid query: {exc}",
             "results": [],
+            "bugs": [],
+            "bug_count": 0,
         }
-    return {"ok": True, "query": query, "count": len(results), "results": results}
+    return {
+        "ok": True,
+        "query": query,
+        "count": len(results),
+        "results": results,
+        "bugs": bugs,
+        "bug_count": len(bugs),
+    }

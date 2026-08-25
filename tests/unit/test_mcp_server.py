@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+import pytest
+
 from chrono_core.domain.models import GitState, HandoffPayload
 from chrono_core.mcp_server import (
     get_resume_context_tool,
@@ -133,6 +135,120 @@ def test_handle_get_resume_context_for_existing_project(tmp_path: Path):
     assert result["project_name"] == "example"
     assert result["summary"] == "Earlier work."
     assert len(result["next_actions"]) == 1
+
+
+def _seed_two_branch_project(workspace: Path, db_path: Path) -> Path:
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    store = Store(str(db_path))
+    store.init_schema()
+    resolved = resolve_project(project, workspace_root=workspace)
+    pid = store.get_or_create_project(resolved)
+    for branch, text in (
+        ("feat/novel", "novel action"),
+        ("feat/platform", "platform action"),
+    ):
+        sid = store.create_session(
+            pid, HandoffPayload(summary=f"{branch} session"), GitState(branch=branch)
+        )
+        store.record_next_actions(pid, sid, [text])
+    return project
+
+
+def test_handle_get_resume_context_defaults_to_current_branch(
+    monkeypatch, tmp_path: Path
+):
+    from chrono_core.domain.models import GitState as _GitState
+
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    db_path = tmp_path / "chrono.db"
+    project = _seed_two_branch_project(workspace, db_path)
+
+    monkeypatch.setattr(
+        "chrono_core.mcp_server.read_git_state",
+        lambda _: _GitState(branch="feat/novel"),
+    )
+
+    result = handle_get_resume_context(
+        str(project),
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+    )
+
+    assert [a["text"] for a in result["next_actions"]] == ["novel action"]
+    assert result["hidden_actions"] > 0
+    assert result["hidden_blockers"] >= 0
+
+
+def test_handle_get_resume_context_include_all_shows_everything(
+    monkeypatch, tmp_path: Path
+):
+    from chrono_core.domain.models import GitState as _GitState
+
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    db_path = tmp_path / "chrono.db"
+    project = _seed_two_branch_project(workspace, db_path)
+
+    monkeypatch.setattr(
+        "chrono_core.mcp_server.read_git_state",
+        lambda _: _GitState(branch="feat/novel"),
+    )
+
+    result = handle_get_resume_context(
+        str(project),
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+        include_all=True,
+    )
+
+    assert sorted(a["text"] for a in result["next_actions"]) == [
+        "novel action",
+        "platform action",
+    ]
+    assert result["hidden_actions"] == 0
+
+
+def test_handle_get_resume_context_explicit_branch(monkeypatch, tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    db_path = tmp_path / "chrono.db"
+    project = _seed_two_branch_project(workspace, db_path)
+
+    monkeypatch.setattr(
+        "chrono_core.mcp_server.read_git_state",
+        lambda _: pytest.fail("read_git_state must not run when branch is explicit"),
+    )
+
+    result = handle_get_resume_context(
+        str(project),
+        workspace_root=str(workspace),
+        db_path=str(db_path),
+        branch="feat/platform",
+    )
+
+    assert [a["text"] for a in result["next_actions"]] == ["platform action"]
+
+
+def test_get_resume_context_tool_passes_scoping_params(monkeypatch, tmp_path: Path):
+    captured: dict[str, object] = {}
+
+    def fake_handler(cwd, *, branch=None, include_all=False, limit=20, **kwargs):
+        captured.update(branch=branch, include_all=include_all, limit=limit)
+        return {"project_name": "example"}
+
+    monkeypatch.setattr("chrono_core.mcp_server.handle_get_resume_context", fake_handler)
+
+    get_resume_context_tool(
+        str(tmp_path),
+        branch="feat/x",
+        include_all=False,
+        limit=5,
+    )
+
+    assert captured == {"branch": "feat/x", "include_all": False, "limit": 5}
 
 
 def test_handle_get_resume_context_for_unknown_project(tmp_path: Path):
