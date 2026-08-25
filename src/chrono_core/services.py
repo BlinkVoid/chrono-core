@@ -109,3 +109,52 @@ def reopen_blocker(db_path: str | None, blocker_id: str) -> dict[str, Any]:
     return lifecycle_result(
         "blocker", "reopen", open_store(db_path).reopen_blocker(blocker_id)
     )
+
+
+def report_bug(
+    db_path: str | None,
+    cwd: str,
+    *,
+    title: str,
+    severity: str = "medium",
+    detail: str = "",
+    workspace_wide: bool = False,
+    workspace_root: str | None = None,
+) -> dict[str, Any]:
+    from chrono_core.config import default_workspace_root
+    from chrono_core.workspace.resolver import resolve_project
+
+    store = open_store(db_path)
+    project_id: str | None = None
+    if not workspace_wide:
+        project = resolve_project(
+            Path(cwd), workspace_root=Path(workspace_root or default_workspace_root())
+        )
+        project_id = store.get_or_create_project(project)
+    bug_id = store.report_bug(project_id, title, detail=detail, severity=severity)
+    return {
+        "ok": True,
+        "bug_id": bug_id,
+        "project_id": project_id,
+        "bug": store.get_bug(bug_id),
+    }
+
+
+def list_bugs(
+    db_path: str | None,
+    *,
+    status: str | None = "open",
+    severity: str | None = None,
+    project_id: str | None = None,
+) -> dict[str, Any]:
+    bugs = open_store(db_path).list_bugs(
+        status=status, severity=severity, project_id=project_id
+    )
+    return {"ok": True, "count": len(bugs), "bugs": bugs}
+
+
+def update_bug(db_path: str | None, bug_id: str, **fields: Any) -> dict[str, Any]:
+    try:
+        return open_store(db_path).update_bug(bug_id, **fields)
+    except ValueError as exc:
+        return {"ok": False, "bug_id": bug_id, "error": str(exc)}

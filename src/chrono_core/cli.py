@@ -196,6 +196,48 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
+    p_bug = sub.add_parser("bug", help="track bugs across projects")
+    bug_sub = p_bug.add_subparsers(dest="bug_command")
+
+    p_bug_report = bug_sub.add_parser("report", help="file a bug for the project at --cwd")
+    p_bug_report.add_argument("title")
+    p_bug_report.add_argument("--detail", default="")
+    p_bug_report.add_argument(
+        "--severity", choices=["low", "medium", "high", "critical"], default="medium"
+    )
+    p_bug_report.add_argument(
+        "--workspace", action="store_true", help="file as workspace-wide (no project)"
+    )
+    p_bug_report.add_argument("--cwd", default=".")
+    p_bug_report.add_argument("--workspace-root", default=default_workspace_root())
+    p_bug_report.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+
+    p_bug_list = bug_sub.add_parser("list", help="list bugs across projects")
+    p_bug_list.add_argument("--status", default="open")
+    p_bug_list.add_argument("--severity", default=None)
+    p_bug_list.add_argument("--project-id", default=None)
+    p_bug_list.add_argument("--json", action="store_true")
+    p_bug_list.add_argument("--cwd", default=".")
+    p_bug_list.add_argument("--workspace-root", default=default_workspace_root())
+    p_bug_list.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+
+    p_bug_show = bug_sub.add_parser("show", help="show one bug")
+    p_bug_show.add_argument("bug_id")
+    p_bug_show.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+
+    p_bug_update = bug_sub.add_parser("update", help="change bug status/severity/detail")
+    p_bug_update.add_argument("bug_id")
+    p_bug_update.add_argument(
+        "--status", choices=["open", "confirmed", "in_progress", "fixed", "wont_fix", "cancelled"]
+    )
+    p_bug_update.add_argument(
+        "--severity", choices=["low", "medium", "high", "critical"]
+    )
+    p_bug_update.add_argument("--detail")
+    p_bug_update.add_argument("--cwd", default=".")
+    p_bug_update.add_argument("--workspace-root", default=default_workspace_root())
+    p_bug_update.add_argument("--db-path", "--db", default=DEFAULT_DB_PATH)
+
     p_ingest = sub.add_parser(
         "ingest-existing-tools", help="import workspace-intelligence registry into Continuity"
     )
@@ -345,6 +387,36 @@ def main(argv: list[str] | None = None) -> int:
         result = handler()
         print(json.dumps(result, indent=2))
         return 0 if result["ok"] else 1
+
+    if args.command == "bug":
+        if args.bug_command == "report":
+            result = services.report_bug(
+                args.db_path, args.cwd,
+                title=args.title, severity=args.severity, detail=args.detail,
+                workspace_wide=args.workspace, workspace_root=args.workspace_root,
+            )
+        elif args.bug_command == "list":
+            result = services.list_bugs(
+                args.db_path, status=args.status, severity=args.severity,
+                project_id=args.project_id,
+            )
+            if not args.json:
+                for b in result["bugs"]:
+                    print(f"[{b['id']}] ({b['severity']}/{b['status']}) "
+                          f"{b['project_name']}: {b['title']}")
+                return 0
+        elif args.bug_command == "show":
+            bug = services.open_store(args.db_path).get_bug(args.bug_id)
+            result = {"ok": bug is not None, "bug": bug}
+        elif args.bug_command == "update":
+            result = services.update_bug(
+                args.db_path, args.bug_id,
+                status=args.status, severity=args.severity, detail=args.detail,
+            )
+        else:
+            parser.error("bug requires a subcommand")
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("ok") else 1
 
     if args.command == "ingest-existing-tools":
         store = Store(args.db_path)
