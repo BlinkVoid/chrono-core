@@ -9,15 +9,12 @@ from mcp.server.fastmcp import FastMCP
 from chrono_core import services
 from chrono_core.capture.git import read_git_state
 from chrono_core.capture.handoff import persist_handoff
-from chrono_core.config import default_db_path, default_workspace_root
+from chrono_core.config import default_workspace_root
 from chrono_core.domain.models import HandoffPayload
 from chrono_core.management.distill import distill_project
 from chrono_core.management.review import review_project
 from chrono_core.resume import validate_resume_path
-from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import resolve_project
-
-DEFAULT_DB_PATH = default_db_path()
 
 
 def handle_resolve_project(cwd: str, workspace_root: str | None = None) -> dict[str, Any]:
@@ -54,7 +51,7 @@ def handle_session_handoff(
         risks=list(risks or []),
     )
     git_state = read_git_state(Path(project.path))
-    store = Store(db_path or DEFAULT_DB_PATH)
+    store = services.open_store(db_path)
     return persist_handoff(store, project, payload, git_state, agent_name=agent_name)
 
 
@@ -68,8 +65,7 @@ def handle_get_resume_context(
     """Return a compact resume context for the project at *cwd*."""
     ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
+    store = services.open_store(db_path)
     context = validate_resume_path(store.get_resume_context(store.resolve_project_id(project)))
     result = context.to_dict()
     if max_tokens:
@@ -110,8 +106,7 @@ def handle_record_decision(
     """Record a project decision outside a session handoff."""
     ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
+    store = services.open_store(db_path)
     project_id = store.get_or_create_project(project)
     decision = {"title": title, "rationale": rationale or ""}
     store.record_decisions(project_id, None, [decision])
@@ -135,8 +130,7 @@ def handle_record_blocker(
     """Record a project blocker outside a session handoff."""
     ws = Path(workspace_root or default_workspace_root())
     project = resolve_project(Path(cwd), workspace_root=ws)
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
+    store = services.open_store(db_path)
     project_id = store.get_or_create_project(project)
     blocker = {"title": title, "status": status, "detail": detail or ""}
     store.record_blockers(project_id, None, [blocker])
@@ -150,12 +144,12 @@ def handle_record_blocker(
 
 def handle_resolve_blocker(blocker_id: str, *, db_path: str | None = None) -> dict[str, Any]:
     """Mark a previously recorded blocker as resolved."""
-    return services.resolve_blocker(db_path or DEFAULT_DB_PATH, blocker_id)
+    return services.resolve_blocker(db_path, blocker_id)
 
 
 def handle_complete_action(action_id: str, *, db_path: str | None = None) -> dict[str, Any]:
     """Mark a previously recorded next action as done."""
-    return services.complete_action(db_path or DEFAULT_DB_PATH, action_id)
+    return services.complete_action(db_path, action_id)
 
 
 def handle_search_observations(
@@ -166,8 +160,7 @@ def handle_search_observations(
     limit: int = 20,
 ) -> dict[str, Any]:
     """Full-text search captured observations across projects."""
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
+    store = services.open_store(db_path)
     results = store.search_observations(query, project_id=project_id, limit=limit)
     return {"ok": True, "query": query, "count": len(results), "results": results}
 
@@ -182,7 +175,7 @@ def handle_distill_project(
     return distill_project(
         cwd=cwd,
         workspace_root=workspace_root or default_workspace_root(),
-        store=Store(db_path or DEFAULT_DB_PATH),
+        store=services.open_store(db_path),
     )
 
 
@@ -196,7 +189,7 @@ def handle_review_project(
     return review_project(
         cwd=cwd,
         workspace_root=workspace_root or default_workspace_root(),
-        store=Store(db_path or DEFAULT_DB_PATH),
+        store=services.open_store(db_path),
     )
 
 
@@ -305,6 +298,103 @@ def complete_action_tool(action_id: str, db_path: str | None = None) -> dict[str
     return handle_complete_action(action_id, db_path=db_path)
 
 
+def handle_cancel_action(
+    action_id: str, *, reason: str | None = None, db_path: str | None = None
+) -> dict[str, Any]:
+    """Close a stale or wrong next action without pretending it was done."""
+    return services.cancel_action(db_path, action_id, reason)
+
+
+@mcp.tool(name="chrono_core_cancel_action")
+def cancel_action_tool(
+    action_id: str, reason: str | None = None, db_path: str | None = None
+) -> dict[str, Any]:
+    """Cancel a next action so resume stops surfacing it as open work."""
+    return handle_cancel_action(action_id, reason=reason, db_path=db_path)
+
+
+def handle_edit_action(
+    action_id: str, text: str, *, db_path: str | None = None
+) -> dict[str, Any]:
+    """Rewrite a next action's text truthfully while keeping its history."""
+    return services.edit_action(db_path, action_id, text)
+
+
+@mcp.tool(name="chrono_core_edit_action")
+def edit_action_tool(
+    action_id: str, text: str, db_path: str | None = None
+) -> dict[str, Any]:
+    """Rewrite a next action in place, keeping the previous wording in history."""
+    return handle_edit_action(action_id, text, db_path=db_path)
+
+
+def handle_reopen_action(action_id: str, *, db_path: str | None = None) -> dict[str, Any]:
+    """Return a completed or cancelled next action to open status."""
+    return services.reopen_action(db_path, action_id)
+
+
+@mcp.tool(name="chrono_core_reopen_action")
+def reopen_action_tool(action_id: str, db_path: str | None = None) -> dict[str, Any]:
+    """Reopen a next action so resume context reports it as open work again."""
+    return handle_reopen_action(action_id, db_path=db_path)
+
+
+def handle_supersede_action(
+    action_id: str, text: str, *, db_path: str | None = None
+) -> dict[str, Any]:
+    """Retire a next action by linking it to a newly created replacement."""
+    return services.supersede_action(db_path, action_id, text)
+
+
+@mcp.tool(name="chrono_core_supersede_action")
+def supersede_action_tool(
+    action_id: str, text: str, db_path: str | None = None
+) -> dict[str, Any]:
+    """Replace a next action with a linked successor and retire the original."""
+    return handle_supersede_action(action_id, text, db_path=db_path)
+
+
+def handle_cancel_blocker(
+    blocker_id: str, *, reason: str | None = None, db_path: str | None = None
+) -> dict[str, Any]:
+    """Close a stale or wrong blocker without pretending it was resolved."""
+    return services.cancel_blocker(db_path, blocker_id, reason)
+
+
+@mcp.tool(name="chrono_core_cancel_blocker")
+def cancel_blocker_tool(
+    blocker_id: str, reason: str | None = None, db_path: str | None = None
+) -> dict[str, Any]:
+    """Cancel a blocker so resume stops surfacing it as open work."""
+    return handle_cancel_blocker(blocker_id, reason=reason, db_path=db_path)
+
+
+def handle_edit_blocker(
+    blocker_id: str, text: str, *, db_path: str | None = None
+) -> dict[str, Any]:
+    """Rewrite a blocker's title truthfully while keeping its record."""
+    return services.edit_blocker(db_path, blocker_id, text)
+
+
+@mcp.tool(name="chrono_core_edit_blocker")
+def edit_blocker_tool(
+    blocker_id: str, text: str, db_path: str | None = None
+) -> dict[str, Any]:
+    """Rewrite a blocker's title so it stays an accurate statement of the obstacle."""
+    return handle_edit_blocker(blocker_id, text, db_path=db_path)
+
+
+def handle_reopen_blocker(blocker_id: str, *, db_path: str | None = None) -> dict[str, Any]:
+    """Return a resolved or cancelled blocker to open status."""
+    return services.reopen_blocker(db_path, blocker_id)
+
+
+@mcp.tool(name="chrono_core_reopen_blocker")
+def reopen_blocker_tool(blocker_id: str, db_path: str | None = None) -> dict[str, Any]:
+    """Reopen a blocker so resume context reports it as active again."""
+    return handle_reopen_blocker(blocker_id, db_path=db_path)
+
+
 @mcp.tool(name="chrono_core_search_observations")
 def search_observations_tool(
     query: str,
@@ -340,5 +430,8 @@ def review_project_tool(
 
 def main() -> int:
     """Run the Chrono Core MCP server over stdio."""
-    mcp.run(transport="stdio")
+    try:
+        mcp.run(transport="stdio")
+    finally:
+        services.close_stores()
     return 0

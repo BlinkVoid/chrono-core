@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from chrono_core import mcp_server
 from chrono_core.capture import handoff
 from chrono_core.cli import build_parser
 from chrono_core.config import default_db_path
@@ -32,8 +31,16 @@ def test_cli_db_path_defaults_to_canonical_location(argv: list[str]):
     assert args.db_path == CANONICAL
 
 
-def test_mcp_server_default_matches_canonical_location():
-    assert mcp_server.DEFAULT_DB_PATH == CANONICAL
+def test_mcp_server_default_matches_canonical_location(monkeypatch, tmp_path):
+    from chrono_core import services
+
+    sentinel = tmp_path / "canonical.db"
+    monkeypatch.setattr(services, "default_db_path", lambda: str(sentinel))
+    try:
+        store = services.open_store(None)
+        assert store.db_path == Path(sentinel)
+    finally:
+        services.close_stores()
 
 
 def test_capture_and_resume_fallbacks_match_canonical_location():

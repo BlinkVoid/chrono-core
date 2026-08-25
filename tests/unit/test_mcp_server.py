@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from chrono_core.domain.models import GitState, HandoffPayload
@@ -249,3 +250,33 @@ def test_mcp_server_constants():
     from chrono_core.config import default_workspace_root
 
     assert Path(default_workspace_root()).name == "workspace"
+
+
+def test_cancel_action_via_handle(monkeypatch, tmp_path):
+    from chrono_core import services
+    from chrono_core.mcp_server import handle_cancel_action
+
+    db = str(tmp_path / "m.db")
+    store = services.open_store(db)
+    pid = store.upsert_project(project_id="p", name="p", path="/tmp/p", relative_path="p")
+    store.record_next_actions(pid, None, ["x"])
+    aid = store._connect().execute("SELECT id FROM next_actions").fetchone()["id"]
+
+    result = handle_cancel_action(aid, db_path=db)
+    assert result["ok"] is True and result["status"] == "cancelled"
+
+
+def test_registered_tools_include_lifecycle():
+    from chrono_core.mcp_server import mcp
+
+    registered = asyncio.run(mcp.list_tools())
+    names = {t.name for t in registered}
+    assert {
+        "chrono_core_cancel_action",
+        "chrono_core_edit_action",
+        "chrono_core_reopen_action",
+        "chrono_core_supersede_action",
+        "chrono_core_cancel_blocker",
+        "chrono_core_edit_blocker",
+        "chrono_core_reopen_blocker",
+    } <= names
