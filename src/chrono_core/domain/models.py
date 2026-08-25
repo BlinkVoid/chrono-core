@@ -14,6 +14,9 @@ class ResumeContext:
     active_blockers: list[dict[str, Any]] = field(default_factory=list)
     next_actions: list[dict[str, Any]] = field(default_factory=list)
     recent_decisions: list[dict[str, Any]] = field(default_factory=list)
+    branch: str = ""
+    hidden_actions: int = 0
+    hidden_blockers: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -25,6 +28,9 @@ class ResumeContext:
             "active_blockers": self.active_blockers,
             "next_actions": self.next_actions,
             "recent_decisions": self.recent_decisions,
+            "branch": self.branch,
+            "hidden_actions": self.hidden_actions,
+            "hidden_blockers": self.hidden_blockers,
         }
 
 

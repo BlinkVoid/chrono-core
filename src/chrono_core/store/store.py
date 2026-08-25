@@ -364,7 +364,14 @@ class Store:
         )
         self._commit()
 
-    def get_resume_context(self, project_id: str) -> ResumeContext:
+    def get_resume_context(
+        self,
+        project_id: str,
+        *,
+        branch: str | None = None,
+        include_all: bool = False,
+        limit: int | None = 20,
+    ) -> ResumeContext:
         conn = self._connect()
         project_row = conn.execute(
             "SELECT id, name, path, summary FROM projects WHERE id = ?", (project_id,)
@@ -378,36 +385,74 @@ class Store:
                 current_status="No project found in continuity database.",
             )
 
+        scoped = include_all or branch is None
+        branch_filter = "" if scoped else """
+            AND (s.git_branch IS NULL OR s.git_branch = :branch)
+        """
+        hidden_filter = "1=1" if scoped else """
+            s.git_branch IS NOT NULL AND s.git_branch != :branch
+        """
+
         session_row = conn.execute(
             """
             SELECT summary, git_branch, git_head, git_dirty
             FROM sessions
-            WHERE project_id = ?
+            WHERE project_id = :pid
             ORDER BY ended_at DESC
             LIMIT 1
             """,
-            (project_id,),
+            {"pid": project_id},
         ).fetchone()
 
         blockers = conn.execute(
-            """
-            SELECT id, title, status, detail
-            FROM blockers
-            WHERE project_id = ? AND status = 'open'
-            ORDER BY created_at DESC
+            f"""
+            SELECT b.id, b.title, b.status, b.detail
+            FROM blockers b
+            LEFT JOIN sessions s ON s.id = b.session_id
+            WHERE b.project_id = :pid AND b.status = 'open'
+            {branch_filter}
+            ORDER BY b.created_at DESC
+            {'' if limit is None else 'LIMIT :limit'}
             """,
-            (project_id,),
+            {"pid": project_id, "branch": branch, "limit": limit},
         ).fetchall()
 
         actions = conn.execute(
-            """
-            SELECT id, text, status, priority
-            FROM next_actions
-            WHERE project_id = ? AND status = 'open'
-            ORDER BY created_at DESC
+            f"""
+            SELECT na.id, na.text, na.status, na.priority
+            FROM next_actions na
+            LEFT JOIN sessions s ON s.id = na.session_id
+            WHERE na.project_id = :pid AND na.status = 'open'
+            {branch_filter}
+            ORDER BY na.created_at DESC
+            {'' if limit is None else 'LIMIT :limit'}
             """,
-            (project_id,),
+            {"pid": project_id, "branch": branch, "limit": limit},
         ).fetchall()
+
+        if scoped:
+            hidden_actions = 0
+            hidden_blockers = 0
+        else:
+            hidden_blockers = conn.execute(
+                f"""
+                SELECT COUNT(*) AS n
+                FROM blockers b
+                LEFT JOIN sessions s ON s.id = b.session_id
+                WHERE b.project_id = :pid AND b.status = 'open' AND {hidden_filter}
+                """,
+                {"pid": project_id, "branch": branch},
+            ).fetchone()["n"]
+
+            hidden_actions = conn.execute(
+                f"""
+                SELECT COUNT(*) AS n
+                FROM next_actions na
+                LEFT JOIN sessions s ON s.id = na.session_id
+                WHERE na.project_id = :pid AND na.status = 'open' AND {hidden_filter}
+                """,
+                {"pid": project_id, "branch": branch},
+            ).fetchone()["n"]
 
         decisions = conn.execute(
             """
@@ -426,8 +471,8 @@ class Store:
             summary = session_row["summary"] or ""
             dirty_flag = bool(session_row["git_dirty"])
             dirty_text = " (dirty)" if dirty_flag else ""
-            branch = session_row["git_branch"] or "unknown"
-            current_status = f"Latest session on {branch}{dirty_text}."
+            branch_name = session_row["git_branch"] or "unknown"
+            current_status = f"Latest session on {branch_name}{dirty_text}."
         else:
             current_status = "No sessions captured yet."
 
@@ -440,4 +485,7 @@ class Store:
             active_blockers=[dict(row) for row in blockers],
             next_actions=[dict(row) for row in actions],
             recent_decisions=[dict(row) for row in decisions],
+            branch=branch or "",
+            hidden_actions=hidden_actions,
+            hidden_blockers=hidden_blockers,
         )
