@@ -6,6 +6,7 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
+from chrono_core import services
 from chrono_core.capture.git import read_git_state
 from chrono_core.capture.handoff import persist_handoff
 from chrono_core.config import default_db_path, default_workspace_root
@@ -149,26 +150,12 @@ def handle_record_blocker(
 
 def handle_resolve_blocker(blocker_id: str, *, db_path: str | None = None) -> dict[str, Any]:
     """Mark a previously recorded blocker as resolved."""
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
-    resolved = store.resolve_blocker(blocker_id)
-    return {
-        "ok": resolved,
-        "blocker_id": blocker_id,
-        "status": "resolved" if resolved else "not_found",
-    }
+    return services.resolve_blocker(db_path or DEFAULT_DB_PATH, blocker_id)
 
 
 def handle_complete_action(action_id: str, *, db_path: str | None = None) -> dict[str, Any]:
     """Mark a previously recorded next action as done."""
-    store = Store(db_path or DEFAULT_DB_PATH)
-    store.init_schema()
-    completed = store.complete_next_action(action_id)
-    return {
-        "ok": completed,
-        "action_id": action_id,
-        "status": "done" if completed else "not_found",
-    }
+    return services.complete_action(db_path or DEFAULT_DB_PATH, action_id)
 
 
 def handle_search_observations(

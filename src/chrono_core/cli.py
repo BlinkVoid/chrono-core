@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from chrono_core import __version__
+from chrono_core import __version__, services
 from chrono_core.capture.handoff import capture_handoff
 from chrono_core.config import default_db_path, default_workspace_root
 from chrono_core.export.markdown import export_markdown
@@ -133,11 +133,66 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
+    p_blocker_cancel = blocker_sub.add_parser("cancel", help="close a blocker as cancelled")
+    p_blocker_cancel.add_argument("blocker_id")
+    p_blocker_cancel.add_argument("--reason", default=None)
+    p_blocker_cancel.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_blocker_edit = blocker_sub.add_parser("edit", help="rewrite a blocker's title")
+    p_blocker_edit.add_argument("blocker_id")
+    p_blocker_edit.add_argument("--text", required=True)
+    p_blocker_edit.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_blocker_reopen = blocker_sub.add_parser(
+        "reopen", help="return a closed blocker to open"
+    )
+    p_blocker_reopen.add_argument("blocker_id")
+    p_blocker_reopen.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
     p_action = sub.add_parser("action", help="manage next-action lifecycle")
     action_sub = p_action.add_subparsers(dest="action_command")
     p_action_complete = action_sub.add_parser("complete", help="mark a next action done")
     p_action_complete.add_argument("action_id", help="next action id (see resume output)")
     p_action_complete.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_action_cancel = action_sub.add_parser(
+        "cancel", help="close an action as cancelled"
+    )
+    p_action_cancel.add_argument("action_id")
+    p_action_cancel.add_argument("--reason", default=None)
+    p_action_cancel.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_action_edit = action_sub.add_parser("edit", help="rewrite an action's text")
+    p_action_edit.add_argument("action_id")
+    p_action_edit.add_argument("--text", required=True)
+    p_action_edit.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_action_reopen = action_sub.add_parser(
+        "reopen", help="return a closed action to open"
+    )
+    p_action_reopen.add_argument("action_id")
+    p_action_reopen.add_argument(
+        "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
+    )
+
+    p_action_supersede = action_sub.add_parser(
+        "supersede", help="replace an action with corrected text, keeping both"
+    )
+    p_action_supersede.add_argument("action_id")
+    p_action_supersede.add_argument("--text", required=True)
+    p_action_supersede.add_argument(
         "--db-path", "--db", default=DEFAULT_DB_PATH, help="continuity database path"
     )
 
@@ -259,31 +314,37 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "blocker":
         if args.blocker_command == "resolve":
-            store = Store(args.db_path)
-            store.init_schema()
-            resolved = store.resolve_blocker(args.blocker_id)
-            result = {
-                "ok": resolved,
-                "blocker_id": args.blocker_id,
-                "status": "resolved" if resolved else "not_found",
-            }
+            result = services.resolve_blocker(args.db_path, args.blocker_id)
             print(json.dumps(result, indent=2))
-            return 0 if resolved else 1
+            return 0 if result["ok"] else 1
+        if args.blocker_command == "cancel":
+            result = services.cancel_blocker(args.db_path, args.blocker_id, args.reason)
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
+        if args.blocker_command == "edit":
+            result = services.edit_blocker(args.db_path, args.blocker_id, args.text)
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
+        if args.blocker_command == "reopen":
+            result = services.reopen_blocker(args.db_path, args.blocker_id)
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
         parser.error("blocker requires a subcommand")
 
     if args.command == "action":
-        if args.action_command == "complete":
-            store = Store(args.db_path)
-            store.init_schema()
-            completed = store.complete_next_action(args.action_id)
-            result = {
-                "ok": completed,
-                "action_id": args.action_id,
-                "status": "done" if completed else "not_found",
-            }
-            print(json.dumps(result, indent=2))
-            return 0 if completed else 1
-        parser.error("action requires a subcommand")
+        handlers = {
+            "complete": lambda: services.complete_action(args.db_path, args.action_id),
+            "cancel": lambda: services.cancel_action(args.db_path, args.action_id, args.reason),
+            "edit": lambda: services.edit_action(args.db_path, args.action_id, args.text),
+            "reopen": lambda: services.reopen_action(args.db_path, args.action_id),
+            "supersede": lambda: services.supersede_action(args.db_path, args.action_id, args.text),
+        }
+        handler = handlers.get(args.action_command)
+        if handler is None:
+            parser.error("action requires a subcommand")
+        result = handler()
+        print(json.dumps(result, indent=2))
+        return 0 if result["ok"] else 1
 
     if args.command == "ingest-existing-tools":
         store = Store(args.db_path)
