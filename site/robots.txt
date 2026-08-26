@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://blinkvoid.github.io/chrono-core/sitemap.xml
