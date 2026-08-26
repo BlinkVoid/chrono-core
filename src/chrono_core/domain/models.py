@@ -6,6 +6,7 @@ from typing import Any
 ACTION_STATUSES = ("open", "done", "cancelled", "superseded")
 BLOCKER_STATUSES = ("open", "resolved", "cancelled")
 BUG_SEVERITIES = ("low", "medium", "high", "critical")
+PATTERN_STATUSES = ("candidate", "validated", "promoted", "retired")
 BUG_STATUSES = ("open", "confirmed", "in_progress", "fixed", "wont_fix", "cancelled")
 
 
@@ -22,6 +23,7 @@ class ResumeContext:
     branch: str = ""
     hidden_actions: int = 0
     hidden_blockers: int = 0
+    recommended_patterns: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -36,6 +38,7 @@ class ResumeContext:
             "branch": self.branch,
             "hidden_actions": self.hidden_actions,
             "hidden_blockers": self.hidden_blockers,
+            "recommended_patterns": self.recommended_patterns,
         }
 
 

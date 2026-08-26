@@ -11,7 +11,10 @@ from typing import Any
 
 from chrono_core.domain.models import GitState, HandoffPayload, ResumeContext
 from chrono_core.store.schema import DDL, SCHEMA_VERSION
+from chrono_core.textutil import salient_terms
 from chrono_core.workspace.resolver import ResolvedProject
+
+_PATTERN_STATUS_RANK = {"candidate": 0, "validated": 1, "promoted": 2}
 
 
 def utc_now() -> str:
@@ -702,6 +705,18 @@ class Store:
         else:
             current_status = "No sessions captured yet."
 
+        rec_text = " ".join(
+            [d["title"] for d in decisions]
+            + [b["title"] for b in blockers]
+            + [a["text"] for a in actions]
+        )
+        rec_terms = salient_terms(rec_text)
+        recommended_patterns = (
+            self.search_patterns_safe(" OR ".join(rec_terms), limit=3)
+            if rec_terms
+            else []
+        )
+
         return ResumeContext(
             project_id=project_id,
             project_name=project_row["name"],
@@ -714,6 +729,7 @@ class Store:
             branch=branch or "",
             hidden_actions=hidden_actions,
             hidden_blockers=hidden_blockers,
+            recommended_patterns=recommended_patterns,
         )
 
     def report_bug(
@@ -826,6 +842,138 @@ class Store:
         )
         self._commit()
         return {"ok": True, "already": False, "bug_id": bug_id, "bug": self.get_bug(bug_id)}
+
+    def upsert_pattern(
+        self,
+        *,
+        title: str,
+        statement: str = "",
+        category: str | None = None,
+        source: str = "authored",
+        source_ref: str | None = None,
+        projects: list[str] | None = None,
+        status: str = "candidate",
+    ) -> str:
+        """Insert or refresh a pattern keyed by its unique title.
+
+        Field values always refresh. The stored status never regresses away
+        from promoted/retired, and otherwise only moves forward along
+        candidate -> validated -> promoted.
+        """
+        if status not in _PATTERN_STATUS_RANK:
+            raise ValueError(f"invalid pattern status '{status}'")
+        conn = self._connect()
+        now = utc_now()
+        existing = conn.execute(
+            "SELECT id, status FROM patterns WHERE title = ?", (title,)
+        ).fetchone()
+        if existing is None:
+            pattern_id = make_entity_id("pat")
+            conn.execute(
+                """
+                INSERT INTO patterns (
+                    id, title, statement, category, status, source,
+                    source_ref, projects_json, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    pattern_id,
+                    title,
+                    statement,
+                    category,
+                    status,
+                    source,
+                    source_ref,
+                    json.dumps(projects or [], ensure_ascii=False),
+                    now,
+                    now,
+                ),
+            )
+            self._commit()
+            return pattern_id
+
+        kept = existing["status"]
+        if kept not in ("promoted", "retired"):
+            if _PATTERN_STATUS_RANK[status] > _PATTERN_STATUS_RANK[kept]:
+                kept = status
+        conn.execute(
+            """
+            UPDATE patterns SET statement = ?, category = ?, source = ?,
+                source_ref = ?, projects_json = ?, status = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                statement,
+                category,
+                source,
+                source_ref,
+                json.dumps(projects or [], ensure_ascii=False),
+                kept,
+                now,
+                existing["id"],
+            ),
+        )
+        self._commit()
+        return existing["id"]
+
+    def set_pattern_status(self, pattern_id: str, status: str) -> dict[str, Any]:
+        from chrono_core.domain.models import PATTERN_STATUSES
+
+        if status not in PATTERN_STATUSES:
+            raise ValueError(f"invalid pattern status '{status}'")
+        cursor = self._connect().execute(
+            "UPDATE patterns SET status = ?, updated_at = ? WHERE id = ?",
+            (status, utc_now(), pattern_id),
+        )
+        self._commit()
+        return {
+            "ok": cursor.rowcount > 0,
+            "pattern_id": pattern_id,
+            "status": status if cursor.rowcount > 0 else "not_found",
+        }
+
+    def list_patterns(
+        self, *, status: str | None = None, limit: int | None = None
+    ) -> list[dict[str, Any]]:
+        sql = """
+            SELECT id, title, statement, category, status, source,
+                   source_ref, projects_json, created_at, updated_at
+            FROM patterns
+        """
+        params: list[Any] = []
+        if status is not None:
+            sql += " WHERE status = ?"
+            params.append(status)
+        sql += " ORDER BY title"
+        if limit is not None:
+            sql += " LIMIT ?"
+            params.append(limit)
+        rows = self._connect().execute(sql, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def search_patterns_safe(
+        self,
+        query: str,
+        *,
+        limit: int = 3,
+        statuses: tuple[str, ...] = ("candidate", "validated"),
+    ) -> list[dict[str, Any]]:
+        """FTS match against patterns; malformed queries return []."""
+        try:
+            rows = self._connect().execute(
+                """
+                SELECT p.id, p.title, p.category, p.status
+                FROM pattern_fts f JOIN patterns p ON p.rowid = f.rowid
+                WHERE pattern_fts MATCH ?
+                ORDER BY rank LIMIT ?
+                """,
+                (query, max(limit * 4, limit)),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return []
+        hits = [dict(row) for row in rows if row["status"] in statuses]
+        return hits[:limit]
 
     def search_bugs(self, query: str, *, limit: int = 20) -> list[dict[str, Any]]:
         rows = self._connect().execute(
