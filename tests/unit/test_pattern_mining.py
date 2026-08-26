@@ -42,9 +42,14 @@ def test_mining_respects_limit_and_skips_existing_titles(tmp_path: Path):
 
     second = mine_pattern_candidates(store, min_projects=2)
 
-    assert second["mined"] == []
-    assert second["skipped_existing"] == 2
-    assert len(store.list_patterns(status="candidate")) == 1
+    # Title-only dedup: the already-stored top-ranked term is skipped;
+    # remaining qualifying terms are still minted as new candidates.
+    assert {p["title"] for p in second["mined"]} == {
+        "Recurring theme: circuit",
+        "Recurring theme: saved",
+    }
+    assert second["skipped_existing"] == 1
+    assert len(store.list_patterns()) == 3
 
 
 def test_single_project_terms_are_not_mined(tmp_path: Path):
