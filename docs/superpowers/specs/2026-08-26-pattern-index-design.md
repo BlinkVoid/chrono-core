@@ -107,8 +107,11 @@ v4 only adds tables (no data backfill).
   decision titles, open blocker titles, and open action texts.
 - One OR-query against `pattern_fts`; malformed query or empty index returns
   `[]` — recommendation must never fail a resume.
-- Rank by hit count then updated_at desc; take top 3 where status in
-  (candidate, validated).
+- Rank by FTS5 bm25 relevance (`ORDER BY rank`); take top 3 where status in
+  (candidate, validated). (Amended 2026-08-26 during implementation: true
+  per-term hit counting would need N MATCH subqueries for no practical gain
+  at local scale; the original "hit count then updated_at" wording was
+  replaced by this cheaper deterministic ranking.)
 - Emitted as `recommended_patterns: [{id, title, category, status}]` in the
   resume context dict/dataclass. MCP `get_resume_context` inherits this with
   no extra wiring.
