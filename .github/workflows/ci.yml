@@ -29,10 +29,10 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install project
-        run: uv pip install --system -e ".[dev]"
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
 
       - name: Lint
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Test
-        run: pytest -q
+        run: uv run pytest -q
