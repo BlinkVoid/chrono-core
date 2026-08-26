@@ -7,7 +7,7 @@ from pathlib import Path
 from chrono_core.capture.handoff import build_handoff_payload, persist_handoff
 from chrono_core.domain.models import GitState, HandoffPayload
 from chrono_core.store.store import Store
-from chrono_core.workspace.resolver import resolve_project
+from chrono_core.workspace.resolver import ResolvedProject, resolve_project
 
 
 def test_build_handoff_payload_from_summary_only():
@@ -67,3 +67,43 @@ def test_persist_handoff_creates_records(tmp_path: Path):
     assert result["project_id"] == project.project_id
     assert "session_id" in result
     assert "Block" in result["resume_hint"]
+
+
+def test_persist_handoff_prefers_existing_project_for_colliding_path(tmp_path: Path):
+    store = Store(tmp_path / "test.db")
+    store.init_schema()
+    project = ResolvedProject(
+        name="FigmentLab",
+        path="/workspace/FigmentLab",
+        relative_path=".",
+        marker=".git",
+    )
+    colliding_project_id = store.upsert_project(
+        project_id=project.project_id,
+        name="automaton",
+        path="/workspace/cybermancer/automaton",
+        relative_path=".",
+    )
+    canonical_project_id = store.upsert_project(
+        project_id="FigmentLab-b5b4d9f26c",
+        name="FigmentLab",
+        path="/workspace/FigmentLab",
+        relative_path="FigmentLab",
+    )
+
+    result = persist_handoff(
+        store,
+        project,
+        HandoffPayload(summary="Collision-safe handoff."),
+        GitState(branch="main"),
+    )
+
+    assert result["project_id"] == canonical_project_id
+    conn = store._connect()
+    assert conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0] == 2
+    assert conn.execute(
+        "SELECT path FROM projects WHERE id = ?", (colliding_project_id,)
+    ).fetchone()["path"] == "/workspace/cybermancer/automaton"
+    assert conn.execute(
+        "SELECT COUNT(*) FROM sessions WHERE project_id = ?", (canonical_project_id,)
+    ).fetchone()[0] == 1

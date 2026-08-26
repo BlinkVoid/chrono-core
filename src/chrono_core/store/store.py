@@ -131,6 +131,24 @@ class Store:
     ) -> str:
         conn = self._connect()
         now = utc_now()
+        existing = conn.execute("SELECT id FROM projects WHERE path = ?", (path,)).fetchone()
+        if existing:
+            # The absolute path is canonical.  Resolve it before an id upsert:
+            # the supplied id may already identify an unrelated project.
+            conn.execute(
+                """
+                UPDATE projects SET
+                    name=?,
+                    relative_path=?,
+                    phase=COALESCE(?, phase),
+                    summary=COALESCE(?, summary),
+                    updated_at=?
+                WHERE id=?
+                """,
+                (name, relative_path, phase, summary, now, existing["id"]),
+            )
+            self._commit()
+            return existing["id"]
         conn.execute(
             """
             INSERT INTO projects (
