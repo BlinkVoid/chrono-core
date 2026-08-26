@@ -61,9 +61,9 @@ Goal: project state becomes coherent and maintainable.
 Goal: reuse hard-won patterns across projects.
 
 - [ ] MetaFactory ingestion adapter.
-- [ ] reusable pattern index.
+- [x] reusable pattern index.
 - [ ] project similarity search.
-- [ ] pattern recommendation in resume context.
+- [x] pattern recommendation in resume context.
 - [ ] promote validated patterns into GearCore skills.
 
 ## Phase 5 — Supersession / Consolidation
