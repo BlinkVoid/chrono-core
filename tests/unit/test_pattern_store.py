@@ -165,3 +165,27 @@ def test_recommendations_appear_in_get_resume_context(tmp_path: Path):
     assert all(
         set(p.keys()) == expected_keys for p in context.recommended_patterns
     )
+
+
+def test_recommendations_survive_hyphenated_project_tokens(tmp_path: Path):
+    store = make_store(tmp_path)
+    workspace = tmp_path / "ws"
+    proj = workspace / "proj-alpha"
+    proj.mkdir(parents=True)
+    from chrono_core.workspace.resolver import resolve_project
+
+    project = resolve_project(proj, workspace_root=workspace)
+    pid = store.get_or_create_project(project)
+    session = store.create_session(
+        pid, HandoffPayload(summary="s"), GitState(branch="main")
+    )
+    store.record_decisions(
+        pid, session,         [{"title": "circuit breaker for proj-alpha client rollout"}]
+    )
+    seeded_pattern(store)
+
+    context = store.get_resume_context(pid)
+
+    assert [p["title"] for p in context.recommended_patterns] == [
+        "Single Client Boundary"
+    ]

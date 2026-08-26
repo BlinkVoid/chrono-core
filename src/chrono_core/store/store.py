@@ -711,10 +711,9 @@ class Store:
             + [a["text"] for a in actions]
         )
         rec_terms = salient_terms(rec_text)
+        rec_query = " OR ".join(f'"{term}"' for term in rec_terms)
         recommended_patterns = (
-            self.search_patterns_safe(" OR ".join(rec_terms), limit=3)
-            if rec_terms
-            else []
+            self.search_patterns_safe(rec_query, limit=3) if rec_terms else []
         )
 
         return ResumeContext(
