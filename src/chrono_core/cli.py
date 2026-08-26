@@ -300,6 +300,49 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=None, help="continuity database path"
     )
 
+    p_ingest_patterns = sub.add_parser(
+        "ingest-patterns", help="ingest _MetaFactory consolidated patterns"
+    )
+    p_ingest_patterns.add_argument(
+        "--metafactory-root",
+        default=str(Path.home() / "workspace" / "_MetaFactory"),
+        help="_MetaFactory checkout root",
+    )
+    p_ingest_patterns.add_argument(
+        "--file", default=None, help="explicit patterns_library.md path"
+    )
+    p_ingest_patterns.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
+    p_mine = sub.add_parser(
+        "mine-patterns", help="mine recurring keyword patterns across projects"
+    )
+    p_mine.add_argument("--min-projects", type=int, default=2)
+    p_mine.add_argument("--limit", type=int, default=20)
+    p_mine.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
+    p_patterns = sub.add_parser("patterns", help="inspect and manage the pattern index")
+    patterns_sub = p_patterns.add_subparsers(dest="patterns_command")
+    p_patterns_list = patterns_sub.add_parser("list", help="list patterns")
+    p_patterns_list.add_argument("--status", default=None)
+    p_patterns_list.add_argument("--limit", type=int, default=50)
+    p_patterns_list.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+    p_patterns_set = patterns_sub.add_parser(
+        "set-status", help="transition a pattern's lifecycle status"
+    )
+    p_patterns_set.add_argument("pattern_id")
+    p_patterns_set.add_argument(
+        "status", help="candidate | validated | promoted | retired"
+    )
+    p_patterns_set.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
     p_gearcore = sub.add_parser("gearcore", help="GearCore adapter utilities")
     gearcore_sub = p_gearcore.add_subparsers(dest="gearcore_command")
     p_gearcore_plan = gearcore_sub.add_parser(
@@ -465,6 +508,52 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result, indent=2))
         return 0 if result["ok"] else 1
+
+    if args.command == "ingest-patterns":
+        from chrono_core.integrations.metafactory import ingest_metafactory_patterns
+
+        store = services.open_store(args.db_path)
+        try:
+            result = ingest_metafactory_patterns(
+                store,
+                metafactory_root=args.metafactory_root,
+                file=args.file,
+            )
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        print(json.dumps(result, indent=2))
+        return 0
+
+    if args.command == "mine-patterns":
+        from chrono_core.management.patterns import mine_pattern_candidates
+
+        result = mine_pattern_candidates(
+            services.open_store(args.db_path),
+            min_projects=args.min_projects,
+            limit=args.limit,
+        )
+        print(json.dumps(result, indent=2))
+        return 0
+
+    if args.command == "patterns":
+        if args.patterns_command == "list":
+            store = services.open_store(args.db_path)
+            patterns = store.list_patterns(status=args.status, limit=args.limit)
+            for row in patterns:
+                row.pop("statement", None)
+            print(json.dumps({"ok": True, "count": len(patterns), "patterns": patterns}, indent=2))
+            return 0
+        if args.patterns_command == "set-status":
+            store = services.open_store(args.db_path)
+            try:
+                result = store.set_pattern_status(args.pattern_id, args.status)
+            except ValueError as exc:
+                print(str(exc), file=sys.stderr)
+                return 2
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
+        parser.error("patterns requires a subcommand")
 
     if args.command == "export":
         if args.export_command == "markdown":
