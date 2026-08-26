@@ -289,6 +289,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="restrict output to a record type; repeatable",
     )
+    p_export_graph = export_sub.add_parser(
+        "graph", help="export a project's record graph (nodes and edges) as JSON"
+    )
+    graph_selectors = p_export_graph.add_mutually_exclusive_group(required=True)
+    graph_selectors.add_argument("--project-id", default=None, help="export this project id")
+    graph_selectors.add_argument("--cwd", default=None, help="resolve the project from this path")
+    p_export_graph.add_argument("--workspace-root", default=default_workspace_root())
+    p_export_graph.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
 
     p_gearcore = sub.add_parser("gearcore", help="GearCore adapter utilities")
     gearcore_sub = p_gearcore.add_subparsers(dest="gearcore_command")
@@ -466,6 +476,10 @@ def main(argv: list[str] | None = None) -> int:
             from chrono_core.export.json import export_json_command
 
             return export_json_command(args)
+        if args.export_command == "graph":
+            from chrono_core.export.graph import export_graph_command
+
+            return export_graph_command(args)
         parser.error("export requires a subcommand")
 
     if args.command == "gearcore":

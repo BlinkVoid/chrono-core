@@ -23,6 +23,10 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
 - `chrono export json` emits per-project records (decisions, blockers, next
   actions) as stable, date-filterable JSON for consumer backfill/incremental
   sync (see `docs/superpowers/specs/2026-08-26-record-export-json-design.md`).
+- `chrono export graph` emits the same project's records as a derived
+  `{nodes, edges}` graph (session-hub co-occurrence plus supersession links;
+  no graph DB — see
+  `docs/superpowers/specs/2026-08-26-record-graph-export-design.md`).
 - Focused unit tests covering resolver, store, handoff, resume, MCP tool handlers, distillation, review, and export.
 
 ## Project Location

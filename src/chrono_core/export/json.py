@@ -4,12 +4,11 @@ import json
 import sys
 from argparse import Namespace
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from chrono_core import services
+from chrono_core.export.common import load_project_row, resolve_export_project
 from chrono_core.store.store import Store, utc_now
-from chrono_core.workspace.resolver import resolve_project
 
 RECORD_TYPES = ("decisions", "blockers", "next_actions")
 
@@ -97,9 +96,7 @@ def export_records_json(
     does instead of failing. Raises ValueError on an unknown explicit project
     id, malformed ``since``, or unknown record types.
     """
-    project_row = store._connect().execute(
-        "SELECT id, name, path FROM projects WHERE id = ?", (project_id,)
-    ).fetchone()
+    project_row = load_project_row(store, project_id)
     if project_row is None:
         if fallback_project is None:
             raise ValueError(f"unknown project id: {project_id}")
@@ -140,22 +137,8 @@ def export_records_json(
 def export_json_command(args: Namespace) -> int:
     """CLI entry point for ``chrono export json``."""
     store = services.open_store(args.db_path)
-    fallback = None
-    if getattr(args, "project_id", None):
-        project_id = args.project_id
-    else:
-        try:
-            project = resolve_project(
-                Path(args.cwd),
-                workspace_root=Path(getattr(args, "workspace_root", ".") or "."),
-            )
-        except ValueError as exc:
-            print(str(exc), file=sys.stderr)
-            return 2
-        project_id = store.resolve_project_id(project)
-        fallback = project
-
     try:
+        project_id, fallback = resolve_export_project(store, args)
         payload = export_records_json(
             store,
             project_id,
