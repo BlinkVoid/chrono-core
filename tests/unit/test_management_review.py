@@ -165,7 +165,7 @@ def test_export_markdown_includes_review_queue(tmp_path: Path):
 def test_export_markdown_handles_nested_projects(tmp_path: Path):
     workspace = tmp_path / "workspace"
     db_path = tmp_path / "chrono.db"
-    project_path = workspace / "incubator" / "example"
+    project_path = workspace / "projects" / "example"
     project_path.mkdir(parents=True)
     (project_path / ".git").mkdir()
     (project_path / "README.md").write_text("# Nested\n", encoding="utf-8")

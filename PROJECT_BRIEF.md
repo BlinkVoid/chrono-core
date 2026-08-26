@@ -8,7 +8,7 @@ The system should make it cheap for any agent to record what happened, easy for 
 
 ## Scope
 
-Chrono Core is not a Incubator-only tool. Incubator hosts the incubator, but the product operates over `~/workspace` and should eventually become a standalone package, MCP server, and GearCore-compatible capability.
+Chrono Core is not tied to the incubator it was born in. The product operates over `~/workspace` and should eventually become a standalone package, MCP server, and GearCore-compatible capability.
 
 ## Users
 

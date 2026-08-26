@@ -12,7 +12,7 @@ Scope: Full sweep — lifecycle, bug tracking, resume scoping, hygiene, packagin
 2. **Resume drowns current work.** `Store.get_resume_context` selects open actions and
    blockers flat project-global with no limit (`store.py:402-410`) and picks the latest
    session regardless of branch. Projects with parallel work streams (novel lane vs
-   platform lane in InternalProject) surface ~30 unrelated items.
+   platform lane in a large multi-lane project) surface ~30 unrelated items.
 3. **No cross-project bug tracking.** Bugs live nowhere queryable; chrono's own defects
    (this design's motivation) are tracked as prose in next_actions.
 4. **Hygiene debt** blocks publication: machine-specific path constants, zero SQL
@@ -159,5 +159,5 @@ chrono bug update <id> [--status ...] [--severity ...] [--detail ...]
 
 ## Verification
 
-Full pytest suite + ruff per slice. Dogfood check: `chrono resume` on InternalProject
+Full pytest suite + ruff per slice. Dogfood check: `chrono resume` on a large multi-lane project
 surfaces only current-branch items; `chrono bug list` finds bug #1 cross-project.

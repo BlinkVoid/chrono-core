@@ -17,9 +17,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/YOUR_ORG/chrono-core"
-Repository = "https://github.com/YOUR_ORG/chrono-core"
-Issues = "https://github.com/YOUR_ORG/chrono-core/issues"
+Homepage = "https://github.com/BlinkVoid/chrono-core"
+Repository = "https://github.com/BlinkVoid/chrono-core"
+Issues = "https://github.com/BlinkVoid/chrono-core/issues"
 
 [project.optional-dependencies]
 dev = [

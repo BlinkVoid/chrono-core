@@ -17,7 +17,7 @@ Goals:
 - make Chrono Core available across Codex, Claude, Kimi, and future AI CLIs
 - use GearCore as the cross-tool distribution and progressive-disclosure layer
 - support workspace traversal over `~/workspace`
-- integrate with local Incubator, `workspace-intelligence`, and `_MetaFactory`
+- integrate with the local incubator, `workspace-intelligence`, and `_MetaFactory`
 - keep private project state in a local database
 
 GearCore should be an adapter and distribution mechanism, not a core dependency.
@@ -29,7 +29,7 @@ Public mode is the later open-source route.
 Goals:
 
 - standard installable package
-- portable config with no hardcoded Incubator assumptions
+- portable config with no hardcoded incubator assumptions
 - MCP server for compatible clients
 - CLI for manual workflows
 - optional plugin manifests for clients that support plugin packages

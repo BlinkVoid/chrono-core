@@ -2,6 +2,7 @@
 
 Local-first project memory for humans and AI agents working across many projects in parallel.
 
+[![CI](https://github.com/BlinkVoid/chrono-core/actions/workflows/ci.yml/badge.svg)](https://github.com/BlinkVoid/chrono-core/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style](https://img.shields.io/badge/code_style-ruff-261230)
@@ -50,7 +51,7 @@ Later — even weeks afterwards, from the same project — resume with the right
 ```text
 $ chrono resume
 Project: demo-app
-Path: /tmp/opencode/demo-app
+Path: /tmp/chrono-demo/demo-app
 Status: Latest session on spike/queue-backend.
 Latest session: Spiked Redis Streams vs SQS; leaning Redis Streams.
 

@@ -13,7 +13,7 @@ Prerequisite: `chrono export json` (see
 
 Chrono holds the raw material of a problem/solution graph — decisions,
 blockers, next actions, sessions — but exposes no way to consume it *as a
-graph*. Consumers (ProjectA vault sync, `_MetaFactory` distillation) would
+graph*. Consumers (an external vault sync, `_MetaFactory` distillation) would
 have to re-derive relationships themselves.
 
 There is **no dedicated graph database**, by design (`docs/SYSTEM_DESIGN.md`:

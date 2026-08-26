@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 3 management session workflows are complete over the Phase 1 local core and Phase 2 agent interface. The project has moved out of the Hub incubator incubator into its own workspace folder. Phase 4 cross-project intelligence is the next focus.
+Phase 3 management session workflows are complete over the Phase 1 local core and Phase 2 agent interface. The project has moved out of the incubator into its own workspace folder. Phase 4 cross-project intelligence is the next focus.
 
 ## What Landed
 

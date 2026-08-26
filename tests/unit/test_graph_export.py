@@ -142,8 +142,8 @@ def test_graph_output_is_deterministic(tmp_path: Path):
     assert edge_keys == sorted(edge_keys)
 
 
-def test_unknown_project_id_raises():
-    store = Store("/tmp/opencode/graph-export-unknown.db")
+def test_unknown_project_id_raises(tmp_path: Path):
+    store = Store(tmp_path / "graph-export-unknown.db")
     store.init_schema()
     with pytest.raises(ValueError):
         build_record_graph(store, "nope-0000000000")
@@ -199,11 +199,11 @@ def test_cli_unregistered_cwd_project_exports_empty_graph(tmp_path: Path, capsys
     assert out["edges"] == []
 
 
-def test_cli_unknown_project_id_fails_cleanly(capsys):
+def test_cli_unknown_project_id_fails_cleanly(tmp_path: Path, capsys):
     rc = main([
         "export", "graph",
         "--project-id", "nope-0000000000",
-        "--db-path", "/tmp/opencode/graph-export-unknown-cli.db",
+        "--db-path", str(tmp_path / "graph-export-unknown-cli.db"),
     ])
     captured = capsys.readouterr()
     assert rc != 0

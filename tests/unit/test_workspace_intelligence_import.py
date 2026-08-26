@@ -87,7 +87,7 @@ def _create_workspace_intelligence_db(path: Path, workspace: Path) -> None:
             "active",
             "high",
             json.dumps(["management", "tracking"]),
-            "user",
+            "operator",
             "Discovers workspace projects.",
             "Workspace Intelligence",
             "SQLite registry and MCP server are working.",

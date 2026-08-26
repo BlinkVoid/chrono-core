@@ -7,11 +7,11 @@ from chrono_core.workspace.resolver import make_project_id, resolve_project
 
 
 def test_make_project_id_is_deterministic():
-    assert make_project_id("projects/incubator/example") == make_project_id("projects/incubator/example")
+    assert make_project_id("group/sub/example") == make_project_id("group/sub/example")
 
 
 def test_make_project_id_normalizes_separators():
-    assert make_project_id("Hub\\incubator\\example") == make_project_id("projects/incubator/example")
+    assert make_project_id("group\\sub\\example") == make_project_id("group/sub/example")
 
 
 def test_store_get_or_create_project(tmp_path: Path):

@@ -1418,13 +1418,13 @@ Expected: all tests pass, lint clean. Fix anything before continuing.
 - [ ] **Step 2: End-to-end smoke test**
 
 ```bash
-rm -rf /tmp/opencode/pattern-smoke && mkdir -p /tmp/opencode/pattern-smoke/proj-a /tmp/opencode/pattern-smoke/proj-b /tmp/opencode/pattern-smoke/mf/consolidated/2026-08-26_000000
-printf '## Pattern: Fail-Closed Gating\n\n**Category**: security\n**Projects**: proj-a\n\n**Pattern Statement**:\nDefault is rejection.\n' > /tmp/opencode/pattern-smoke/mf/consolidated/2026-08-26_000000/patterns_library.md
-DB=/tmp/opencode/pattern-smoke/db.sqlite
-for p in proj-a proj-b; do uv run chrono handoff --cwd /tmp/opencode/pattern-smoke/$p --workspace-root /tmp/opencode/pattern-smoke --db-path $DB --summary s --decision "circuit breaker for $p" >/dev/null; done
-uv run chrono ingest-patterns --metafactory-root /tmp/opencode/pattern-smoke/mf --db-path $DB
+rm -rf /tmp/chrono-demo/pattern-smoke && mkdir -p /tmp/chrono-demo/pattern-smoke/proj-a /tmp/chrono-demo/pattern-smoke/proj-b /tmp/chrono-demo/pattern-smoke/mf/consolidated/2026-08-26_000000
+printf '## Pattern: Fail-Closed Gating\n\n**Category**: security\n**Projects**: proj-a\n\n**Pattern Statement**:\nDefault is rejection.\n' > /tmp/chrono-demo/pattern-smoke/mf/consolidated/2026-08-26_000000/patterns_library.md
+DB=/tmp/chrono-demo/pattern-smoke/db.sqlite
+for p in proj-a proj-b; do uv run chrono handoff --cwd /tmp/chrono-demo/pattern-smoke/$p --workspace-root /tmp/chrono-demo/pattern-smoke --db-path $DB --summary s --decision "circuit breaker for $p" >/dev/null; done
+uv run chrono ingest-patterns --metafactory-root /tmp/chrono-demo/pattern-smoke/mf --db-path $DB
 uv run chrono mine-patterns --db-path $DB
-uv run chrono resume --cwd /tmp/opencode/pattern-smoke/proj-a --workspace-root /tmp/opencode/pattern-smoke --db-path $DB --json | python3 -c "import json,sys; print([p['title'] for p in json.load(sys.stdin)['recommended_patterns']])"
+uv run chrono resume --cwd /tmp/chrono-demo/pattern-smoke/proj-a --workspace-root /tmp/chrono-demo/pattern-smoke --db-path $DB --json | python3 -c "import json,sys; print([p['title'] for p in json.load(sys.stdin)['recommended_patterns']])"
 ```
 
 Expected: ingest reports 1 pattern; mine reports a `Recurring theme:` candidate; resume JSON lists recommended pattern titles (non-empty list containing either the Fail-Closed pattern or a recurring-theme candidate).

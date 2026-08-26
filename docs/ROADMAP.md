@@ -2,7 +2,7 @@
 
 ## Phase 0 — Design Incubator
 
-- [x] Create Incubator incubator project.
+- [x] Create incubator project.
 - [x] Document mission and principles.
 - [x] Document initial system design.
 - [x] Document graph-shaped data model.

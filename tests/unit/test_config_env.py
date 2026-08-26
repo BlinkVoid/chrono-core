@@ -23,7 +23,7 @@ def test_no_personal_fallback(monkeypatch, tmp_path):
     monkeypatch.delenv("CHRONO_WORKSPACE_ROOT", raising=False)
     monkeypatch.delenv("CONTINUITY_WORKSPACE_ROOT", raising=False)
     monkeypatch.chdir(tmp_path)
-    assert "~" not in default_workspace_root()
+    assert str(Path.home()) not in default_workspace_root()
     assert Path(default_workspace_root()) == Path(os.getcwd())
 
 

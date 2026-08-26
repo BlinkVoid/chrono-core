@@ -3,11 +3,11 @@
 Date: 2026-08-26
 Status: Implemented (branch `feat/record-export-json`; `chrono_core.export.json`,
 `chrono export json`)
-Consumer: ProjectA vault sync (`atlas sync chrono`, separate ProjectA spec)
+Consumer: an external vault sync (`vault sync chrono`, tracked in that tool's own spec)
 
 ## Problem
 
-ProjectA will sync Chrono records (decisions, blockers, next actions) into an
+The vault sync will sync Chrono records (decisions, blockers, next actions) into an
 Obsidian vault, one note per record, idempotently keyed by record ID. The only
 machine-readable surface today is `chrono resume --json`, which:
 
@@ -61,9 +61,9 @@ chrono export json [--project-id ID | --cwd PATH] [--db-path PATH]
 
 ```json
 {
-  "project_id": "ProjectA-24b1d6cb41",
-  "project_name": "ProjectA",
-  "project_path": "~/workspace/cores/core-a",
+  "project_id": "example-core-24b1d6cb41",
+  "project_name": "example-core",
+  "project_path": "~/workspace/cores/example-core",
   "exported_at": "2026-08-26T09:00:00+00:00",
   "filters": {"since": null, "include_closed": false},
   "decisions": [
@@ -109,7 +109,7 @@ project, bad `--since` format, or unknown `--type`. No partial output on error.
 ## Non-goals
 
 - No writes; export stays strictly read-only.
-- No MCP tool parity in this change (follow-up if ProjectA's sync moves to MCP).
+- No MCP tool parity in this change (follow-up if that sync moves to MCP).
 - No sessions/observations/documents/bugs export — decisions, blockers, and
   next actions are the sync targets today.
 - No cross-project/workspace-wide dump; consumers iterate projects.

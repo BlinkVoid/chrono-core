@@ -64,9 +64,9 @@ Chrono Core should connect current project problems to prior work.
 
 Examples:
 
-- "This provider abstraction resembles a collaborator's LLM client design."
-- "Use Hub's ADR style for this architectural split."
-- "This stale-doc problem appeared in ProjectX; run the same context cleanup."
+- "This provider abstraction resembles the research-agent project's LLM client design."
+- "Use the workspace ADR style for this architectural split."
+- "This stale-doc problem appeared in the research-agent project; run the same context cleanup."
 
 Sources:
 

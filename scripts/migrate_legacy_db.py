@@ -1,37 +1,52 @@
-"""One-off ops script: copy the legacy continuity DB and remap moved projects.
+"""One-off ops script: copy a legacy continuity DB and remap moved projects.
 
 Not part of the installed package; run ad hoc with the project venv, e.g.::
 
     uv run python scripts/migrate_legacy_db.py  # or import from a REPL
 
-The workspace layout it remaps (and WORKSPACE_ROOT below) is specific to this
-machine's migration history.
+The remap is workspace-specific, so it is supplied by the operator rather than
+baked in. Two environment variables configure it:
+
+``CHRONO_MIGRATION_WORKSPACE_ROOT``
+    Absolute path to the workspace root. Defaults to ``~/workspace``.
+
+``CHRONO_MIGRATION_MOVES``
+    JSON array of ``[old_relative_path, new_relative_path]`` pairs, relative to
+    the workspace root, e.g.::
+
+        CHRONO_MIGRATION_MOVES='[["MyTool", "tools/MyTool"], ["old-name", "tools/new-name"]]'
+
+    A project's new name is taken from the last segment of its new path, so a
+    move that also renames the directory renames the project too. Unset or empty
+    means no moves, which makes the migration a plain copy.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any
 
 from chrono_core.workspace.resolver import make_project_id
 
-WORKSPACE_ROOT = Path("~/workspace")
-
-PROJECT_ROOT_MOVES = (
-    (WORKSPACE_ROOT / "BlueCore", WORKSPACE_ROOT / "cores" / "BlueCore"),
-    (WORKSPACE_ROOT / "GearCore", WORKSPACE_ROOT / "cores" / "GearCore"),
-    (WORKSPACE_ROOT / "ProjectB", WORKSPACE_ROOT / "cores" / "ProjectB"),
-    (
-        WORKSPACE_ROOT / "OpenSource" / "PromptCore",
-        WORKSPACE_ROOT / "cores" / "PromptCore",
-    ),
-    (WORKSPACE_ROOT / "TestCore", WORKSPACE_ROOT / "cores" / "TestCore"),
-    (
-        WORKSPACE_ROOT / "continuity-core",
-        WORKSPACE_ROOT / "cores" / "chrono-core",
-    ),
+WORKSPACE_ROOT = Path(
+    os.environ.get("CHRONO_MIGRATION_WORKSPACE_ROOT", str(Path.home() / "workspace"))
 )
+
+
+def _load_project_root_moves() -> tuple[tuple[Path, Path], ...]:
+    """Read the operator-supplied move map from the environment."""
+    raw = os.environ.get("CHRONO_MIGRATION_MOVES", "").strip()
+    if not raw:
+        return ()
+    return tuple(
+        (WORKSPACE_ROOT / old, WORKSPACE_ROOT / new) for old, new in json.loads(raw)
+    )
+
+
+PROJECT_ROOT_MOVES = _load_project_root_moves()
 
 PROJECT_FOREIGN_KEY_TABLES = (
     "sessions",
@@ -55,7 +70,7 @@ def _moved_project(
 
         new_path = new_root / suffix
         new_relative = new_path.relative_to(WORKSPACE_ROOT).as_posix()
-        new_name = "chrono-core" if current == WORKSPACE_ROOT / "continuity-core" else name
+        new_name = new_path.name
         return (
             project_id,
             make_project_id(new_relative),

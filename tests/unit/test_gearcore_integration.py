@@ -21,7 +21,7 @@ def test_gearcore_install_plan_without_skill_path_omits_skill_commands():
     }
     assert [command["argv"][1] for command in data["commands"]] == ["add-mcp"]
     assert not any("add-skill" in command["argv"] for command in data["commands"])
-    assert "~" not in json.dumps(data)
+    assert str(Path.home()) not in json.dumps(data)
 
 
 def test_gearcore_install_plan_with_explicit_skill_path_registers_skill(tmp_path: Path):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
@@ -8,8 +9,15 @@ from pathlib import Path
 from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import make_project_id
 
+# The ops script reads its remap from the environment at import time, so the
+# test workspace layout has to be in place before the module is exec'd.
+TEST_WORKSPACE_ROOT = "/workspace"
+TEST_MOVES = '[["continuity-core", "cores/chrono-core"]]'
+
 
 def _load_ops_script():
+    os.environ["CHRONO_MIGRATION_WORKSPACE_ROOT"] = TEST_WORKSPACE_ROOT
+    os.environ["CHRONO_MIGRATION_MOVES"] = TEST_MOVES
     script = (
         Path(__file__).resolve().parents[2] / "scripts" / "migrate_legacy_db.py"
     )
@@ -39,7 +47,7 @@ def test_identity_migration_preserves_observations_fts_and_foreign_keys(tmp_path
             (
                 old_id,
                 "continuity-core",
-                "~/workspace/continuity-core",
+                "/workspace/continuity-core",
                 old_relative,
                 now,
                 now,
@@ -71,7 +79,7 @@ def test_identity_migration_preserves_observations_fts_and_foreign_keys(tmp_path
     assert project == (
         new_id,
         "chrono-core",
-        "~/workspace/cores/chrono-core",
+        "/workspace/cores/chrono-core",
         "cores/chrono-core",
     )
     assert observation_project == new_id

@@ -1,8 +1,8 @@
 # Doc Consolidation Playbook
 
 A battle-tested approach for reconciling a project's scattered, partly-stale design
-docs against canonical state (the code), distilled from a real multi-wave run in the
-InternalProject project (June 2026). This is the concrete realization of
+docs against canonical state (the code), distilled from a real multi-wave run in a
+large internal platform project (June 2026). This is the concrete realization of
 [Management Workflows](MANAGEMENT_WORKFLOWS.md) Workflow 4 (Documentation
 Reconciliation) and a dedicated management session — captured here as an input to
 Chrono Core's design.
@@ -11,13 +11,13 @@ Chrono Core's design.
 
 Chrono Core's whole premise is that project state drifts: README says Phase 1,
 sessions say Phase 2; two design docs recommend incompatible approaches; a decision
-lives in a handoff but never reached an ADR. The InternalProject run hit every one of these
+lives in a handoff but never reached an ADR. That run hit every one of these
 and resolved them with a repeatable loop. The mechanics below are candidate behaviors
 for Chrono Core's management session and documentation-reconciliation workflow.
 
 ## The problem it solved
 
-InternalProject had ~25 design docs accumulated over months: overlapping, some describing
+That project had ~25 design docs accumulated over months: overlapping, some describing
 planned work that had since shipped (or shipped differently), some citing line numbers
 that had drifted, some contradicting the code outright. Goal: one navigable design
 reference — a refreshed architecture map, one verified doc per real subsystem, a single
@@ -95,7 +95,7 @@ step as each task's bookkeeping.
 
 Every doc/code mismatch found during the run is collected into one dated archive file
 for human review — grouped by subsystem, each with its `file:line` and a one-line
-"code says X / doc said Y". Real examples from the InternalProject run:
+"code says X / doc said Y". Real examples from that run:
 
 - A docstring claimed a 3-tuple return; the protocol and all call-sites used a 4-tuple.
 - A comment said "19 core tools"; the code registered 26 (a whole tool group added
@@ -143,6 +143,6 @@ human driving each task.
 
 ## Source
 
-InternalProject project, `feat/swap-layer-deepseek-uv` branch, plan
+Internal platform project, `feat/swap-layer-deepseek-uv` branch, plan
 `docs/superpowers/plans/2026-06-27-docs-consolidation.md`, executed via the
 subagent-driven-development loop. Run dated 2026-06-27/28.

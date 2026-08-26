@@ -13,7 +13,7 @@ from chrono_core.workspace.resolver import resolve_project
 
 
 def test_resume_rejects_or_recovers_missing_active_tmp_worktree(tmp_path):
-    """BUG-Hub-071: never advertise a vanished worktree as resumable."""
+    """BUG-071: never advertise a vanished worktree as resumable."""
     workspace = tmp_path / "workspace"
     volatile_worktree = workspace / "tmp" / "hive-v2-assess"
     volatile_worktree.mkdir(parents=True)

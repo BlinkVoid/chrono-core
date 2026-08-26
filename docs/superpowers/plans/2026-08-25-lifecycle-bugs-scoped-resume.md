@@ -514,7 +514,7 @@ Expected: PASS (fix the `_default_db_path` test reference noted above)
 
 - [ ] **Step 6: Dogfood verification on real data**
 
-Run: `chrono resume --cwd ~/workspace/InternalProject | head -20`
+Run: `chrono resume --cwd ~/workspace/example-platform | head -20`
 Expected: header shows `(feat/...)` scope; far fewer actions than before; footer reports hidden count.
 
 - [ ] **Step 7: Commit**
@@ -1948,7 +1948,7 @@ Fix its imports (`from chrono_core.…`) and add a module docstring noting it is
 
 - [ ] **Step 5: Run suite + grep for leftovers**
 
-Run: `uv run pytest tests/unit -q && grep -rn "user\|FALLBACK_WORKSPACE" src/ || true`
+Run: `uv run pytest tests/unit -q && grep -rn "$HOME\|FALLBACK_WORKSPACE" src/ || true`
 Expected: PASS; grep finds no hits under `src/`
 
 - [ ] **Step 6: Commit**
@@ -2209,7 +2209,7 @@ git commit -m "docs: standalone SEO landing page (local preview, unpublished)"
 
 1. `uv run pytest -q` — whole suite green
 2. `uv run ruff check src tests` — clean
-3. `chrono resume --cwd ~/workspace/InternalProject` — only current-branch items + hidden-count footer
+3. `chrono resume --cwd ~/workspace/example-platform` — only current-branch items + hidden-count footer
 4. `chrono bug list --status open --db ~/.local/share/chrono-core/chrono.db` — shows dogfooded bug #1
 5. `chrono action cancel act_<some-stale-id> --reason "superseded by corrective handoff"` — works against live DB
 6. Write a closing `chrono handoff` summarizing the slice set, files changed, and verification evidence

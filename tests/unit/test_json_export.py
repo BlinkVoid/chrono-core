@@ -226,11 +226,11 @@ def test_cli_requires_exactly_one_project_selector():
 
 
 # 7d. Unknown --project-id exits non-zero without partial output.
-def test_cli_unknown_project_id_fails_cleanly(capsys):
+def test_cli_unknown_project_id_fails_cleanly(tmp_path: Path, capsys):
     rc = main([
         "export", "json",
         "--project-id", "nope-0000000000",
-        "--db-path", "/tmp/opencode/export-json-unknown-project.db",
+        "--db-path", str(tmp_path / "export-json-unknown-project.db"),
     ])
     captured = capsys.readouterr()
     assert rc != 0
