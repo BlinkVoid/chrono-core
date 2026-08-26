@@ -18,6 +18,7 @@ MIGRATIONS: list[tuple[int, str]] = [
         3,
         "lifecycle columns (next_actions/blockers), bugs table + FTS, first indexes",
     ),
+    (4, "patterns table + FTS"),
 ]
 
 _V3_LIFECYCLE_BUGS = [
@@ -79,8 +80,54 @@ _V3_LIFECYCLE_BUGS = [
     "CREATE INDEX IF NOT EXISTS idx_observations_proj ON observations(project_id)",
 ]
 
+_V4_PATTERNS = [
+    """
+    CREATE TABLE IF NOT EXISTS patterns (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL UNIQUE,
+        statement TEXT NOT NULL DEFAULT '',
+        category TEXT,
+        status TEXT NOT NULL DEFAULT 'candidate',
+        source TEXT NOT NULL DEFAULT 'authored',
+        source_ref TEXT,
+        projects_json TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE VIRTUAL TABLE IF NOT EXISTS pattern_fts USING fts5(
+        title, statement, content='patterns', content_rowid='rowid'
+    )
+    """,
+    """
+    CREATE TRIGGER IF NOT EXISTS patterns_fts_insert
+    AFTER INSERT ON patterns BEGIN
+        INSERT INTO pattern_fts (rowid, title, statement)
+        VALUES (new.rowid, new.title, new.statement);
+    END
+    """,
+    """
+    CREATE TRIGGER IF NOT EXISTS patterns_fts_delete
+    AFTER DELETE ON patterns BEGIN
+        INSERT INTO pattern_fts (pattern_fts, rowid, title, statement)
+        VALUES ('delete', old.rowid, old.title, old.statement);
+    END
+    """,
+    """
+    CREATE TRIGGER IF NOT EXISTS patterns_fts_update
+    AFTER UPDATE ON patterns BEGIN
+        INSERT INTO pattern_fts (pattern_fts, rowid, title, statement)
+        VALUES ('delete', old.rowid, old.title, old.statement);
+        INSERT INTO pattern_fts (rowid, title, statement)
+        VALUES (new.rowid, new.title, new.statement);
+    END
+    """,
+]
+
 _STATEMENTS: dict[int, list[str]] = {
     3: _V3_LIFECYCLE_BUGS,
+    4: _V4_PATTERNS,
 }
 
 

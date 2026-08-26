@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 DDL = """
 PRAGMA foreign_keys = ON;
@@ -118,6 +118,41 @@ AFTER UPDATE ON observations BEGIN
     VALUES ('delete', old.rowid, old.content, old.source);
     INSERT INTO observation_fts (rowid, content, source)
     VALUES (new.rowid, new.content, new.source);
+END;
+
+CREATE TABLE IF NOT EXISTS patterns (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL UNIQUE,
+    statement TEXT NOT NULL DEFAULT '',
+    category TEXT,
+    status TEXT NOT NULL DEFAULT 'candidate',
+    source TEXT NOT NULL DEFAULT 'authored',
+    source_ref TEXT,
+    projects_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS pattern_fts USING fts5(
+    title, statement, content='patterns', content_rowid='rowid'
+);
+
+CREATE TRIGGER IF NOT EXISTS patterns_fts_insert
+AFTER INSERT ON patterns BEGIN
+    INSERT INTO pattern_fts (rowid, title, statement) VALUES (new.rowid, new.title, new.statement);
+END;
+
+CREATE TRIGGER IF NOT EXISTS patterns_fts_delete
+AFTER DELETE ON patterns BEGIN
+    INSERT INTO pattern_fts (pattern_fts, rowid, title, statement)
+    VALUES ('delete', old.rowid, old.title, old.statement);
+END;
+
+CREATE TRIGGER IF NOT EXISTS patterns_fts_update
+AFTER UPDATE ON patterns BEGIN
+    INSERT INTO pattern_fts (pattern_fts, rowid, title, statement)
+    VALUES ('delete', old.rowid, old.title, old.statement);
+    INSERT INTO pattern_fts (rowid, title, statement) VALUES (new.rowid, new.title, new.statement);
 END;
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
