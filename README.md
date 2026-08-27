@@ -89,10 +89,11 @@ Next actions (all branches):
 | Branch-scoped resume | `chrono resume` surfaces only the current workstream's open items; `--all`, `--branch`, and `--limit` widen or trim the view. |
 | Full lifecycle verbs | `chrono action complete/cancel/edit/reopen/supersede` and `chrono blocker resolve/cancel/edit/reopen` correct captured state instead of duplicating it. |
 | Cross-project bug tracking | `chrono bug report/list/show/update` files and tracks bugs across every project in the workspace, exposed through MCP tools as well. The schema carries `remote_url` / `remote_issue_id` for future external sync. |
+| Semantic evidence capture | `chrono observe` records an explicitly typed lesson or pattern candidate that safe cross-project mining may reuse. |
 | Full-text search | `chrono search <query>` runs FTS5 queries over captured observations. |
 | Markdown export | `chrono export markdown` writes a derived project index, per-project pages, and a top-level `ReviewQueue.md`. |
 | Distill & review heuristics | `chrono distill` compacts sessions into current state; `chrono review` runs deterministic doc reconciliation, stale/contradictory-doc detection, health scoring (including bug pressure), improvement advice, and a review queue. These are deterministic heuristics, not semantic/AI reconciliation. |
-| MCP server | `chrono-mcp` exposes 20 tools (resolve, handoff, resume, decisions/blockers/actions lifecycle, search, bugs, distill, review) backed by the same store and code paths as the CLI. |
+| MCP server | `chrono-mcp` exposes 21 tools (resolve, handoff, resume, semantic observations, decisions/blockers/actions lifecycle, search, bugs, distill, review) backed by the same store and code paths as the CLI. |
 | GearCore adapter | `chrono gearcore install-plan` prints registration commands for the GearCore skill and MCP server; Chrono Core works fine without GearCore. |
 
 ## Architecture
@@ -101,7 +102,7 @@ Next actions (all branches):
 AI Agent / Human
       |
       v
-MCP tools + CLI          (chrono-mcp: 20 tools · chrono: 13 command groups)
+MCP tools + CLI          (chrono-mcp: 21 tools · chrono: 17 command groups)
       |
       v
 Chrono Core service layer

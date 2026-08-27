@@ -336,6 +336,45 @@ class Store:
             )
         self._commit()
 
+    def record_observation(
+        self,
+        project_id: str,
+        session_id: str | None,
+        kind: str,
+        content: str,
+        source: str = "direct",
+    ) -> dict[str, Any]:
+        """Record and return one observation."""
+        observation_id = make_entity_id("obs")
+        observed_at = utc_now()
+        self._connect().execute(
+            """
+            INSERT INTO observations (
+                id, project_id, session_id, kind, content, source, observed_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                observation_id,
+                project_id,
+                session_id,
+                kind,
+                content,
+                source,
+                observed_at,
+            ),
+        )
+        self._commit()
+        return {
+            "id": observation_id,
+            "project_id": project_id,
+            "session_id": session_id,
+            "kind": kind,
+            "content": content,
+            "source": source,
+            "observed_at": observed_at,
+        }
+
     def resolve_blocker(self, blocker_id: str) -> bool:
         conn = self._connect()
         cursor = conn.execute(

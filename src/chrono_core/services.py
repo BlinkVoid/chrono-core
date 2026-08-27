@@ -114,6 +114,50 @@ def reopen_blocker(db_path: str | None, blocker_id: str) -> dict[str, Any]:
     )
 
 
+def record_semantic_observation(
+    db_path: str | None,
+    cwd: str,
+    *,
+    content: str,
+    kind: str = "lesson",
+    workspace_root: str | None = None,
+) -> dict[str, Any]:
+    """Capture mineable project knowledge through a constrained public path."""
+    from chrono_core.management.patterns import MINABLE_OBSERVATION_KINDS
+    from chrono_core.workspace.resolver import resolve_project
+
+    normalized = content.strip()
+    if not normalized:
+        return {"ok": False, "kind": kind, "error": "content must not be blank"}
+    if kind not in MINABLE_OBSERVATION_KINDS:
+        allowed = ", ".join(sorted(MINABLE_OBSERVATION_KINDS))
+        return {
+            "ok": False,
+            "kind": kind,
+            "error": f"invalid semantic observation kind '{kind}'; expected one of: {allowed}",
+        }
+
+    project = resolve_project(
+        Path(cwd), workspace_root=Path(workspace_root or default_workspace_root())
+    )
+    store = open_store(db_path)
+    with store.transaction():
+        project_id = store.get_or_create_project(project)
+        observation = store.record_observation(
+            project_id,
+            None,
+            kind,
+            normalized,
+            source="direct",
+        )
+    return {
+        "ok": True,
+        "project_id": project_id,
+        "recorded_count": 1,
+        "observation": observation,
+    }
+
+
 def report_bug(
     db_path: str | None,
     cwd: str,

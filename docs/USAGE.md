@@ -92,6 +92,15 @@ Blocker lifecycle (`chrono blocker ...`): `resolve`, `cancel <id>`,
 Bug tracking (`chrono bug ...`): `report --cwd "$PWD" <title> [--severity S]`,
 `list [--status] [--severity]`, `show <id>`, `update <id> [--status] [--severity]`.
 
+Capture reusable semantic evidence explicitly; arbitrary operational kinds are
+rejected so they cannot contaminate pattern mining:
+
+```bash
+chrono observe "Bound retries with an explicit budget" --kind lesson --cwd "$PWD"
+chrono observe "Single client boundary for provider calls" \
+  --kind pattern_candidate --cwd "$PWD"
+```
+
 Search covers observations and bug text in one envelope:
 
 ```bash

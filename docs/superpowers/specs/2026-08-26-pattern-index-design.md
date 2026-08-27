@@ -103,6 +103,10 @@ v4 only adds tables (no data backfill).
   projects and counts, `source='mined'`, `status='candidate'`.
 - Mining never overwrites an existing pattern; a colliding title is skipped
   and reported as such.
+- First-class evidence capture (added 2026-08-27): `chrono observe` and
+  `chrono_core_record_observation` accept only the semantic allowlist and store
+  sessionless `source='direct'` observations. This gives agents and humans a
+  safe way to feed the miner without exposing arbitrary observation kinds.
 - The tokenizer/stopword list lives in a shared small module
   (`chrono_core/textutil.py`) so mining and recommendation scoring use one
   definition; the Store must not import from `management/`.

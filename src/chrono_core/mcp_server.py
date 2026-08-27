@@ -158,6 +158,24 @@ def handle_record_blocker(
     }
 
 
+def handle_record_observation(
+    cwd: str,
+    content: str,
+    *,
+    kind: str = "lesson",
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Record explicitly semantic evidence for safe pattern mining."""
+    return services.record_semantic_observation(
+        db_path,
+        cwd,
+        content=content,
+        kind=kind,
+        workspace_root=workspace_root,
+    )
+
+
 def handle_resolve_blocker(blocker_id: str, *, db_path: str | None = None) -> dict[str, Any]:
     """Mark a previously recorded blocker as resolved."""
     return services.resolve_blocker(db_path, blocker_id)
@@ -307,6 +325,24 @@ def record_blocker_tool(
         title,
         detail=detail,
         status=status,
+        workspace_root=workspace_root,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="chrono_core_record_observation")
+def record_observation_tool(
+    cwd: str,
+    content: str,
+    kind: str = "lesson",
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Persist a semantic lesson or pattern candidate outside a handoff."""
+    return handle_record_observation(
+        cwd,
+        content,
+        kind=kind,
         workspace_root=workspace_root,
         db_path=db_path,
     )

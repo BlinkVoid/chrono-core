@@ -121,6 +121,21 @@ Output shape:
 
 Unknown ids return `"ok": false`, `"status": "not_found"`, and exit code 1.
 
+### `chrono observe`
+
+Capture project-scoped semantic evidence outside a handoff. The kind is
+restricted to `lesson`, `pattern`, or `pattern_candidate`; file, test, risk,
+git, and importer metadata cannot enter through this command.
+
+```bash
+chrono observe "Bound retries with an explicit budget" --kind lesson --cwd .
+```
+
+The default kind is `lesson`. Successful output contains `project_id`,
+`recorded_count: 1`, and the stored observation (including its `obs_` id and
+`source: "direct"`). Blank content or an unsupported kind returns
+`{"ok": false, "error": ...}` and exit code 2 without creating a database.
+
 ### `chrono search`
 
 Full-text search captured observations (changed files, tests, risks, imported
@@ -418,6 +433,24 @@ Output:
   }
 }
 ```
+
+### `chrono_core_record_observation`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "content": "Bound retries with an explicit budget",
+  "kind": "lesson"
+}
+```
+
+`kind` defaults to `lesson` and accepts only `lesson`, `pattern`, or
+`pattern_candidate`. Output contains the resolved `project_id`,
+`recorded_count: 1`, and the stored observation with `source: "direct"` and no
+session id. Invalid kinds and blank content return a structured error without
+writing.
 
 ### `chrono_core_record_blocker`
 

@@ -124,6 +124,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=None, help="continuity database path"
     )
 
+    p_observe = sub.add_parser(
+        "observe", help="capture a semantic observation for safe pattern mining"
+    )
+    p_observe.add_argument("content", help="reusable lesson or pattern evidence")
+    p_observe.add_argument(
+        "--kind",
+        choices=["lesson", "pattern", "pattern_candidate"],
+        default="lesson",
+    )
+    p_observe.add_argument("--cwd", default=".")
+    p_observe.add_argument("--workspace-root", default=default_workspace_root())
+    p_observe.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
     p_blocker = sub.add_parser("blocker", help="manage blocker lifecycle")
     blocker_sub = p_blocker.add_subparsers(dest="blocker_command")
     p_blocker_resolve = blocker_sub.add_parser("resolve", help="mark a blocker resolved")
@@ -434,6 +449,17 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result, indent=2))
         return 0 if result["ok"] else 1
+
+    if args.command == "observe":
+        result = services.record_semantic_observation(
+            args.db_path,
+            args.cwd,
+            content=args.content,
+            kind=args.kind,
+            workspace_root=args.workspace_root,
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result["ok"] else 2
 
     if args.command == "blocker":
         if args.blocker_command == "resolve":

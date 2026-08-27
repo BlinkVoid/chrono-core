@@ -15,6 +15,7 @@ EXPECTED_TOOLS = {
     "chrono_core_session_handoff",
     "chrono_core_get_resume_context",
     "chrono_core_record_decision",
+    "chrono_core_record_observation",
     "chrono_core_record_blocker",
     "chrono_core_resolve_blocker",
     "chrono_core_complete_action",

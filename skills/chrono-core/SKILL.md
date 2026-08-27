@@ -37,6 +37,12 @@ Use the returned context to understand project status, blockers, decisions, and 
 
 When a blocker is no longer real or a next action is finished, close it so resume context stays accurate — `chrono blocker resolve <id>` / `chrono action complete <id>` (or the matching MCP tools). Ids appear in resume output.
 
+When a reusable lesson or candidate mechanism is established, capture it
+explicitly with `chrono observe "<evidence>" --kind lesson --cwd "$PWD"` (or
+`--kind pattern_candidate`). This constrained path is eligible for safe
+cross-project pattern mining; ordinary decisions and operational handoff data
+are not.
+
 ## Handoff
 
 When the user says `handoff` or equivalent, prepare a concise structured handoff and run:
@@ -57,6 +63,7 @@ When Chrono Core is installed as an MCP server (`chrono-mcp`), the following too
 - `chrono_core_session_handoff` — persist a structured handoff.
 - `chrono_core_get_resume_context` — fetch compact resume context.
 - `chrono_core_record_decision` — persist a project decision outside a handoff.
+- `chrono_core_record_observation` — persist an explicitly semantic lesson or pattern candidate for safe mining.
 - `chrono_core_record_blocker` — persist a blocker outside a handoff.
 - `chrono_core_resolve_blocker` — mark an open blocker resolved by id.
 - `chrono_core_complete_action` — mark an open next action done by id.
