@@ -106,3 +106,37 @@ def test_resume_finds_project_recorded_under_a_different_workspace_root(tmp_path
 
     assert context.project_name == "example"
     assert context.summary == "Captured under the inner root."
+
+
+def test_resume_does_not_reuse_project_when_each_project_is_its_workspace_root(
+    tmp_path: Path,
+):
+    """Workspace-root projects must not all collapse onto the id for ``.``."""
+    first_dir = tmp_path / "MemCoreV2"
+    second_dir = tmp_path / "promethean-story-worktree"
+    (first_dir / ".git").mkdir(parents=True)
+    (second_dir / ".git").mkdir(parents=True)
+    db_path = tmp_path / "test.db"
+
+    store = Store(db_path)
+    store.init_schema()
+    first = resolve_project(first_dir, workspace_root=first_dir)
+    first_id = store.get_or_create_project(first)
+    store.create_session(
+        first_id,
+        HandoffPayload(summary="MemCore-only status must stay private."),
+        GitState(branch="main"),
+    )
+
+    context = get_resume_context(
+        Namespace(
+            cwd=str(second_dir),
+            workspace_root=str(second_dir),
+            db_path=str(db_path),
+            branch="story/dogfood-content",
+        )
+    )
+
+    assert context.project_name == "unknown"
+    assert context.summary == ""
+    assert context.project_id != first_id

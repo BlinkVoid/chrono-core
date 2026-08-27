@@ -30,7 +30,14 @@ class ResolvedProject:
     project_id: str = field(init=False)
 
     def __post_init__(self):
-        object.__setattr__(self, "project_id", make_project_id(self.relative_path))
+        # A workspace-relative path normally gives projects stable, portable
+        # identifiers.  At the workspace root, however, every project has the
+        # same relative path (``.``).  Use the resolved location for that one
+        # case so independently configured project roots cannot share state.
+        identity = self.relative_path
+        if identity.replace("\\", "/").strip("/") in {"", "."}:
+            identity = str(Path(self.path).expanduser().resolve())
+        object.__setattr__(self, "project_id", make_project_id(identity))
 
     def to_dict(self) -> dict[str, object]:
         return {
