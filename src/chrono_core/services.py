@@ -237,3 +237,34 @@ def search_observations_safe(
         "bugs": bugs,
         "bug_count": len(bugs),
     }
+
+
+def run_doctor(db_path: str | None = None) -> dict[str, Any]:
+    """Audit an existing database without creating or mutating it."""
+    from chrono_core.management.doctor import audit_store
+
+    resolved = Path(db_path or default_db_path()).expanduser()
+    if not resolved.is_file():
+        return {
+            "ok": False,
+            "error": "database not found",
+            "db_path": str(resolved),
+            "checks": {},
+            "summary": {"pass": 0, "warn": 0, "fail": 1},
+        }
+    store = Store(resolved, read_only=True)
+    try:
+        result = audit_store(store)
+    except sqlite3.DatabaseError as exc:
+        return {
+            "ok": False,
+            "error": "database unreadable",
+            "detail": str(exc),
+            "db_path": str(resolved),
+            "checks": {},
+            "summary": {"pass": 0, "warn": 0, "fail": 1},
+        }
+    finally:
+        store.close()
+    result["db_path"] = str(resolved)
+    return result

@@ -90,6 +90,7 @@ Next actions (all branches):
 | Full lifecycle verbs | `chrono action complete/cancel/edit/reopen/supersede` and `chrono blocker resolve/cancel/edit/reopen` correct captured state instead of duplicating it. |
 | Cross-project bug tracking | `chrono bug report/list/show/update` files and tracks bugs across every project in the workspace, exposed through MCP tools as well. The schema carries `remote_url` / `remote_issue_id` for future external sync. |
 | Semantic evidence capture | `chrono observe` records an explicitly typed lesson or pattern candidate that safe cross-project mining may reuse. |
+| Database diagnostics | `chrono doctor` performs a read-only integrity, ownership, identity, legacy-bucket, and mined-pattern provenance audit. |
 | Full-text search | `chrono search <query>` runs FTS5 queries over captured observations. |
 | Markdown export | `chrono export markdown` writes a derived project index, per-project pages, and a top-level `ReviewQueue.md`. |
 | Distill & review heuristics | `chrono distill` compacts sessions into current state; `chrono review` runs deterministic doc reconciliation, stale/contradictory-doc detection, health scoring (including bug pressure), improvement advice, and a review queue. These are deterministic heuristics, not semantic/AI reconciliation. |
@@ -102,7 +103,7 @@ Next actions (all branches):
 AI Agent / Human
       |
       v
-MCP tools + CLI          (chrono-mcp: 21 tools · chrono: 17 command groups)
+MCP tools + CLI          (chrono-mcp: 21 tools · chrono: 18 command groups)
       |
       v
 Chrono Core service layer

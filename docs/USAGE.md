@@ -101,6 +101,15 @@ chrono observe "Single client boundary for provider calls" \
   --kind pattern_candidate --cwd "$PWD"
 ```
 
+Audit the database without modifying it. Warnings do not fail the command;
+integrity, foreign-key, ownership, legacy residue, or unsafe mined-pattern
+failures return exit code 1:
+
+```bash
+chrono doctor
+chrono doctor --json
+```
+
 Search covers observations and bug text in one envelope:
 
 ```bash

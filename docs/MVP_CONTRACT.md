@@ -312,6 +312,21 @@ Output shape:
 }
 ```
 
+### `chrono doctor`
+
+Run a read-only health audit against an existing Chrono database:
+
+```bash
+chrono doctor
+chrono doctor --json
+```
+
+Checks cover SQLite integrity, foreign keys, ambiguous project identities,
+child/session ownership, the legacy workspace-root collision bucket, and
+mined-pattern provenance. Each check reports `pass`, `warn`, or `fail`.
+Warnings keep exit code 0; any failure returns exit code 1. A missing or
+unreadable database is reported without creating or mutating it.
+
 ## MCP Tools
 
 Tool names use underscores only (`chrono_core_<verb>`), never dots:

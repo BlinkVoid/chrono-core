@@ -33,6 +33,9 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
   and resume/MCP context carries FTS-scored
   `recommended_patterns` (see
   `docs/superpowers/specs/2026-08-26-pattern-index-design.md`).
+- `chrono doctor` provides a read-only database audit for integrity, foreign
+  keys, project identity ambiguity, session ownership, legacy collision
+  residue, and mined-pattern provenance.
 - Focused unit tests covering resolver, store, handoff, resume, MCP tool handlers, distillation, review, and export.
 
 ## Project Location

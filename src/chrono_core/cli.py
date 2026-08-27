@@ -59,6 +59,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=None, help="continuity database path"
     )
 
+    p_doctor = sub.add_parser("doctor", help="audit continuity database health")
+    p_doctor.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+    p_doctor.add_argument("--json", action="store_true", help="emit JSON")
+
     p_discover = sub.add_parser("discover", help="discover workspace projects")
     p_discover.add_argument("--workspace-root", default=default_workspace_root())
     p_discover.add_argument(
@@ -431,6 +437,23 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(result.to_dict(), indent=2))
         return 0 if result.ok else 1
+
+    if args.command == "doctor":
+        result = services.run_doctor(args.db_path)
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            for name, check in result.get("checks", {}).items():
+                print(f"{check['status'].upper():4} {name}: {check['message']}")
+            summary = result["summary"]
+            print(
+                "Doctor: "
+                f"{summary['pass']} passed, {summary['warn']} warning(s), "
+                f"{summary['fail']} failed."
+            )
+            if result.get("error"):
+                print(f"Error: {result['error']}")
+        return 0 if result["ok"] else 1
 
     if args.command == "handoff":
         if not args.summary.strip() and not args.json:

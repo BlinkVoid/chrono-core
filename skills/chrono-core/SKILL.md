@@ -43,6 +43,13 @@ explicitly with `chrono observe "<evidence>" --kind lesson --cwd "$PWD"` (or
 cross-project pattern mining; ordinary decisions and operational handoff data
 are not.
 
+## Health Check
+
+Use `chrono doctor` for a concise read-only database audit, or `chrono doctor
+--json` for structured findings. Warnings identify reviewable ambiguity; a
+non-zero exit indicates integrity, ownership, legacy residue, or provenance
+failures. Doctor never repairs or creates a database.
+
 ## Handoff
 
 When the user says `handoff` or equivalent, prepare a concise structured handoff and run:
