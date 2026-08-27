@@ -6,7 +6,7 @@ Start with SQLite plus FTS and graph-shaped edges. Do not introduce a dedicated 
 
 ## Version
 
-Schema version: `3`
+Schema version: `4`
 
 - v1: initial tables and the `observation_fts` virtual table.
 - v2: FTS sync triggers on `observations` (insert/update/delete). The
@@ -73,6 +73,14 @@ path that is already registered (the same directory resolved under a different
 workspace root), the existing row and its id win; only the metadata is
 updated. This keeps sessions, blockers, and actions attached to one project
 record instead of raising an IntegrityError or splitting history across ids.
+The most specific observed `relative_path` is retained, so resolving the same
+directory through a narrower workspace root cannot flatten its metadata later.
+
+The inverse case is also guarded: two different absolute paths may produce the
+same workspace-relative id when each is named identically under a different
+configured root. The first project keeps that id; the newcomer receives a
+deterministic absolute-path fallback id. Chrono never resolves this collision
+by overwriting the first project's path or history.
 
 **Reads must resolve through the same rule.** A project id hashes the
 workspace-*relative* path, so `cores/DesignCore` under `~/workspace` and

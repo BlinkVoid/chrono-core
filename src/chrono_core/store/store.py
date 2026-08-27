@@ -12,9 +12,14 @@ from typing import Any
 from chrono_core.domain.models import GitState, HandoffPayload, ResumeContext
 from chrono_core.store.schema import DDL, SCHEMA_VERSION
 from chrono_core.textutil import salient_terms
-from chrono_core.workspace.resolver import ResolvedProject
+from chrono_core.workspace.resolver import ResolvedProject, make_project_id
 
 _PATTERN_STATUS_RANK = {"candidate": 0, "validated": 1, "promoted": 2}
+
+
+def _relative_path_depth(value: str) -> int:
+    normalized = value.replace("\\", "/").strip("/")
+    return 0 if normalized in {"", "."} else len(normalized.split("/"))
 
 
 def utc_now() -> str:
@@ -149,10 +154,17 @@ class Store:
     ) -> str:
         conn = self._connect()
         now = utc_now()
-        existing = conn.execute("SELECT id FROM projects WHERE path = ?", (path,)).fetchone()
+        existing = conn.execute(
+            "SELECT id, relative_path FROM projects WHERE path = ?", (path,)
+        ).fetchone()
         if existing:
             # The absolute path is canonical.  Resolve it before an id upsert:
             # the supplied id may already identify an unrelated project.
+            stable_relative_path = existing["relative_path"]
+            if _relative_path_depth(relative_path) > _relative_path_depth(
+                stable_relative_path
+            ):
+                stable_relative_path = relative_path
             conn.execute(
                 """
                 UPDATE projects SET
@@ -163,10 +175,26 @@ class Store:
                     updated_at=?
                 WHERE id=?
                 """,
-                (name, relative_path, phase, summary, now, existing["id"]),
+                (name, stable_relative_path, phase, summary, now, existing["id"]),
             )
             self._commit()
             return existing["id"]
+        existing_id = conn.execute(
+            "SELECT path FROM projects WHERE id = ?", (project_id,)
+        ).fetchone()
+        if existing_id and existing_id["path"] != path:
+            # Workspace-relative identities can collide when callers use
+            # different workspace roots with the same relative project path.
+            # Preserve the existing project's history and give the newcomer a
+            # deterministic identity rooted in its absolute location instead.
+            project_id = make_project_id(str(Path(path).expanduser().resolve()))
+            fallback = conn.execute(
+                "SELECT path FROM projects WHERE id = ?", (project_id,)
+            ).fetchone()
+            if fallback and fallback["path"] != path:
+                raise RuntimeError(
+                    f"absolute-path project id collision for {path}: {project_id}"
+                )
         conn.execute(
             """
             INSERT INTO projects (

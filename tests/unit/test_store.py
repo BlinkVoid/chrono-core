@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from chrono_core.domain.models import GitState, HandoffPayload
 from chrono_core.store.store import Store
 from chrono_core.workspace.resolver import make_project_id, resolve_project
 
@@ -30,6 +31,51 @@ def test_store_get_or_create_project(tmp_path: Path):
         .fetchone()
     )
     assert row["name"] == "example"
+
+
+def test_store_keeps_projects_with_colliding_relative_identity_separate(tmp_path: Path):
+    """Different workspace roots can both contain ``app`` without sharing history."""
+    store = Store(tmp_path / "test.db")
+    store.init_schema()
+
+    first_root = tmp_path / "workspace-a"
+    second_root = tmp_path / "workspace-b"
+    first_path = first_root / "app"
+    second_path = second_root / "app"
+    (first_path / ".git").mkdir(parents=True)
+    (second_path / ".git").mkdir(parents=True)
+    first = resolve_project(first_path, workspace_root=first_root)
+    second = resolve_project(second_path, workspace_root=second_root)
+    assert first.project_id == second.project_id
+
+    first_id = store.get_or_create_project(first)
+    first_session = store.create_session(
+        first_id,
+        HandoffPayload(summary="first project history"),
+        GitState(),
+    )
+    second_id = store.get_or_create_project(second)
+    second_session = store.create_session(
+        second_id,
+        HandoffPayload(summary="second project history"),
+        GitState(),
+    )
+
+    assert first_id != second_id
+    rows = store._connect().execute(
+        "SELECT id, path FROM projects ORDER BY path"
+    ).fetchall()
+    assert [dict(row) for row in rows] == [
+        {"id": first_id, "path": str(first_path)},
+        {"id": second_id, "path": str(second_path)},
+    ]
+    sessions = store._connect().execute(
+        "SELECT id, project_id FROM sessions ORDER BY id"
+    ).fetchall()
+    assert {tuple(row) for row in sessions} == {
+        (first_session, first_id),
+        (second_session, second_id),
+    }
 
 
 def test_store_creates_session_and_records(tmp_path: Path):
@@ -114,10 +160,20 @@ def test_upsert_same_path_different_id_reuses_existing_project(tmp_path: Path):
         path="/ws/alpha",
         relative_path="deeper/alpha",
     )
+    flattened_id = store.upsert_project(
+        project_id="alpha-3333333333",
+        name="alpha-renamed-again",
+        path="/ws/alpha",
+        relative_path="alpha",
+    )
 
     assert returned_id == first_id
+    assert flattened_id == first_id
     conn = store._connect()
     assert conn.execute("SELECT COUNT(*) FROM projects").fetchone()[0] == 1
-    row = conn.execute("SELECT id, name FROM projects WHERE path = '/ws/alpha'").fetchone()
+    row = conn.execute(
+        "SELECT id, name, relative_path FROM projects WHERE path = '/ws/alpha'"
+    ).fetchone()
     assert row["id"] == first_id
-    assert row["name"] == "alpha-renamed"
+    assert row["name"] == "alpha-renamed-again"
+    assert row["relative_path"] == "deeper/alpha"
