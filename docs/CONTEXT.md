@@ -29,7 +29,8 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
   `docs/superpowers/specs/2026-08-26-record-graph-export-design.md`).
 - Pattern index (Phase 4 slice): `chrono ingest-patterns` imports MetaFactory
   consolidated patterns, `chrono mine-patterns` derives deterministic
-  candidates, and resume/MCP context carries FTS-scored
+  multiword candidates from explicitly semantic observations,
+  and resume/MCP context carries FTS-scored
   `recommended_patterns` (see
   `docs/superpowers/specs/2026-08-26-pattern-index-design.md`).
 - Focused unit tests covering resolver, store, handoff, resume, MCP tool handlers, distillation, review, and export.

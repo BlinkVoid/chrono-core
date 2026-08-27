@@ -39,3 +39,18 @@ def term_project_counts(documents: list[tuple[str, str]]) -> dict[str, dict[str,
             per_project = counts.setdefault(token, {})
             per_project[project_id] = per_project.get(project_id, 0) + 1
     return counts
+
+
+def phrase_project_counts(
+    documents: list[tuple[str, str]], *, min_words: int = 2, max_words: int = 4
+) -> dict[str, dict[str, int]]:
+    """Per-phrase totals keyed by project for contiguous meaningful tokens."""
+    counts: dict[str, dict[str, int]] = {}
+    for project_id, text in documents:
+        tokens = tokenize(text)
+        for width in range(min_words, min(max_words, len(tokens)) + 1):
+            for start in range(len(tokens) - width + 1):
+                phrase = " ".join(tokens[start : start + width])
+                per_project = counts.setdefault(phrase, {})
+                per_project[project_id] = per_project.get(project_id, 0) + 1
+    return counts

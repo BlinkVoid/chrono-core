@@ -66,7 +66,12 @@ def test_mine_patterns_cli(tmp_path: Path, capsys):
         session = store.create_session(
             pid, HandoffPayload(summary="s"), GitState(branch="main")
         )
-        store.record_decisions(pid, session, [{"title": f"idempotency key reuse in {name}"}])
+        store.record_observations(
+            pid,
+            session,
+            "lesson",
+            [f"idempotency key reuse in {name}"],
+        )
 
     rc = main([
         "mine-patterns",
@@ -75,7 +80,7 @@ def test_mine_patterns_cli(tmp_path: Path, capsys):
 
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
-    assert any(p["title"].startswith("Recurring theme:") for p in out["mined"])
+    assert any(p["title"].startswith("Recurring pattern:") for p in out["mined"])
 
 
 def test_patterns_list_and_set_status_cli(tmp_path: Path, capsys):

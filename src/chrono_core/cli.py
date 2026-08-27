@@ -316,7 +316,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     p_mine = sub.add_parser(
-        "mine-patterns", help="mine recurring keyword patterns across projects"
+        "mine-patterns", help="mine recurring semantic phrases across projects"
     )
     p_mine.add_argument("--min-projects", type=int, default=2)
     p_mine.add_argument("--limit", type=int, default=20)

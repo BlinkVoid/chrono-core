@@ -27,7 +27,7 @@ and FTS-based pattern recommendations embedded in resume context.
 1. **Sources**: MetaFactory consolidated snapshots *and* self-mined
    candidates from Chrono records. Hand-authoring stays possible via direct
    Store use but gets no dedicated CLI in v1.
-2. **Mining is deterministic only** — keyword clustering produces
+2. **Mining is deterministic only** — recurring phrase clustering produces
    *candidates*; confirmation into `validated` happens by editing status
    (CLI flag or direct), not by hidden heuristics.
 3. **Primary consumer**: resume recommendations (CLI + MCP inherit).
@@ -89,11 +89,17 @@ v4 only adds tables (no data backfill).
 
 - CLI: `chrono mine-patterns [--min-projects N] [--limit K] [--db-path]`
   (defaults 2 / 20). Workspace-wide; takes no project selector.
-- Pipeline: load all decisions (title+rationale) and observations across
-  projects → tokenize, lowercase, drop stopwords → count distinct projects
-  per term → keep terms in ≥ N projects → cap at K by (project count desc,
-  total frequency desc, term asc) → insert candidates.
-- Candidate shape: title `"Recurring theme: <term>"`, statement naming the
+- Pipeline (amended 2026-08-27 after operational metadata produced false
+  candidates): load only explicitly semantic observations (`lesson`,
+  `pattern`, `pattern_candidate`) across
+  projects → tokenize, lowercase, drop stopwords → form contiguous 2–4 word
+  phrases → count distinct projects per phrase → keep phrases in ≥ N projects
+  → cap at K by (project count desc, total frequency desc, phrase asc) → insert
+  candidates. File, test, risk, git, and importer metadata are evidence about
+  work execution, not reusable-pattern evidence, and are excluded. General
+  decisions are also excluded: their prose records project-local choices and
+  cannot deterministically establish a reusable mechanism.
+- Candidate shape: title `"Recurring pattern: <phrase>"`, statement naming the
   projects and counts, `source='mined'`, `status='candidate'`.
 - Mining never overwrites an existing pattern; a colliding title is skipped
   and reported as such.

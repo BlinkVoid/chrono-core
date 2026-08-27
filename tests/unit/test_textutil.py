@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from chrono_core.textutil import salient_terms, term_project_counts, tokenize
+from chrono_core.textutil import (
+    phrase_project_counts,
+    salient_terms,
+    term_project_counts,
+    tokenize,
+)
 
 
 def test_tokenize_lowercases_drops_stopwords_and_short_tokens():
@@ -27,3 +32,12 @@ def test_term_project_counts_counts_distinct_projects():
     assert counts["circuit"] == {"p1": 2, "p2": 1}
     assert counts["breaker"]["p3"] == 3
     assert set(counts["breaker"]) == {"p1", "p2", "p3"}
+
+
+def test_phrase_project_counts_excludes_single_words():
+    counts = phrase_project_counts(
+        [("p1", "circuit breaker circuit"), ("p2", "circuit breaker")]
+    )
+
+    assert counts["circuit breaker"] == {"p1": 1, "p2": 1}
+    assert "circuit" not in counts
