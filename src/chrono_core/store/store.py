@@ -32,19 +32,34 @@ def make_entity_id(prefix: str) -> str:
 class Store:
     """SQLite-backed persistence for Chrono Core."""
 
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(self, db_path: str | Path, *, read_only: bool = False) -> None:
         self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.read_only = read_only
+        if not read_only:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn: sqlite3.Connection | None = None
         self._tx_depth = 0
 
     def _connect(self) -> sqlite3.Connection:
         if self._conn is None:
-            self._conn = sqlite3.connect(str(self.db_path))
+            if self.read_only:
+                base_uri = self.db_path.resolve().as_uri()
+                try:
+                    self._conn = sqlite3.connect(f"{base_uri}?mode=ro", uri=True)
+                    self._conn.execute("SELECT 1 FROM sqlite_schema LIMIT 1")
+                except sqlite3.OperationalError:
+                    if self._conn is not None:
+                        self._conn.close()
+                    self._conn = sqlite3.connect(
+                        f"{base_uri}?mode=ro&immutable=1", uri=True
+                    )
+            else:
+                self._conn = sqlite3.connect(str(self.db_path))
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA foreign_keys = ON")
-            self._conn.execute("PRAGMA journal_mode = WAL")
-            self._conn.execute("PRAGMA synchronous = NORMAL")
+            if not self.read_only:
+                self._conn.execute("PRAGMA journal_mode = WAL")
+                self._conn.execute("PRAGMA synchronous = NORMAL")
         return self._conn
 
     def _commit(self) -> None:

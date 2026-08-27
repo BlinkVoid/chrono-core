@@ -93,6 +93,27 @@ def test_search_main_emits_json(tmp_path: Path, capsys):
     assert "Credential rotation" in data["results"][0]["content"]
 
 
+def test_search_main_reads_database_from_read_only_directory(tmp_path: Path, capsys):
+    db_dir = tmp_path / "read-only"
+    db_path = db_dir / "chrono.db"
+    store = Store(db_path)
+    _seed_observations(store, tmp_path / "workspace")
+    store.close()
+
+    db_path.chmod(0o444)
+    db_dir.chmod(0o555)
+    try:
+        code = main(["search", "credential", "--db-path", str(db_path)])
+    finally:
+        db_dir.chmod(0o755)
+        db_path.chmod(0o644)
+
+    data = json.loads(capsys.readouterr().out)
+    assert code == 0, data
+    assert data["ok"] is True
+    assert data["count"] == 1
+
+
 def test_mcp_handle_search_observations(tmp_path: Path):
     db_path = tmp_path / "chrono.db"
     project_id = _seed_observations(Store(db_path), tmp_path / "workspace")

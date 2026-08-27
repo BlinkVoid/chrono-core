@@ -11,9 +11,11 @@ from chrono_core.store.store import Store
 _STORES: dict[str, Store] = {}
 
 
-def open_store(db_path: str | None = None) -> Store:
-    """Open (and cache per resolved path) a schema-initialized Store."""
+def open_store(db_path: str | None = None, *, read_only: bool = False) -> Store:
+    """Open a Store, caching schema-initialized writable connections."""
     resolved = str(db_path) if db_path else default_db_path()
+    if read_only:
+        return Store(resolved, read_only=True)
     store = _STORES.get(resolved)
     if store is None:
         store = Store(resolved)
@@ -166,8 +168,8 @@ def search_observations_safe(
 ) -> dict[str, Any]:
     """Full-text search over observations and bugs; malformed FTS queries are
     reported structurally."""
+    store = open_store(db_path, read_only=True)
     try:
-        store = open_store(db_path)
         results = store.search_observations(
             query, project_id=project_id, limit=max(limit, 0)
         )
@@ -181,6 +183,8 @@ def search_observations_safe(
             "bugs": [],
             "bug_count": 0,
         }
+    finally:
+        store.close()
     return {
         "ok": True,
         "query": query,
