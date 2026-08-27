@@ -39,3 +39,12 @@ def test_workspace_wide_flag(tmp_path: Path, capsys):
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["bug"]["project_id"] is None
+
+
+def test_bug_list_human_output_reports_empty_state(tmp_path: Path, capsys):
+    db = str(tmp_path / "db.sqlite")
+
+    rc = main(["bug", "list", "--db-path", db, "--status", "open"])
+
+    assert rc == 0
+    assert capsys.readouterr().out == "No open bugs.\n"

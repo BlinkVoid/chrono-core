@@ -508,6 +508,8 @@ def main(argv: list[str] | None = None) -> int:
                 project_id=args.project_id,
             )
             if not args.json:
+                if not result["bugs"]:
+                    print(f"No {args.status} bugs.")
                 for b in result["bugs"]:
                     print(f"[{b['id']}] ({b['severity']}/{b['status']}) "
                           f"{b['project_name']}: {b['title']}")
