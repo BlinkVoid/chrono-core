@@ -88,14 +88,17 @@ Next actions (all branches):
 | Session handoff capture | `chrono handoff` records summary, files changed, tests run, decisions, blockers, next actions, risks, and git state via CLI flags or a JSON payload. |
 | Branch-scoped resume | `chrono resume` surfaces only the current workstream's open items; `--all`, `--branch`, and `--limit` widen or trim the view. |
 | Full lifecycle verbs | `chrono action complete/cancel/edit/reopen/supersede` and `chrono blocker resolve/cancel/edit/reopen` correct captured state instead of duplicating it. |
-| Cross-project bug tracking | `chrono bug report/list/show/update` files and tracks bugs across every project in the workspace, exposed through MCP tools as well. The schema carries `remote_url` / `remote_issue_id` for future external sync. |
+| Cross-project bug tracking | `chrono bug report/list/show/update` files and tracks bugs across every project in the workspace; `chrono bug push BUG_ID` publishes one local bug to GitHub (including GitHub Enterprise) through the authenticated `gh` CLI and records the returned link. The schema carries `remote_url` / `remote_issue_id` for retryable updates. |
 | Semantic evidence capture | `chrono observe` records an explicitly typed lesson or pattern candidate that safe cross-project mining may reuse. |
 | Database diagnostics | `chrono doctor` performs a read-only integrity, ownership, identity, legacy-bucket, and mined-pattern provenance audit. |
 | Full-text search | `chrono search <query>` runs FTS5 queries over captured observations. |
+| Project similarity | `chrono similar` ranks other registered projects against the current one using distilled phase/summary plus observation evidence, with deterministic sublinear-TF/IDF cosine scores and contribution-ranked `shared_terms`. |
+| Project catalog | `chrono project list/show/update/progress/refresh` manages canonical metadata and current inventory; `chrono discover` refreshes bounded Git state and reconciles missing projects. |
 | Markdown export | `chrono export markdown` writes a derived project index, per-project pages, and a top-level `ReviewQueue.md`. |
 | Distill & review heuristics | `chrono distill` compacts sessions into current state; `chrono review` runs deterministic doc reconciliation, stale/contradictory-doc detection, health scoring (including bug pressure), improvement advice, and a review queue. These are deterministic heuristics, not semantic/AI reconciliation. |
-| MCP server | `chrono-mcp` exposes 21 tools (resolve, handoff, resume, semantic observations, decisions/blockers/actions lifecycle, search, bugs, distill, review) backed by the same store and code paths as the CLI. |
+| MCP server | `chrono-mcp` exposes 29 tools, including live inventory discovery/refresh and dirty-filtered project listing, backed by the same store and code paths as the CLI. |
 | GearCore adapter | `chrono gearcore install-plan` prints registration commands for the GearCore skill and MCP server; Chrono Core works fine without GearCore. |
+| Reviewed pattern promotion | `chrono patterns promotion-plan PATTERN_ID` validates an authored skill bundle and before/after evidence; `chrono patterns promote PATTERN_ID` applies the reviewed digest explicitly. |
 
 ## Architecture
 
@@ -103,7 +106,7 @@ Next actions (all branches):
 AI Agent / Human
       |
       v
-MCP tools + CLI          (chrono-mcp: 21 tools · chrono: 18 command groups)
+MCP tools + CLI          (chrono-mcp: 29 tools · chrono: 20 command groups)
       |
       v
 Chrono Core service layer
@@ -147,8 +150,8 @@ The database is canonical; markdown exports are readable views. See [System Desi
 
 ## Roadmap
 
-- **Phase 4 — cross-project intelligence:** reusable pattern index, MetaFactory ingestion, project similarity search, and pattern recommendations surfaced in resume context.
-- **External bug sync:** a one-way GitHub bug dump/sync adapter. The bugs table already carries `remote_url` and `remote_issue_id` columns in anticipation.
+- **Phase 4 — cross-project intelligence:** the reusable pattern index, project similarity search (`chrono similar`), resume-context pattern recommendations, and reviewed GearCore skill promotion have landed.
+- **External bug sync:** one-way GitHub bug push is available via `chrono bug push` and `chrono_core_push_bug_to_github`; SQLite remains authoritative and the stored link makes retries update the same issue.
 
 ## License
 

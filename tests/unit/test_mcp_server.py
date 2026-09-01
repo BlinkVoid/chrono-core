@@ -8,9 +8,11 @@ import pytest
 from chrono_core.domain.models import GitState, HandoffPayload
 from chrono_core.mcp_server import (
     get_resume_context_tool,
+    handle_discover_projects,
     handle_get_resume_context,
     handle_record_blocker,
     handle_record_decision,
+    handle_refresh_project,
     handle_resolve_project,
     handle_session_handoff,
     record_blocker_tool,
@@ -35,6 +37,23 @@ def test_handle_resolve_project_finds_marker(tmp_path: Path):
     assert result["marker"] == ".git"
     assert result["relative_path"] == "example"
     assert "project_id" in result
+
+
+def test_inventory_mcp_tools_refresh_and_filter_current_state(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+    project = workspace / "example"
+    project.mkdir(parents=True)
+    (project / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    db_path = tmp_path / "chrono.db"
+
+    discovered = handle_discover_projects(
+        workspace_root=str(workspace), db_path=str(db_path)
+    )
+    assert discovered["ok"] is True
+    assert discovered["refreshed_count"] == 1
+    refreshed = handle_refresh_project("example", db_path=str(db_path))
+    assert refreshed["ok"] is True
+    assert refreshed["project"]["inventory"]["is_git"] is False
 
 
 def test_handle_resolve_project_defaults(tmp_path: Path):
@@ -473,3 +492,56 @@ def test_update_bug_tool_rejects_unknown_bug(tmp_path: Path):
     db = str(tmp_path / "none.db")
     result = update_bug_tool("nope", status="fixed", db_path=db)
     assert result["ok"] is False
+
+
+def test_project_catalog_tools_round_trip(tmp_path: Path):
+    from chrono_core.mcp_server import (
+        get_project_tool,
+        list_projects_tool,
+        update_project_metadata_tool,
+        update_project_progress_tool,
+    )
+
+    workspace = tmp_path / "workspace"
+    project = workspace / "alpha"
+    project.mkdir(parents=True)
+    (project / ".git").mkdir()
+    db = str(tmp_path / "chrono.db")
+
+    created = handle_session_handoff(
+        str(project),
+        "Seeded the catalog.",
+        workspace_root=str(workspace),
+        db_path=db,
+    )
+    project_id = created["project_id"]
+
+    updated = update_project_metadata_tool(
+        project_id,
+        status="paused",
+        priority="high",
+        tags=["infra"],
+        other_factors={"team": "core"},
+        db_path=db,
+    )
+    assert updated["ok"] is True
+    assert updated["project"]["status"] == "paused"
+    assert updated["project"]["tags"] == ["infra"]
+
+    progressed = update_project_progress_tool(
+        project_id, "catalog exposed over MCP", db_path=db
+    )
+    assert progressed["ok"] is True
+    assert progressed["project"]["current_progress"] == "catalog exposed over MCP"
+
+    shown = get_project_tool("alpha", db_path=db)
+    assert shown["ok"] is True
+    assert shown["project"]["id"] == project_id
+
+    listed = list_projects_tool(status="paused", tag="infra", db_path=db)
+    assert listed["ok"] is True
+    assert listed["count"] == 1
+
+    missing = get_project_tool("ghost", db_path=db)
+    assert missing["ok"] is False
+    assert missing["code"] == "project_not_found"

@@ -8,6 +8,18 @@ BLOCKER_STATUSES = ("open", "resolved", "cancelled")
 BUG_SEVERITIES = ("low", "medium", "high", "critical")
 PATTERN_STATUSES = ("candidate", "validated", "promoted", "retired")
 BUG_STATUSES = ("open", "confirmed", "in_progress", "fixed", "wont_fix", "cancelled")
+PROJECT_STATUSES = ("active", "paused", "missing", "archived")
+PROJECT_PRIORITIES = ("low", "normal", "high", "critical")
+PROJECT_LIFECYCLE_PHASES = (
+    "prototype",
+    "validation",
+    "commercialisation",
+    "maintenance",
+    "archived",
+)
+# Compatibility alias for callers that imported the source-tool maturity
+# enumeration. Operational ``projects.phase`` is maintained by distillation.
+PROJECT_PHASES = PROJECT_LIFECYCLE_PHASES
 
 
 @dataclass(frozen=True)

@@ -199,6 +199,19 @@ def handle_search_observations(
     )
 
 
+def handle_find_similar_projects(
+    cwd: str,
+    *,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Rank other managed projects by shared distilled evidence and observations."""
+    return services.find_similar_projects(
+        db_path, cwd, workspace_root=workspace_root, limit=limit
+    )
+
+
 def handle_distill_project(
     cwd: str,
     *,
@@ -570,6 +583,205 @@ def update_bug_tool(
     """Update a bug's status, severity, or detail."""
     return handle_update_bug(
         bug_id, status=status, severity=severity, detail=detail, db_path=db_path
+    )
+
+
+def handle_list_projects(
+    *,
+    status: str | None = None,
+    tag: str | None = None,
+    limit: int | None = None,
+    dirty: bool | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """List registered projects with optional status/tag/limit filters."""
+    return services.list_projects(db_path, status=status, tag=tag, limit=limit, dirty=dirty)
+
+
+def handle_discover_projects(
+    *,
+    workspace_root: str | None = None,
+    max_depth: int = 3,
+    include_provisional: bool = False,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Persist a bounded workspace inventory refresh and reconciliation."""
+    return services.refresh_workspace_inventory(
+        db_path,
+        workspace_root=workspace_root,
+        max_depth=max_depth,
+        include_provisional=include_provisional,
+    )
+
+
+def handle_refresh_project(
+    project: str, *, db_path: str | None = None
+) -> dict[str, Any]:
+    """Refresh current Git inventory for one registered project."""
+    return services.refresh_project_inventory(db_path, project)
+
+
+def handle_get_project(project: str, *, db_path: str | None = None) -> dict[str, Any]:
+    """Show one project by exact id, absolute path, or relative path."""
+    return services.get_project(db_path, project)
+
+
+def handle_update_project_metadata(
+    project: str,
+    *,
+    status: str | None = None,
+    lifecycle_phase: str | None = None,
+    priority: str | None = None,
+    tags: list[str] | None = None,
+    owner: str | None = None,
+    description_usage: str | None = None,
+    summary: str | None = None,
+    notes: str | None = None,
+    other_factors: dict[str, Any] | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Update project catalog metadata and return the refreshed record."""
+    fields: dict[str, Any] = {}
+    for key, value in (
+        ("status", status),
+        ("lifecycle_phase", lifecycle_phase),
+        ("priority", priority),
+        ("tags", tags),
+        ("owner", owner),
+        ("description_usage", description_usage),
+        ("summary", summary),
+        ("notes", notes),
+        ("other_factors", other_factors),
+    ):
+        if value is not None:
+            fields[key] = value
+    return services.update_project_metadata(db_path, project, fields)
+
+
+def handle_update_project_progress(
+    project: str, text: str, *, db_path: str | None = None
+) -> dict[str, Any]:
+    """Update one project's current progress and return the refreshed record."""
+    return services.update_project_progress(db_path, project, text)
+
+
+def handle_push_bug_to_github(
+    bug_id: str,
+    *,
+    repo: str | None = None,
+    dry_run: bool = False,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Push one local bug to one GitHub issue through the gh CLI REST bridge."""
+    return services.push_bug_to_github(db_path, bug_id, repo=repo, dry_run=dry_run)
+
+
+@mcp.tool(name="chrono_core_push_bug_to_github")
+def push_bug_to_github_tool(
+    bug_id: str,
+    repo: str | None = None,
+    dry_run: bool = False,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Push one local bug to GitHub; this mutates the external repository.
+
+    ``dry_run`` returns a plan without any side effect.
+    """
+    return handle_push_bug_to_github(bug_id, repo=repo, dry_run=dry_run, db_path=db_path)
+
+
+@mcp.tool(name="chrono_core_list_projects")
+def list_projects_tool(
+    status: str | None = None,
+    tag: str | None = None,
+    limit: int | None = None,
+    dirty: bool | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """List registered projects with optional metadata and dirty-state filters."""
+    return handle_list_projects(
+        status=status, tag=tag, limit=limit, dirty=dirty, db_path=db_path
+    )
+
+
+@mcp.tool(name="chrono_core_discover_projects")
+def discover_projects_tool(
+    workspace_root: str | None = None,
+    max_depth: int = 3,
+    include_provisional: bool = False,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Discover and persist current project inventory; this mutates local state."""
+    return handle_discover_projects(
+        workspace_root=workspace_root,
+        max_depth=max_depth,
+        include_provisional=include_provisional,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="chrono_core_refresh_project")
+def refresh_project_tool(project: str, db_path: str | None = None) -> dict[str, Any]:
+    """Refresh one registered project's current Git inventory."""
+    return handle_refresh_project(project, db_path=db_path)
+
+
+@mcp.tool(name="chrono_core_get_project")
+def get_project_tool(
+    project: str, db_path: str | None = None
+) -> dict[str, Any]:
+    """Show one project by exact id, absolute path, or workspace-relative path."""
+    return handle_get_project(project, db_path=db_path)
+
+
+@mcp.tool(name="chrono_core_update_project_metadata")
+def update_project_metadata_tool(
+    project: str,
+    status: str | None = None,
+    lifecycle_phase: str | None = None,
+    priority: str | None = None,
+    tags: list[str] | None = None,
+    owner: str | None = None,
+    description_usage: str | None = None,
+    summary: str | None = None,
+    notes: str | None = None,
+    other_factors: dict[str, Any] | None = None,
+    db_path: str | None = None,
+) -> dict[str, Any]:
+    """Update project catalog metadata; tags replace the whole tag set."""
+    return handle_update_project_metadata(
+        project,
+        status=status,
+        lifecycle_phase=lifecycle_phase,
+        priority=priority,
+        tags=tags,
+        owner=owner,
+        description_usage=description_usage,
+        summary=summary,
+        notes=notes,
+        other_factors=other_factors,
+        db_path=db_path,
+    )
+
+
+@mcp.tool(name="chrono_core_update_project_progress")
+def update_project_progress_tool(
+    project: str, text: str, db_path: str | None = None
+) -> dict[str, Any]:
+    """Set a project's current progress note."""
+    return handle_update_project_progress(project, text, db_path=db_path)
+
+
+@mcp.tool(name="chrono_core_find_similar_projects")
+def find_similar_projects_tool(
+    cwd: str,
+    workspace_root: str | None = None,
+    db_path: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Find related projects ranked by shared distilled state and observations."""
+    return handle_find_similar_projects(
+        cwd, workspace_root=workspace_root, db_path=db_path, limit=limit
     )
 
 

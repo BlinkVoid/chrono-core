@@ -121,9 +121,11 @@ footer.site {
     <dt>Full lifecycle verbs</dt>
     <dd>Complete, cancel, edit, reopen, or supersede actions and blockers so corrections replace stale state instead of duplicating it.</dd>
     <dt>Cross-project bug tracking</dt>
-    <dd><code>chrono bug report/list/show/update</code> tracks bugs across every project in the workspace, exposed via MCP tools too.</dd>
+    <dd><code>chrono bug report/list/show/update</code> tracks bugs across every project in the workspace; <code>chrono bug push</code> publishes a bug to GitHub through <code>gh</code> and records the issue link for retries.</dd>
     <dt>Full-text search</dt>
     <dd><code>chrono search</code> runs SQLite FTS5 queries over captured observations.</dd>
+    <dt>Reviewed pattern promotion</dt>
+    <dd><code>chrono patterns promotion-plan</code> validates an authored skill bundle and before/after evidence, then <code>chrono patterns promote</code> registers only the unchanged reviewed digest. Planning is read-only and failed registration retains the validated pattern.</dd>
     <dt>Markdown export</dt>
     <dd>Derived project wiki pages and a top-level <code>ReviewQueue.md</code> for human review.</dd>
     <dt>Deterministic review heuristics</dt>
@@ -139,7 +141,7 @@ footer.site {
 AI Agent / Human
       |
       v
-MCP tools + CLI          (chrono-mcp: 20 tools · chrono: 13 command groups)
+MCP tools + CLI          (chrono-mcp: 27 tools · chrono: 20 command groups)
       |
       v
 Chrono Core service layer
@@ -205,7 +207,7 @@ Next actions (spike/queue-backend):
     </div>
     <div class="faq-item">
       <dt>Which agents does it work with?</dt>
-      <dd>Anything that speaks MCP. The <code>chrono-mcp</code> server exposes 20 tools; humans get identical functionality via the CLI.</dd>
+      <dd>Anything that speaks MCP. The <code>chrono-mcp</code> server exposes 27 tools; humans get identical functionality via the CLI.</dd>
     </div>
   </dl>
 </section>

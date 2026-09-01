@@ -28,10 +28,18 @@ EXPECTED_TOOLS = {
     "chrono_core_reopen_blocker",
     "chrono_core_distill_project",
     "chrono_core_search_observations",
+    "chrono_core_find_similar_projects",
     "chrono_core_review_project",
     "chrono_core_report_bug",
     "chrono_core_list_bugs",
     "chrono_core_update_bug",
+    "chrono_core_push_bug_to_github",
+    "chrono_core_list_projects",
+    "chrono_core_discover_projects",
+    "chrono_core_refresh_project",
+    "chrono_core_get_project",
+    "chrono_core_update_project_metadata",
+    "chrono_core_update_project_progress",
 }
 
 

@@ -6,7 +6,7 @@ Start with SQLite plus FTS and graph-shaped edges. Do not introduce a dedicated 
 
 ## Version
 
-Schema version: `4`
+Schema version: `6`
 
 - v1: initial tables and the `observation_fts` virtual table.
 - v2: FTS sync triggers on `observations` (insert/update/delete). The
@@ -20,6 +20,18 @@ Schema version: `4`
   `bug_fts` index plus sync triggers; adds per-table indexes on
   `(project_id, status, created_at)` for sessions/actions/blockers/bugs/
   decisions and `observations(project_id)`.
+- v4 (`store/migrations.py`, "patterns table + FTS"): adds the `patterns`
+  table with an external-content `pattern_fts` index plus sync triggers.
+- v5 (`store/migrations.py`, "project catalog metadata"): adds nullable
+  `priority`, `lifecycle_phase`, `owner`, `description_usage`, `current_progress`, and `notes`
+  columns plus JSON-text `tags` (default `'[]'`) and `other_factors`
+  (default `'{}'`) columns to `projects`, mirroring the
+  `tool-project-tracker` registry field set. Existing rows keep their values
+  and receive the JSON defaults.
+- v6 (`store/migrations.py`, "current project Git inventory and missing
+  reconciliation"): adds one current `project_inventory` row per physical
+  project, including exact scan-root/depth provenance, bounded Git state,
+  failure details, and reversible missing status tracking.
 
 ## Migration Framework
 
@@ -39,7 +51,15 @@ The initial executable DDL lives in `src/chrono_core/store/schema.py`.
 
 Core tables:
 
-- `projects`
+- `projects` (v5 adds `priority`, JSON-text `tags`, `owner`,
+  `lifecycle_phase`,
+  `description_usage`, `current_progress`, `notes`, and JSON-text
+  `other_factors`; `tags` is a JSON array of unique strings and
+  `other_factors` a JSON object; the store decodes both on read and validates
+  updates before mutation). `phase` remains Chrono's operational/distilled
+  state; catalog maturity is stored separately in `lifecycle_phase`.
+- `project_inventory` (v6: current Git state and exact-scope missing
+  reconciliation; Git command output is never persisted)
 - `sessions`
 - `decisions`
 - `blockers`

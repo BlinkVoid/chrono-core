@@ -160,11 +160,16 @@ def test_import_workspace_intelligence_registry_into_continuity_store(tmp_path: 
 
     conn = store._connect()
     project = conn.execute(
-        "SELECT id, phase, summary FROM projects WHERE id = ?",
+        "SELECT id, phase, lifecycle_phase, summary, current_progress, priority, tags "
+        "FROM projects WHERE id = ?",
         (continuity_project_id,),
     ).fetchone()
-    assert project["phase"] == "validation"
-    assert project["summary"] == "SQLite registry and MCP server are working."
+    assert project["phase"] is None
+    assert project["lifecycle_phase"] == "validation"
+    assert project["summary"] == "Workspace Intelligence"
+    assert project["current_progress"] == "SQLite registry and MCP server are working."
+    assert project["priority"] == "high"
+    assert json.loads(project["tags"]) == ["management", "tracking"]
 
     observations = conn.execute(
         "SELECT kind, content, source FROM observations WHERE project_id = ? ORDER BY kind",

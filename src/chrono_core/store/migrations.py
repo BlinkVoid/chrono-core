@@ -19,6 +19,9 @@ MIGRATIONS: list[tuple[int, str]] = [
         "lifecycle columns (next_actions/blockers), bugs table + FTS, first indexes",
     ),
     (4, "patterns table + FTS"),
+    (5, "project catalog metadata (priority, tags, owner, description_usage, "
+        "current_progress, notes, lifecycle_phase, other_factors)"),
+    (6, "current project Git inventory and missing reconciliation"),
 ]
 
 _V3_LIFECYCLE_BUGS = [
@@ -125,9 +128,60 @@ _V4_PATTERNS = [
     """,
 ]
 
+# Mirrors the source tool's column set so an imported registry keeps its
+# metadata fields natively instead of only as archived observations.
+_V5_PROJECT_CATALOG = [
+    "ALTER TABLE projects ADD COLUMN priority TEXT",
+    "ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'",
+    "ALTER TABLE projects ADD COLUMN owner TEXT",
+    "ALTER TABLE projects ADD COLUMN description_usage TEXT",
+    "ALTER TABLE projects ADD COLUMN current_progress TEXT",
+    "ALTER TABLE projects ADD COLUMN notes TEXT",
+    "ALTER TABLE projects ADD COLUMN lifecycle_phase TEXT",
+    "ALTER TABLE projects ADD COLUMN other_factors TEXT NOT NULL DEFAULT '{}'",
+    # Tier-2 catalog builds wrote maturity into the operational phase column.
+    # Move only recognized maturity values; Chrono's active/blocked/unknown
+    # operational values remain untouched.
+    "UPDATE projects SET lifecycle_phase = phase "
+    "WHERE phase IN ('prototype', 'validation', 'commercialisation', "
+    "'maintenance', 'archived') AND lifecycle_phase IS NULL",
+    "UPDATE projects SET phase = NULL "
+    "WHERE phase IN ('prototype', 'validation', 'commercialisation', "
+    "'maintenance', 'archived') AND lifecycle_phase = phase",
+]
+
+_V6_PROJECT_INVENTORY = [
+    """
+    CREATE TABLE IF NOT EXISTS project_inventory (
+        project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+        workspace_root TEXT NOT NULL,
+        marker TEXT NOT NULL,
+        depth INTEGER NOT NULL,
+        last_seen_at TEXT,
+        missing_since TEXT,
+        status_before_missing TEXT,
+        last_error_json TEXT,
+        is_git INTEGER NOT NULL DEFAULT 0,
+        branch TEXT,
+        detached INTEGER NOT NULL DEFAULT 0,
+        head_sha TEXT,
+        head_subject TEXT,
+        remote_name TEXT,
+        remote_url TEXT,
+        default_branch TEXT,
+        dirty INTEGER NOT NULL DEFAULT 0,
+        changed_count INTEGER NOT NULL DEFAULT 0,
+        untracked_count INTEGER NOT NULL DEFAULT 0,
+        collected_at TEXT
+    )
+    """,
+]
+
 _STATEMENTS: dict[int, list[str]] = {
     3: _V3_LIFECYCLE_BUGS,
     4: _V4_PATTERNS,
+    5: _V5_PROJECT_CATALOG,
+    6: _V6_PROJECT_INVENTORY,
 }
 
 

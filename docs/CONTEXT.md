@@ -33,6 +33,18 @@ Phase 3 management session workflows are complete over the Phase 1 local core an
   and resume/MCP context carries FTS-scored
   `recommended_patterns` (see
   `docs/superpowers/specs/2026-08-26-pattern-index-design.md`).
+- Project similarity search (Phase 4 slice): `chrono similar` and the
+  `chrono_core_find_similar_projects` MCP tool rank other registered projects
+  against the current one with deterministic sublinear-TF/IDF cosine scores
+  over distilled phase/summary plus observation content, including
+  contribution-ranked `shared_terms` (see
+  `docs/superpowers/specs/2026-08-31-project-similarity-design.md`).
+- Reviewed GearCore pattern promotion (final Phase 4 slice): authored skill
+  bundles and before/after evidence can be inspected with `chrono patterns
+  promotion-plan` and registered only through `chrono patterns promote` with
+  its unchanged digest. Planning is read-only; failed GearCore registration
+  leaves the pattern validated (see
+  `docs/superpowers/specs/2026-09-01-gearcore-pattern-promotion-design.md`).
 - `chrono doctor` provides a read-only database audit for integrity, foreign
   keys, project identity ambiguity, session ownership, legacy collision
   residue, and mined-pattern provenance.
@@ -70,11 +82,7 @@ Current preferred split:
 
 ## Immediate Next Work
 
-1. Start Phase 4: design the reusable pattern index.
-2. Add a MetaFactory ingestion adapter for consolidated pattern snapshots.
-3. Add project similarity search over captured observations and distilled state.
-4. Surface pattern recommendations in resume context.
-5. Promote validated patterns into GearCore skills once recommendations are proven useful.
+1. Evaluate Phase 4 adoption evidence and prioritize the next roadmap phase.
 
 ## Packaging Decision
 
@@ -106,3 +114,37 @@ Completed Phase 3 management session workflows:
 - `chrono_core_review_project` exposes the same workflow through MCP.
 - `chrono export markdown` includes health/review sections on project pages and writes a top-level `ReviewQueue.md`.
 - Roadmap status now treats Phase 4 cross-project intelligence as the active next phase.
+
+## Implementation Snapshot — 2026-08-31
+
+Landed the project similarity search Phase 4 slice (see
+`docs/superpowers/specs/2026-08-31-project-similarity-design.md`):
+
+- `Store.find_similar_projects` scores other registered projects against a
+  selected project using cosine similarity over sublinear-TF/IDF term weights;
+  each project document combines its distilled phase/summary with captured
+  observation content. Scores are rounded for a stable JSON contract and each
+  result carries up to eight `shared_terms` ordered by score contribution.
+- The shared `services.find_similar_projects` path is read-only: it verifies
+  the project's physical path is already registered, never registers unknown
+  projects, and reports a missing database structurally.
+- `chrono similar --cwd PATH [--workspace-root PATH] [--limit N] [--db-path PATH]`
+  prints the service JSON envelope and exits non-zero for a missing database or
+  unknown project.
+- `chrono_core_find_similar_projects` exposes the same envelope through MCP.
+
+## Implementation Snapshot — 2026-09-01
+
+Completed the reviewed GearCore promotion boundary (see
+`docs/superpowers/specs/2026-09-01-gearcore-pattern-promotion-design.md`):
+
+- `chrono patterns promotion-plan` validates an operator-authored `SKILL.md`
+  bundle and matching UTF-8 before/after evidence, then returns the exact
+  shell-free `gearcore add-skill` argv and its content digest without writing
+  the database, the skill, or GearCore configuration.
+- `chrono patterns promote` recomputes the plan and invokes GearCore only when
+  the supplied digest is unchanged. It marks the pattern `promoted` only after
+  registration succeeds; command failures retain `validated`, while an
+  unexpected final status-write failure is reported as partial success.
+- Skill prose and evidence are never passed as command arguments, persisted to
+  Chrono, or echoed from provider stderr in the structured error envelope.

@@ -62,6 +62,21 @@ If the GearCore hub is available, use:
 gearcore request-skill chrono-core
 ```
 
+Reviewed pattern promotion validates an authored skill bundle and recorded
+before/after evidence before showing the exact mutation command:
+
+```bash
+chrono patterns promotion-plan PATTERN_ID \
+  --skill-path skills/example --evidence evidence.json
+chrono patterns promote PATTERN_ID \
+  --skill-path skills/example --evidence evidence.json \
+  --plan-digest PLAN_DIGEST
+```
+
+Plans are read-only. Apply requires the unchanged digest; `--scope project`
+also requires an existing `--project-root`, and `--copy` omits the default
+symlink registration flag. GearCore failures leave the local pattern validated.
+
 ## Shared Rules
 
 - Resolve the project before capturing state.
@@ -90,7 +105,39 @@ Blocker lifecycle (`chrono blocker ...`): `resolve`, `cancel <id>`,
 `edit <id> <title>`, `reopen <id>`.
 
 Bug tracking (`chrono bug ...`): `report --cwd "$PWD" <title> [--severity S]`,
-`list [--status] [--severity]`, `show <id>`, `update <id> [--status] [--severity]`.
+`list [--status] [--severity]`, `show <id>`, `update <id> [--status] [--severity]`,
+and `push <id> [--repo [HOST/]OWNER/REPO] [--dry-run]`. Push uses the
+authenticated `gh api` bridge, infers a project repository from Git `origin`,
+requires `--repo` for workspace-wide bugs, and records the remote issue link so
+later pushes update the same issue. GitHub Enterprise hosts are supported.
+
+Project catalog (`chrono project ...`) manages canonical metadata for
+registered projects. Selectors resolve by exact project id, then exact
+absolute path, then exact workspace-relative path; an ambiguous relative path
+is a structured error:
+
+```bash
+chrono project list [--status STATUS] [--tag TAG] [--limit N] [--dirty | --no-dirty]
+chrono project refresh PROJECT
+
+# Persisted workspace inventory refresh (Git state + missing reconciliation)
+chrono discover --workspace-root ~/workspace
+# Read-only traversal; no database or Git subprocesses
+chrono discover --workspace-root ~/workspace --no-persist
+chrono project show PROJECT
+chrono project update PROJECT [--status S] [--lifecycle-phase P] [--priority PRI] \
+  [--tag TAG ...] [--owner O] [--description-usage D] [--summary S] \
+  [--notes N] [--other-factors '{"k": "v"}']
+chrono project progress PROJECT "Current status in one line"
+```
+
+`--tag` is repeatable on update and replaces the whole tag set.
+`--other-factors` accepts one JSON object string. Supported statuses are
+`active`, `paused`, `missing`, and `archived`; lifecycle phase and priority use the
+workspace-intelligence enumerations. Operational `phase` is maintained by
+Chrono distillation and is read-only to this command. Updates reject invalid values, malformed
+JSON, and empty updates, printing the structured error envelope and exiting
+non-zero. Every command prints the shared JSON service envelope.
 
 Capture reusable semantic evidence explicitly; arbitrary operational kinds are
 rejected so they cannot contaminate pattern mining:

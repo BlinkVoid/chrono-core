@@ -17,12 +17,25 @@ def distill_project(
     store.init_schema()
     project = resolve_project(Path(cwd), workspace_root=Path(workspace_root))
     project_id = store.get_or_create_project(project)
-    context = store.get_resume_context(project_id)
+    distillation = distill_registered_project(project_id=project_id, store=store)
+    store.update_project_state(
+        project_id,
+        phase=distillation["phase"],
+        summary=distillation["summary"],
+    )
+    return distillation
 
+
+def distill_registered_project(*, project_id: str, store: Store) -> dict[str, Any]:
+    """Derive project state from existing records without persisting it.
+
+    Export uses this view for an already-registered project so generated output
+    cannot alter catalog state. ``distill_project`` remains the explicit,
+    mutating management command.
+    """
+    context = store.get_resume_context(project_id)
     phase = _derive_phase(context.active_blockers, context.next_actions, context.summary)
     summary = _derive_summary(context.summary, context.current_status)
-    store.update_project_state(project_id, phase=phase, summary=summary)
-
     bug_count = high_severity_bug_count(store, project_id)
     penalty = bug_pressure(store, project_id)
     health = {

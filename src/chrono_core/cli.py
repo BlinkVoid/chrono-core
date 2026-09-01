@@ -130,6 +130,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=None, help="continuity database path"
     )
 
+    p_similar = sub.add_parser(
+        "similar", help="rank other projects by shared evidence with this one"
+    )
+    p_similar.add_argument("--cwd", default=".")
+    p_similar.add_argument("--workspace-root", default=default_workspace_root())
+    p_similar.add_argument(
+        "--limit", type=int, default=5, help="maximum similar projects to return"
+    )
+    p_similar.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
     p_observe = sub.add_parser(
         "observe", help="capture a semantic observation for safe pattern mining"
     )
@@ -258,6 +270,93 @@ def build_parser() -> argparse.ArgumentParser:
     p_bug_update.add_argument("--workspace-root", default=default_workspace_root())
     p_bug_update.add_argument("--db-path", "--db", default=None)
 
+    p_bug_push = bug_sub.add_parser(
+        "push", help="push a bug to a GitHub issue via the gh CLI"
+    )
+    p_bug_push.add_argument("bug_id")
+    p_bug_push.add_argument(
+        "--repo",
+        default=None,
+        help="destination repository as [HOST/]OWNER/REPO; inferred from git "
+        "origin for project bugs",
+    )
+    p_bug_push.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print the push plan without network calls or database writes",
+    )
+    p_bug_push.add_argument("--db-path", "--db", default=None)
+
+    p_project = sub.add_parser("project", help="manage the project catalog")
+    project_sub = p_project.add_subparsers(dest="project_command")
+
+    p_project_list = project_sub.add_parser("list", help="list registered projects")
+    p_project_list.add_argument("--status", default=None)
+    p_project_list.add_argument("--tag", default=None)
+    p_project_list.add_argument("--limit", type=int, default=None)
+    p_project_list.add_argument("--dirty", dest="dirty_true", action="store_true")
+    p_project_list.add_argument("--no-dirty", dest="dirty_false", action="store_true")
+    p_project_list.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
+    p_project_show = project_sub.add_parser(
+        "show", help="show one project by id, absolute path, or relative path"
+    )
+    p_project_show.add_argument("project")
+    p_project_show.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
+    p_project_update = project_sub.add_parser(
+        "update", help="update project catalog metadata"
+    )
+    p_project_update.add_argument("project")
+    p_project_update.add_argument(
+        "--status", default=None, help="active | paused | missing | archived"
+    )
+    p_project_update.add_argument(
+        "--lifecycle-phase",
+        default=None,
+        help="prototype | validation | commercialisation | maintenance | archived",
+    )
+    p_project_update.add_argument(
+        "--priority", default=None, help="low | normal | high | critical"
+    )
+    p_project_update.add_argument(
+        "--tag",
+        dest="tags",
+        action="append",
+        default=None,
+        help="replace the tag set; repeatable",
+    )
+    p_project_update.add_argument("--owner", default=None)
+    p_project_update.add_argument("--description-usage", default=None)
+    p_project_update.add_argument("--summary", default=None)
+    p_project_update.add_argument("--notes", default=None)
+    p_project_update.add_argument(
+        "--other-factors", default=None, help="JSON object string"
+    )
+    p_project_update.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
+    p_project_progress = project_sub.add_parser(
+        "progress", help="update a project's current progress"
+    )
+    p_project_progress.add_argument("project")
+    p_project_progress.add_argument("text")
+    p_project_progress.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+    p_project_refresh = project_sub.add_parser(
+        "refresh", help="refresh one project's current Git inventory"
+    )
+    p_project_refresh.add_argument("project")
+    p_project_refresh.add_argument(
+        "--db-path", "--db", default=None, help="continuity database path"
+    )
+
     p_ingest = sub.add_parser(
         "ingest-existing-tools", help="import workspace-intelligence registry into Continuity"
     )
@@ -364,6 +463,34 @@ def build_parser() -> argparse.ArgumentParser:
         "--db-path", "--db", default=None, help="continuity database path"
     )
 
+    def add_promotion_arguments(promotion_parser: argparse.ArgumentParser, *, digest: bool) -> None:
+        promotion_parser.add_argument("pattern_id")
+        promotion_parser.add_argument("--skill-path", required=True)
+        promotion_parser.add_argument("--evidence", required=True)
+        promotion_parser.add_argument(
+            "--scope", choices=["global", "project"], default="global"
+        )
+        promotion_parser.add_argument("--project-root", default=None)
+        promotion_parser.add_argument(
+            "--copy", dest="symlink", action="store_false",
+            help="copy the skill instead of registering it by symlink",
+        )
+        promotion_parser.set_defaults(symlink=True)
+        promotion_parser.add_argument(
+            "--db-path", "--db", default=None, help="continuity database path"
+        )
+        if digest:
+            promotion_parser.add_argument("--plan-digest", required=True)
+
+    p_promotion_plan = patterns_sub.add_parser(
+        "promotion-plan", help="preview a reviewed GearCore pattern promotion"
+    )
+    add_promotion_arguments(p_promotion_plan, digest=False)
+    p_promote = patterns_sub.add_parser(
+        "promote", help="apply a reviewed GearCore pattern promotion"
+    )
+    add_promotion_arguments(p_promote, digest=True)
+
     p_gearcore = sub.add_parser("gearcore", help="GearCore adapter utilities")
     gearcore_sub = p_gearcore.add_subparsers(dest="gearcore_command")
     p_gearcore_plan = gearcore_sub.add_parser(
@@ -426,17 +553,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["ok"] else 1
 
     if args.command == "discover":
-        store = None if args.no_persist else services.open_store(args.db_path)
-        result = discover_workspace(
-            workspace_root=args.workspace_root,
-            store=store,
-            options=DiscoveryOptions(
+        if args.no_persist:
+            result = discover_workspace(
+                workspace_root=args.workspace_root,
+                store=None,
+                options=DiscoveryOptions(
+                    max_depth=args.max_depth,
+                    include_provisional=args.include_provisional,
+                ),
+            ).to_dict()
+        else:
+            result = services.refresh_workspace_inventory(
+                args.db_path,
+                workspace_root=args.workspace_root,
                 max_depth=args.max_depth,
                 include_provisional=args.include_provisional,
-            ),
-        )
-        print(json.dumps(result.to_dict(), indent=2))
-        return 0 if result.ok else 1
+            )
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("ok") else 1
 
     if args.command == "doctor":
         result = services.run_doctor(args.db_path)
@@ -469,6 +603,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "search":
         result = services.search_observations_safe(
             args.db_path, args.query, project_id=args.project_id, limit=args.limit
+        )
+        print(json.dumps(result, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "similar":
+        result = services.find_similar_projects(
+            args.db_path,
+            args.cwd,
+            workspace_root=args.workspace_root,
+            limit=args.limit,
         )
         print(json.dumps(result, indent=2))
         return 0 if result["ok"] else 1
@@ -545,8 +689,84 @@ def main(argv: list[str] | None = None) -> int:
                 args.db_path, args.bug_id,
                 status=args.status, severity=args.severity, detail=args.detail,
             )
+        elif args.bug_command == "push":
+            result = services.push_bug_to_github(
+                args.db_path, args.bug_id, repo=args.repo, dry_run=args.dry_run,
+            )
         else:
             parser.error("bug requires a subcommand")
+        print(json.dumps(result, indent=2))
+        return 0 if result.get("ok") else 1
+
+    if args.command == "project":
+        if args.project_command == "list":
+            if args.dirty_true and args.dirty_false:
+                result = {
+                    "ok": False,
+                    "code": "invalid_input",
+                    "error": "--dirty and --no-dirty are mutually exclusive",
+                }
+                print(json.dumps(result, indent=2))
+                return 2
+            result = services.list_projects(
+                args.db_path, status=args.status, tag=args.tag, limit=args.limit,
+                dirty=True if args.dirty_true else False if args.dirty_false else None,
+            )
+        elif args.project_command == "show":
+            result = services.get_project(args.db_path, args.project)
+        elif args.project_command == "update":
+            fields = {}
+            for option, field in (
+                ("status", "status"),
+                ("lifecycle_phase", "lifecycle_phase"),
+                ("priority", "priority"),
+                ("owner", "owner"),
+                ("description_usage", "description_usage"),
+                ("summary", "summary"),
+                ("notes", "notes"),
+            ):
+                value = getattr(args, option)
+                if value is not None:
+                    fields[field] = value
+            if args.tags is not None:
+                fields["tags"] = args.tags
+            if args.other_factors is not None:
+                try:
+                    parsed = json.loads(args.other_factors)
+                except ValueError as exc:
+                    print(
+                        json.dumps(
+                            {
+                                "ok": False,
+                                "code": "invalid_input",
+                                "error": f"--other-factors must be a JSON object: {exc}",
+                            },
+                            indent=2,
+                        )
+                    )
+                    return 2
+                if not isinstance(parsed, dict):
+                    print(
+                        json.dumps(
+                            {
+                                "ok": False,
+                                "code": "invalid_input",
+                                "error": "--other-factors must be a JSON object",
+                            },
+                            indent=2,
+                        )
+                    )
+                    return 2
+                fields["other_factors"] = parsed
+            result = services.update_project_metadata(args.db_path, args.project, fields)
+        elif args.project_command == "progress":
+            result = services.update_project_progress(
+                args.db_path, args.project, args.text
+            )
+        elif args.project_command == "refresh":
+            result = services.refresh_project_inventory(args.db_path, args.project)
+        else:
+            parser.error("project requires a subcommand")
         print(json.dumps(result, indent=2))
         return 0 if result.get("ok") else 1
 
@@ -604,6 +824,31 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             print(json.dumps(result, indent=2))
             return 0 if result["ok"] else 1
+        if args.patterns_command == "promotion-plan":
+            result = services.plan_pattern_promotion(
+                args.db_path,
+                args.pattern_id,
+                skill_path=args.skill_path,
+                evidence_path=args.evidence,
+                scope=args.scope,
+                project_root=args.project_root,
+                copy=not args.symlink,
+            )
+            print(json.dumps(result, indent=2))
+            return 0 if result.get("ok") else 1
+        if args.patterns_command == "promote":
+            result = services.promote_pattern(
+                args.db_path,
+                args.pattern_id,
+                skill_path=args.skill_path,
+                evidence_path=args.evidence,
+                plan_digest=args.plan_digest,
+                scope=args.scope,
+                project_root=args.project_root,
+                copy=not args.symlink,
+            )
+            print(json.dumps(result, indent=2))
+            return 0 if result.get("ok") else 1
         parser.error("patterns requires a subcommand")
 
     if args.command == "export":

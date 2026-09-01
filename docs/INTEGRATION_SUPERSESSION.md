@@ -12,7 +12,7 @@ It already points to `tool-project-tracker` / `workspace-intelligence` as canoni
 
 ### `tool-project-tracker` / `workspace-intelligence`
 
-Status: useful existing implementation.
+Status: feature parity accepted; retained pending separately authorized archival.
 
 Current strengths:
 
@@ -37,8 +37,21 @@ Recommended path:
 1. Read and reuse the implementation where possible.
 2. Import registry data or wrap its discovery service.
 3. **Status:** `chrono_core.integrations.workspace_intelligence` now imports the SQLite registry via `chrono ingest-existing-tools`, including project metadata, git state, and lifecycle phase.
-4. Avoid deleting or replacing it until Chrono Core has feature parity for project discovery and metadata export.
-5. Decide later whether to absorb it as `chrono_core_workspace`.
+4. **Status (Stages 1–3 accepted):** schema v5 carries the source
+   registry's catalog fields on `projects`, and `chrono project
+   list/show/update/progress` plus the
+   `chrono_core_list_projects` / `chrono_core_get_project` /
+   `chrono_core_update_project_metadata` /
+   `chrono_core_update_project_progress` MCP tools cover the source tool's
+   project metadata workflows. Stage 2 covers bounded live Git refresh,
+   missing reconciliation, and dirty filtering through `chrono discover` and
+   `chrono project refresh`. Stage 3 proves exact isolated migration parity and
+   fast, non-mutating Markdown export against the live 80-project registry. See
+   `docs/superpowers/specs/2026-09-01-workspace-intelligence-migration-acceptance.md`.
+5. Retain the live implementation and GearCore registrations until the separate
+   archival plan is explicitly authorized and its rollback package is ready.
+6. After a verified archival operation, route active project tracking to Chrono
+   Core while retaining source-registry import compatibility.
 
 ### `_MetaFactory`
 

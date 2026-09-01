@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 6
 
 DDL = """
 PRAGMA foreign_keys = ON;
@@ -12,9 +12,40 @@ CREATE TABLE IF NOT EXISTS projects (
     relative_path TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'active',
     phase TEXT,
+    lifecycle_phase TEXT,
     summary TEXT,
+    priority TEXT,
+    tags TEXT NOT NULL DEFAULT '[]',
+    owner TEXT,
+    description_usage TEXT,
+    current_progress TEXT,
+    notes TEXT,
+    other_factors TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_inventory (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    workspace_root TEXT NOT NULL,
+    marker TEXT NOT NULL,
+    depth INTEGER NOT NULL,
+    last_seen_at TEXT,
+    missing_since TEXT,
+    status_before_missing TEXT,
+    last_error_json TEXT,
+    is_git INTEGER NOT NULL DEFAULT 0,
+    branch TEXT,
+    detached INTEGER NOT NULL DEFAULT 0,
+    head_sha TEXT,
+    head_subject TEXT,
+    remote_name TEXT,
+    remote_url TEXT,
+    default_branch TEXT,
+    dirty INTEGER NOT NULL DEFAULT 0,
+    changed_count INTEGER NOT NULL DEFAULT 0,
+    untracked_count INTEGER NOT NULL DEFAULT 0,
+    collected_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

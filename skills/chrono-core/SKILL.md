@@ -18,6 +18,7 @@ Use Chrono Core when the user asks to:
 - resume a project
 - explain current project status
 - find next actions
+- find related projects
 - reconcile project docs
 - run a management/distillation pass
 
@@ -76,9 +77,49 @@ When Chrono Core is installed as an MCP server (`chrono-mcp`), the following too
 - `chrono_core_complete_action` — mark an open next action done by id.
 - `chrono_core_distill_project` — derive and persist compact project state from captured records.
 - `chrono_core_search_observations` — full-text search captured observations across projects.
+- `chrono_core_find_similar_projects` — rank other managed projects by shared distilled evidence and observations.
+- `chrono_core_push_bug_to_github` — explicitly create or update one GitHub issue from a local bug; this mutates an external repository, while `dry_run` only returns the plan.
 - `chrono_core_review_project` — run doc reconciliation, health review, advice, and review queue generation.
+- `chrono_core_discover_projects` — persist a bounded workspace scan with current Git inventory and missing reconciliation.
+- `chrono_core_refresh_project` — refresh one registered project's current Git inventory.
+- `chrono_core_list_projects` accepts optional `dirty=true|false` for current inventory filtering.
 
 All tools accept `workspace_root` and `db_path` overrides. Prefer the defaults unless the project is outside `~/workspace` or the database location must change.
+
+## Cross-Project Similarity
+
+When the user asks which other projects contain related work or knowledge, run:
+
+```bash
+chrono similar --cwd "$PWD"
+```
+
+Or call `chrono_core_find_similar_projects` with `cwd`. Results are read-only
+and explainable: each match carries a rounded similarity score and
+`shared_terms` naming the evidence that connected the two projects. A missing
+database or unregistered project returns a structured error without side
+effects.
+
+## Reviewed Pattern Promotion
+
+When an operator has already authored a tested GearCore skill bundle and
+sanitized matching before/after evidence, preview the exact registration first:
+
+```bash
+chrono patterns promotion-plan PATTERN_ID --skill-path PATH --evidence PATH
+```
+
+This is read-only. To apply the reviewed plan, require its exact digest:
+
+```bash
+chrono patterns promote PATTERN_ID --skill-path PATH --evidence PATH \
+  --plan-digest PLAN_DIGEST
+```
+
+The skill bundle is never generated or rewritten by Chrono. Registration is
+symlinked by default (`--copy` opts out); project scope additionally requires
+an existing `--project-root`. A stale plan, failure, or timeout leaves the
+pattern validated. This workflow is CLI-only; do not infer an MCP tool for it.
 
 ## Management Pass
 

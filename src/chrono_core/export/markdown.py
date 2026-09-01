@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 from chrono_core.domain.models import ResumeContext
-from chrono_core.management.review import review_project
+from chrono_core.management.review import review_registered_project
 from chrono_core.store.store import Store
 
 
@@ -15,17 +16,15 @@ def export_markdown(store: Store, output_dir: str | Path) -> dict[str, Any]:
     projects_dir = target / "projects"
     projects_dir.mkdir(parents=True, exist_ok=True)
 
-    exported_projects: list[dict[str, str]] = []
+    exported_projects: list[dict[str, Any]] = []
     all_review_items: list[dict[str, str]] = []
     for project in store.list_projects():
         context = store.get_resume_context(project["id"])
-        review = review_project(
-            cwd=project["path"],
-            workspace_root=Path(project["path"]).parent,
-            store=store,
-        )
+        review = review_registered_project(project=project, store=store)
         page_path = projects_dir / f"{project['id']}.md"
-        page_path.write_text(_render_project_page(context, review), encoding="utf-8")
+        page_path.write_text(
+            _render_project_page(context, review, project), encoding="utf-8"
+        )
         for item in review["review_queue"]:
             all_review_items.append({"project": project["name"], **item})
         exported_projects.append(
@@ -34,6 +33,7 @@ def export_markdown(store: Store, output_dir: str | Path) -> dict[str, Any]:
                 "name": project["name"],
                 "path": str(page_path),
                 "relative_path": str(page_path.relative_to(target)),
+                "inventory": project.get("inventory"),
             }
         )
 
@@ -62,7 +62,7 @@ def _render_escape(text: str) -> str:
     )
 
 
-def _render_project_index(projects: list[dict[str, str]]) -> str:
+def _render_project_index(projects: list[dict[str, Any]]) -> str:
     lines = ["# Projects", ""]
     if not projects:
         lines.append("No projects exported.")
@@ -70,19 +70,65 @@ def _render_project_index(projects: list[dict[str, str]]) -> str:
 
     for project in projects:
         name = _render_escape(project["name"])
-        lines.append(f"- [{name}]({project['relative_path']})")
+        inventory = project.get("inventory") or {}
+        branch = inventory.get("branch") or "—"
+        dirty = str(bool(inventory.get("dirty", False))).lower()
+        lines.append(
+            f"- [{name}]({project['relative_path']}) — branch: {branch} · dirty: {dirty}"
+        )
     return "\n".join(lines) + "\n"
 
 
-def _render_project_page(context: ResumeContext, review: dict[str, Any] | None = None) -> str:
+def _render_catalog(project: dict[str, Any] | None) -> list[str]:
+    """Render canonical catalog metadata; only fields that are set."""
+    if not project:
+        return []
+    tags = project.get("tags") or []
+    entries = [
+        ("Status", project.get("status")),
+        ("Operational phase", project.get("phase")),
+        ("Lifecycle phase", project.get("lifecycle_phase")),
+        ("Priority", project.get("priority")),
+        ("Tags", ", ".join(str(tag) for tag in tags) if tags else None),
+        ("Owner", project.get("owner")),
+        ("Description/Usage", project.get("description_usage")),
+        ("Current progress", project.get("current_progress")),
+        ("Notes", project.get("notes")),
+        (
+            "Other factors",
+            (
+                json.dumps(project["other_factors"], ensure_ascii=False, sort_keys=True)
+                if project.get("other_factors")
+                else None
+            ),
+        ),
+    ]
+    present = [
+        (label, value) for label, value in entries if value not in (None, "")
+    ]
+    if not present:
+        return []
+    lines = ["## Catalog", ""]
+    lines.extend(f"- {label}: {_render_escape(str(value))}" for label, value in present)
+    lines.append("")
+    return lines
+
+
+def _render_project_page(
+    context: ResumeContext,
+    review: dict[str, Any] | None = None,
+    project: dict[str, Any] | None = None,
+) -> str:
     lines = [
         f"# {_render_escape(context.project_name)}",
         "",
         f"- Project ID: `{context.project_id}`",
         f"- Path: `{context.project_path}`",
-        f"- Status: {_render_escape(context.current_status or 'Unknown')}",
+        f"- Session status: {_render_escape(context.current_status or 'Unknown')}",
         "",
     ]
+    lines.extend(_render_catalog(project))
+    lines.extend(_render_inventory(project.get("inventory") if project else None))
 
     if context.summary:
         lines.extend(["## Latest Session", "", _render_escape(context.summary), ""])
@@ -97,6 +143,29 @@ def _render_project_page(context: ResumeContext, review: dict[str, Any] | None =
         _append_queue(lines, review.get("review_queue", []))
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_inventory(inventory: dict[str, Any] | None) -> list[str]:
+    if not inventory:
+        return []
+    values = [
+        ("Branch", inventory.get("branch") or "—"),
+        ("HEAD", inventory.get("head_sha") or "—"),
+        ("Dirty", str(bool(inventory.get("dirty", False))).lower()),
+        ("Changed files", inventory.get("changed_count", 0)),
+        ("Untracked files", inventory.get("untracked_count", 0)),
+        ("Last seen", inventory.get("last_seen_at")),
+        ("Collected", inventory.get("collected_at")),
+        ("Missing since", inventory.get("missing_since")),
+    ]
+    lines = ["## Live Inventory", ""]
+    lines.extend(
+        f"- {label}: {_render_escape(str(value))}"
+        for label, value in values
+        if value not in (None, "")
+    )
+    lines.append("")
+    return lines
 
 
 def _append_items(

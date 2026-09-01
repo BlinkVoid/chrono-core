@@ -6,7 +6,7 @@ from typing import Any
 
 from chrono_core.management.distill import (
     bug_pressure,
-    distill_project,
+    distill_registered_project,
     high_severity_bug_count,
 )
 from chrono_core.store.store import Store
@@ -14,7 +14,54 @@ from chrono_core.workspace.resolver import resolve_project
 
 PHASE_PATTERN = re.compile(r"\bPhase\s+(\d+)\b", re.IGNORECASE)
 CHECKBOX_PATTERN = re.compile(r"^\s*-\s+\[(?P<mark>[ xX])\]\s+(?P<text>.+)")
-SKIP_DIRS = {".git", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".venv", "__pycache__"}
+# Review is intentionally scoped to the project's root Markdown and its
+# canonical ``docs/`` tree. These limits keep management review bounded when a
+# project contains generated or bulk-data trees.
+MAX_REVIEW_DOCUMENTS = 256
+MAX_REVIEW_DOCUMENT_BYTES = 1_048_576
+MAX_REVIEW_TOTAL_BYTES = 4_194_304
+MAX_REVIEW_CANDIDATES = MAX_REVIEW_DOCUMENTS * 4
+PRUNED_DIRS = frozenset(
+    {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        ".worktrees",
+        "worktree",
+        "worktrees",
+        "build",
+        "dist",
+        "generated",
+        "generated-docs",
+        "coverage",
+        "node_modules",
+        "vendor",
+        "third_party",
+        "third-party",
+        "dependency",
+        "dependencies",
+        "deps",
+        "data",
+        "dataset",
+        "datasets",
+        "artifacts",
+        "export",
+        "exports",
+        "output",
+        "outputs",
+        "honeycomb",
+        "_archive_projects",
+    }
+)
+PRIORITY_DOCUMENTS = (
+    "docs/ROADMAP.md",
+    "docs/CONTEXT.md",
+    "ROADMAP.md",
+    "CONTEXT.md",
+)
 
 
 def review_project(
@@ -33,9 +80,31 @@ def review_project(
     store.init_schema()
     project = resolve_project(Path(cwd), workspace_root=Path(workspace_root))
     project_id = store.get_or_create_project(project)
-    distillation = distill_project(cwd=cwd, workspace_root=workspace_root, store=store)
+    distillation = distill_registered_project(project_id=project_id, store=store)
+    store.update_project_state(
+        project_id,
+        phase=distillation["phase"],
+        summary=distillation["summary"],
+    )
+    registered_project = store.get_project(project_id)
+    if registered_project is None:
+        raise RuntimeError(f"registered project disappeared: {project_id}")
+    return review_registered_project(project=registered_project, store=store)
+
+
+def review_registered_project(
+    *, project: dict[str, Any], store: Store
+) -> dict[str, Any]:
+    """Review an existing project without resolving, registering, or updating it.
+
+    This read-only view deliberately uses the catalog's stored path verbatim.
+    It supports derived Markdown export even when that path is a symlink, while
+    ``review_project`` retains the standalone command's explicit mutation flow.
+    """
+    project_id = str(project["id"])
+    distillation = distill_registered_project(project_id=project_id, store=store)
     context = store.get_resume_context(project_id)
-    scanned_documents = _scan_documents(Path(project.path))
+    scanned_documents = _scan_documents(Path(str(project["path"])))
     canonical_phase = _canonical_phase(scanned_documents) or _phase_from_project_state(distillation)
     documents = [
         {key: value for key, value in doc.items() if key != "_text"}
@@ -62,17 +131,38 @@ def review_project(
 
 
 def _scan_documents(project_path: Path) -> list[dict[str, Any]]:
-    if not project_path.exists():
+    """Read a deterministic, bounded set of project Markdown documents.
+
+    The scope is root-level Markdown plus Markdown recursively below ``docs/``.
+    Hidden, generated, dependency, worktree, and bulk-data directories are
+    pruned before descending. Canonical roadmap/context files are considered
+    first so the document and byte ceilings do not hide project state.
+    """
+    if not project_path.exists() or not project_path.is_dir():
         return []
 
     docs: list[dict[str, Any]] = []
-    for path in sorted(project_path.rglob("*.md")):
-        if any(part in SKIP_DIRS for part in path.parts):
-            continue
+    total_bytes = 0
+    for candidate_index, path in enumerate(
+        _iter_document_paths(project_path), start=1
+    ):
+        if candidate_index > MAX_REVIEW_CANDIDATES:
+            break
+        if len(docs) >= MAX_REVIEW_DOCUMENTS:
+            break
+        remaining_bytes = MAX_REVIEW_TOTAL_BYTES - total_bytes
+        if remaining_bytes <= 0:
+            break
+        allowed_bytes = min(MAX_REVIEW_DOCUMENT_BYTES, remaining_bytes)
         try:
-            text = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            text = path.read_text(encoding="utf-8", errors="replace")
+            with path.open("rb") as handle:
+                raw = handle.read(allowed_bytes + 1)
+        except OSError:
+            continue
+        if len(raw) > allowed_bytes:
+            continue
+        total_bytes += len(raw)
+        text = raw.decode("utf-8", errors="replace")
         relative_path = path.relative_to(project_path).as_posix()
         docs.append(
             {
@@ -85,6 +175,72 @@ def _scan_documents(project_path: Path) -> list[dict[str, Any]]:
             }
         )
     return docs
+
+
+def _iter_document_paths(project_path: Path):
+    """Yield scoped Markdown paths in deterministic canonical-first order."""
+    yielded: set[Path] = set()
+    for relative_path in PRIORITY_DOCUMENTS:
+        path = project_path / relative_path
+        if _is_markdown_file(path):
+            yielded.add(path)
+            yield path
+
+    for path in _sorted_children(project_path):
+        if path.name == "docs" or path in yielded:
+            continue
+        if _is_markdown_file(path):
+            yielded.add(path)
+            yield path
+
+    docs_path = project_path / "docs"
+    if docs_path.is_dir() and not docs_path.is_symlink():
+        yield from _iter_docs_paths(docs_path, yielded)
+
+
+def _iter_docs_paths(docs_path: Path, yielded: set[Path]):
+    stack = [docs_path]
+    while stack:
+        current = stack.pop()
+        directories: list[Path] = []
+        for path in _sorted_children(current):
+            if path in yielded or path.is_symlink():
+                continue
+            if _is_markdown_file(path):
+                yielded.add(path)
+                yield path
+            elif _is_directory(path) and not _should_prune_directory(path.name):
+                directories.append(path)
+        stack.extend(reversed(directories))
+
+
+def _sorted_children(path: Path) -> list[Path]:
+    try:
+        return sorted(path.iterdir(), key=lambda child: (child.name.casefold(), child.name))
+    except OSError:
+        return []
+
+
+def _is_markdown_file(path: Path) -> bool:
+    return not path.is_symlink() and _is_file(path) and path.suffix.lower() == ".md"
+
+
+def _is_file(path: Path) -> bool:
+    try:
+        return path.is_file()
+    except OSError:
+        return False
+
+
+def _is_directory(path: Path) -> bool:
+    try:
+        return path.is_dir()
+    except OSError:
+        return False
+
+
+def _should_prune_directory(name: str) -> bool:
+    return name.startswith(".") or name.casefold() in PRUNED_DIRS
 
 
 def _title_for_doc(text: str, path: Path) -> str:

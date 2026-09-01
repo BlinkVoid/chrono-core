@@ -109,13 +109,44 @@ def import_workspace_intelligence(
         project_id = make_project_id(relative_path)
         project_path = str(workspace / relative_path)
 
-        store.upsert_project(
+        project_id = store.upsert_project(
             project_id=project_id,
             name=row["name"],
             path=project_path,
             relative_path=relative_path,
-            phase=row["lifecycle_phase"] or None,
-            summary=row["current_progress"] or row["summary"] or None,
+            lifecycle_phase=row["lifecycle_phase"] or None,
+            summary=row["summary"] or None,
+        )
+
+        # Preserve source metadata in canonical columns.  Operational
+        # ``phase`` remains owned by Chrono distillation; source maturity is
+        # imported into the separate lifecycle_phase field.
+        try:
+            source_tags = json.loads(row["tags"] or "[]")
+        except (TypeError, json.JSONDecodeError):
+            source_tags = []
+        try:
+            source_factors = json.loads(row["other_factors"] or "{}")
+        except (TypeError, json.JSONDecodeError):
+            source_factors = {}
+        if not isinstance(source_tags, list) or not all(
+            isinstance(tag, str) for tag in source_tags
+        ):
+            source_tags = []
+        if not isinstance(source_factors, dict):
+            source_factors = {}
+        store.update_project_metadata(
+            project_id,
+            {
+                "status": row["status"] or "active",
+                "priority": row["priority"] or None,
+                "tags": source_tags,
+                "owner": row["owner"],
+                "description_usage": row["description_usage"],
+                "current_progress": row["current_progress"],
+                "notes": row["notes"],
+                "other_factors": source_factors,
+            },
         )
 
         metadata_items: list[str] = []

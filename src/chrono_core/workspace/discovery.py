@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from chrono_core.store.store import Store
+from chrono_core.workspace.inventory import collect_git_inventory, subprocess_runner
 from chrono_core.workspace.resolver import PROJECT_MARKERS, ResolvedProject
 
 DEFAULT_SKIP_DIRS = {
@@ -39,6 +40,10 @@ class DiscoveryResult:
     skipped_count: int = 0
     projects: list[ResolvedProject] = field(default_factory=list)
     skipped: list[dict[str, Any]] = field(default_factory=list)
+    refreshed_count: int = 0
+    missing_count: int = 0
+    failed_count: int = 0
+    failures: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -49,6 +54,10 @@ class DiscoveryResult:
             "skipped_count": self.skipped_count,
             "projects": [project.to_dict() for project in self.projects],
             "skipped": list(self.skipped),
+            "refreshed_count": self.refreshed_count,
+            "missing_count": self.missing_count,
+            "failed_count": self.failed_count,
+            "failures": list(self.failures),
         }
 
 
@@ -57,6 +66,7 @@ def discover_workspace(
     workspace_root: str | Path,
     store: Store | None = None,
     options: DiscoveryOptions | None = None,
+    git_runner: Any = subprocess_runner,
 ) -> DiscoveryResult:
     """Discover projects below a workspace root and optionally persist them."""
     workspace = Path(workspace_root).expanduser().resolve()
@@ -80,11 +90,53 @@ def discover_workspace(
 
     if store is not None:
         store.init_schema()
+        seen_ids: set[str] = set()
+        runner = git_runner or subprocess_runner
         for project in projects:
-            store.get_or_create_project(project)
+            project_id = store.get_or_create_project(project)
+            seen_ids.add(project_id)
+            try:
+                collected = collect_git_inventory(project.path, runner=runner)
+                store.upsert_project_inventory(
+                    project_id=project_id,
+                    workspace_root=str(workspace),
+                    marker=project.marker,
+                    depth=_relative_depth(project.relative_path),
+                    collected=collected,
+                )
+                if collected.get("error") is None:
+                    result.refreshed_count += 1
+                else:
+                    result.failed_count += 1
+                    failure = {"project_id": project_id, **collected["error"]}
+                    result.failures.append(failure)
+            except Exception:  # isolate one unreadable/project-specific failure
+                result.failed_count += 1
+                failure = {"project_id": project_id, "code": "inventory_failed"}
+                result.failures.append(failure)
+                store.upsert_project_inventory(
+                    project_id=project_id,
+                    workspace_root=str(workspace),
+                    marker=project.marker,
+                    depth=_relative_depth(project.relative_path),
+                    collected={"is_git": False, "error": failure},
+                )
         result.persisted_count = len(projects)
+        result.missing_count = len(
+            store.reconcile_missing_inventory(
+                workspace_root=str(workspace),
+                max_depth=opts.max_depth,
+                include_provisional=opts.include_provisional,
+                seen_project_ids=seen_ids,
+            )
+        )
 
     return result
+
+
+def _relative_depth(relative_path: str) -> int:
+    normalized = relative_path.replace("\\", "/").strip("/")
+    return 0 if normalized in {"", "."} else len(normalized.split("/"))
 
 
 def _iter_projects(workspace: Path, options: DiscoveryOptions) -> list[ResolvedProject]:

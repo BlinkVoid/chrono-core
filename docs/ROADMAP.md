@@ -60,11 +60,12 @@ Goal: project state becomes coherent and maintainable.
 
 Goal: reuse hard-won patterns across projects.
 
-- [ ] MetaFactory ingestion adapter.
+- [x] MetaFactory ingestion adapter.
 - [x] reusable pattern index.
-- [ ] project similarity search.
+- [x] project similarity search (`chrono similar` + `chrono_core_find_similar_projects`).
 - [x] pattern recommendation in resume context.
-- [ ] promote validated patterns into GearCore skills.
+- [x] promote validated patterns into GearCore skills through reviewed
+  `promotion-plan`/digest-gated `promote` commands.
 
 ## Phase 5 — Supersession / Consolidation
 
@@ -77,3 +78,13 @@ Candidates:
 - `_MetaFactory` may remain a specialized collector or become a Chrono Core management workflow.
 
 Do not delete or replace existing tools until Chrono Core has feature parity and migration tests.
+
+Stages 1–3 of the workspace-intelligence absorption are accepted: schema-v5
+catalog parity, bounded live inventory refresh/dirty filtering, and isolated
+migration/export acceptance all pass. The final export preserves registered
+identity and does not mutate catalog or lifecycle state. Phase 5 remains in
+progress only because retiring the live `tool-project-tracker` source and its
+GearCore registrations requires separate authorization; the source is retained
+until that reviewed archival operation occurs (see
+`docs/superpowers/specs/2026-09-01-workspace-intelligence-migration-acceptance.md`
+and `docs/superpowers/specs/2026-09-01-tool-project-tracker-archival-plan.md`).

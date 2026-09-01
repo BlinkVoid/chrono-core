@@ -167,6 +167,126 @@ Output shape:
 }
 ```
 
+### `chrono similar`
+
+Rank other registered projects against the project at `--cwd` by shared
+evidence. Each project document combines its distilled phase/summary with its
+captured observation content; scoring is cosine similarity over
+sublinear-TF/IDF term weights, so repeated evidence has diminishing returns and
+terms present in every project contribute little. The query is read-only: an
+unknown project or missing database is reported without registering anything.
+
+```bash
+chrono similar --cwd ~/workspace/example --limit 5
+```
+
+Output shape:
+
+```json
+{
+  "ok": true,
+  "project_id": "example-abc12345",
+  "count": 1,
+  "results": [
+    {
+      "project_id": "sibling-def67890",
+      "project_name": "sibling",
+      "project_path": "~/workspace/sibling",
+      "phase": "active",
+      "summary": "Hardening the SQLite export pipeline.",
+      "score": 0.742381,
+      "shared_terms": ["export", "pipeline", "sqlite"]
+    }
+  ]
+}
+```
+
+Scores are rounded for a stable contract. Only positive-score matches are
+returned, ordered by score descending then by project id, capped by `--limit`
+(a zero or negative limit returns an empty set). Each result lists up to eight
+`shared_terms`, ordered by their contribution to the score then
+alphabetically. Missing databases and unknown projects return
+`{"ok": false, "error": ...}` and exit code 1.
+
+### `chrono project list` / `show` / `update` / `progress`
+
+Manage canonical project catalog metadata (Stage 1 of the
+workspace-intelligence absorption; see
+`docs/superpowers/specs/2026-09-01-workspace-intelligence-absorption-design.md`):
+
+```bash
+chrono project list [--status STATUS] [--tag TAG] [--limit N] [--dirty | --no-dirty] [--db-path PATH]
+chrono project show PROJECT [--db-path PATH]
+chrono project update PROJECT [metadata options] [--db-path PATH]
+chrono project progress PROJECT TEXT [--db-path PATH]
+chrono project refresh PROJECT [--db-path PATH]
+chrono discover --workspace-root ROOT [--max-depth N] [--include-provisional] [--no-persist]
+```
+
+`PROJECT` selectors resolve by exact id, then exact absolute path, then exact
+workspace-relative path; an ambiguous relative path is a structured
+`ambiguous_project` error. Records include `tags` (decoded JSON array of
+unique strings) and `other_factors` (decoded JSON object). Updates accept
+`--status` (`active|paused|missing|archived`), `--lifecycle-phase`
+(`prototype|validation|commercialisation|maintenance|archived`), `--priority`
+(`low|normal|high|critical`), repeatable `--tag` (replaces the tag set),
+`--owner`, `--description-usage`, `--summary`, `--notes`, and one
+`--other-factors` JSON object string. Empty updates, unknown fields, invalid
+enums, and malformed JSON are rejected (`empty_update` / `invalid_input`
+codes) before mutation. Updates stamp `updated_at` and return the refreshed
+record. Reads are side-effect free: a missing database reports
+`database_not_found` without creating it. A readable database on an older
+schema returns `schema_upgrade_required`; reads never apply migrations.
+
+Output shape (list):
+
+```json
+{
+  "ok": true,
+  "count": 1,
+  "projects": [
+    {
+      "id": "alpha-abc12345",
+      "name": "alpha",
+      "path": "~/workspace/alpha",
+      "relative_path": "alpha",
+      "status": "paused",
+      "phase": "active",
+      "lifecycle_phase": "maintenance",
+      "summary": "Hardening the SQLite export pipeline.",
+      "priority": "high",
+      "tags": ["infra"],
+      "owner": "r345",
+      "description_usage": null,
+      "current_progress": "Catalog API wired.",
+      "notes": null,
+      "other_factors": {},
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
+}
+```
+
+`show`, `update`, and `progress` return `{"ok": true, "project": {...}}` with
+the same record; failures return `{"ok": false, "code": ..., "project": null}`.
+
+### `chrono bug push`
+
+Push one local bug to a GitHub issue through the authenticated `gh api` bridge:
+
+```bash
+chrono bug push BUG_ID [--repo [HOST/]OWNER/REPO] [--dry-run] [--db-path PATH]
+```
+
+Project bugs infer the destination from Git `origin`; workspace-wide bugs
+require `--repo`. An existing `remote_url`/`remote_issue_id` link is updated and
+cannot be relinked with a conflicting repository. Request JSON is passed via
+stdin (`--input -`), and GitHub Enterprise hosts use `gh api --hostname HOST`.
+`--dry-run` returns an inspectable plan without subprocess calls or database
+writes. A successful create persists the link before any close-state PATCH, so
+a retry converges on the same issue if that PATCH fails.
+
 ### `chrono ingest-existing-tools`
 
 Import project metadata from the Workspace Intelligence SQLite registry and archive the legacy `project-tracking` directory as source evidence.
@@ -545,6 +665,36 @@ unknown ids report `"status": "not_found"`.
   bugs across the workspace; returns `{"ok": true, "count": n, "bugs": [...]}`.
 - `chrono_core_update_bug(bug_id, status?, severity?, detail?)` — returns
   `{"ok": bool, "bug_id": ..., "bug": {...}}`.
+- `chrono_core_push_bug_to_github(bug_id, repo?, dry_run?, db_path?)` — explicitly
+  creates or updates one GitHub issue through the authenticated `gh api` bridge.
+  Project bugs infer `origin`; workspace-wide bugs require `repo` in
+  `[HOST/]OWNER/REPO` form. GitHub Enterprise hosts are passed to `gh api` via
+  `--hostname`. Request JSON is sent through stdin and the returned issue URL and
+  number are persisted for retryable updates. This is an external mutation;
+  `dry_run` performs no subprocess call or database write.
+
+### Project catalog tools
+
+Same envelopes and error codes as the `chrono project` commands:
+
+- `chrono_core_list_projects(status?, tag?, limit?, dirty?, db_path?)` — returns
+  `{"ok": true, "count": n, "projects": [...]}` with decoded `tags` and
+  `other_factors`; a missing database reports `database_not_found`.
+- `chrono_core_get_project(project, db_path?)` — resolves by exact id,
+  absolute path, then relative path; returns
+  `{"ok": true, "project": {...}}` or `project_not_found` /
+  `ambiguous_project`.
+- `chrono_core_update_project_metadata(project, status?, lifecycle_phase?, priority?,
+  tags?, owner?, description_usage?, summary?, notes?, other_factors?,
+  db_path?)` — validates enums and JSON shapes before mutation, rejects empty
+  updates, and returns `{"ok": true, "project": {...}}` refreshed.
+- `chrono_core_update_project_progress(project, text, db_path?)` — narrow
+  convenience update for `current_progress`.
+- `chrono_core_discover_projects(workspace_root?, max_depth=3,
+  include_provisional=false, db_path?)` — persist one bounded workspace
+  inventory refresh and exact-scope missing reconciliation.
+- `chrono_core_refresh_project(project, db_path?)` — refresh one registered
+  project's current Git inventory.
 
 ### `chrono_core_search_observations`
 
@@ -561,6 +711,22 @@ Input:
 Output: same shape as `chrono search` — `{"ok": true, "query": ..., "count": n,
 "results": [...], "bugs": [...], "bug_count": n}`; the search covers both
 observation text and bug title/detail FTS.
+
+### `chrono_core_find_similar_projects`
+
+Input:
+
+```json
+{
+  "cwd": "~/workspace/example",
+  "workspace_root": "~/workspace",
+  "limit": 5
+}
+```
+
+Output: same shape as `chrono similar` — `{"ok": true, "project_id": ...,
+"count": n, "results": [...]}`. Read-only like the CLI: an unknown project is
+reported structurally and never registered.
 
 ### `chrono_core_review_project`
 
@@ -594,3 +760,25 @@ Not MVP persistence-critical, but contract names are reserved:
 - `chrono_core_reconcile_docs`
 - `chrono_core_review_project_health`
 - `chrono_core_find_reusable_patterns`
+
+### Reviewed GearCore pattern promotion
+
+Pattern administration is CLI-only in this slice. A validated pattern can be
+previewed and then explicitly applied:
+
+```bash
+chrono patterns promotion-plan PATTERN_ID \
+  --skill-path PATH --evidence PATH \
+  [--scope global|project] [--project-root PATH] [--copy] [--db-path PATH]
+
+chrono patterns promote PATTERN_ID \
+  --skill-path PATH --evidence PATH --plan-digest SHA256 \
+  [--scope global|project] [--project-root PATH] [--copy] [--db-path PATH]
+```
+
+The plan validates the authored `SKILL.md` frontmatter/body and a UTF-8 JSON
+before/after evidence file, then returns the exact shell-free `gearcore
+add-skill` argv and a SHA-256 digest. Promotion recomputes that plan, refuses
+stale inputs without invoking GearCore, and marks the pattern `promoted` only
+after a successful registration. No skill prose is generated and evidence is
+never copied into command arguments or the local database.
